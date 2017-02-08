@@ -16,7 +16,101 @@ namespace Monolithic
 {
     internal class Program
     {
-        private static void Main()
+        private static void ClusterTool(int clusters, out List<DeterministicFiniteAutomaton> plants, out List<DeterministicFiniteAutomaton> specs)
+        {
+            var s = Enumerable.Range(0, 4).Select(
+                k => new State(k.ToString(),
+                    k == 0
+                        ? Marking.Marked
+                        : Marking.Unmarked))
+                .ToArray();
+
+            plants = new List<DeterministicFiniteAutomaton>();
+            specs = new List<DeterministicFiniteAutomaton>();
+
+            int max = clusters;
+
+            var evs = Enumerable.Range(1, max).SelectMany(i => Enumerable.Range(0, 9).Select(
+                k => new Event(String.Format("{0}|{1}", i, k),
+                    k % 2 == 0
+                        ? Controllability.Uncontrollable
+                        : Controllability.Controllable))).ToList();
+
+            for (int i = 1; i <= max; i++)
+            {
+                var e = Enumerable.Range(0, 9).Select(
+                    k => new Event(String.Format("{0}|{1}", i, k),
+                        k % 2 == 0
+                            ? Controllability.Uncontrollable
+                            : Controllability.Controllable))
+                    .ToArray();
+
+                var Ri = new DeterministicFiniteAutomaton(
+                    i != max
+                        ? new[]
+                        {
+                            new Transition(s[0], e[1], s[1]),
+                            new Transition(s[1], e[2], s[0]),
+                            new Transition(s[0], e[3], s[2]),
+                            new Transition(s[2], e[4], s[0]),
+                            new Transition(s[0], e[5], s[3]),
+                            new Transition(s[3], e[6], s[0])
+                        }
+                        : new[]
+                        {
+                            new Transition(s[0], e[1], s[1]),
+                            new Transition(s[1], e[2], s[0]),
+                            new Transition(s[0], e[5], s[2]),
+                            new Transition(s[2], e[4], s[0]),
+                        },
+                        s[0], String.Format("R{0}", i));
+
+                var Ci = new DeterministicFiniteAutomaton(new[]
+                {
+                    new Transition(s[0], e[7], s[1]),
+                    new Transition(s[1], e[8], s[0]),
+                },
+                s[0], String.Format("C{0}", i));
+
+                var Ei = new DeterministicFiniteAutomaton(new[]
+                {
+                    new Transition(s[0], e[2], s[1]),
+                    new Transition(s[1], e[7], s[0]),
+                    new Transition(s[0], e[8], s[2]),
+                    new Transition(s[2], e[5], s[0])
+                },
+                s[0], String.Format("E{0}", i));
+
+                plants.Add(Ri);
+                plants.Add(Ci);
+                specs.Add(Ei);
+            }
+
+            for (int i = 1; i < max; i++)
+            {
+                var e61 = new Event(String.Format("{0}|6", i),
+                    Controllability.Uncontrollable);
+                var e31 = new Event(String.Format("{0}|3", i),
+                    Controllability.Controllable);
+                var e12 = new Event(String.Format("{0}|1", i + 1),
+                    Controllability.Controllable);
+                var e42 = new Event(String.Format("{0}|4", i + 1),
+                    Controllability.Uncontrollable);
+
+                var Eij = new DeterministicFiniteAutomaton(new[]
+                {
+                    new Transition(s[0], e61, s[1]),
+                    new Transition(s[1], e12, s[0]),
+                    new Transition(s[0], e42, s[2]),
+                    new Transition(s[2], e31, s[0])
+                },
+                s[0], String.Format("E{0}_{1}", i, i + 1));
+
+                specs.Add(Eij);
+            }
+        }
+
+        private static void FSM(out List<DeterministicFiniteAutomaton> plants, out List<DeterministicFiniteAutomaton> specs)
         {
             var s =
                 Enumerable.Range(0, 6)
@@ -215,24 +309,36 @@ namespace Monolithic
                 },
                 s[0], "E4");
 
-            var e78 = e7.ParallelCompositionWith(e8);
+            plants = new[] { c1, c2, milling, lathe, robot, mm, c3, mp }.ToList();
+            specs = new[] { e1, e2, e3, e4, e5, e6, e7, e8 }.ToList();
+        }
+
+        private static void Main()
+        {
 
             List<DeterministicFiniteAutomaton> plants;
             List<DeterministicFiniteAutomaton> specs;
 
-            plants = new[] { c1, c2, milling, lathe, robot, mm, c3, mp }.ToList();
-            specs = new[] { e1, e2, e3, e4, e5, e6, e7, e8 }.ToList();
+            //ClusterTool(3, out plants, out specs);
+            FSM(out plants, out specs);
 
+            Console.WriteLine("Supervisor:");
             var timer = new Stopwatch();
             timer.Start();
-
             var sup = DeterministicFiniteAutomaton.MonolithicSupervisor(plants, specs, true);
-
             timer.Stop();
+            Console.WriteLine("\tStates: {0}", sup.Size);
+            Console.WriteLine("\tTransitions: {0}", sup.Transitions.Count());
+            Console.WriteLine("\tComputation Time: {0}", timer.ElapsedMilliseconds / 1000.0);
 
-            Console.WriteLine("Computation Time: {0}", timer.ElapsedMilliseconds / 1000.0);
-            Console.WriteLine("size: {0}", sup.Size);
-            Console.WriteLine("Transitions: {0}", sup.Transitions.Count());
+            Console.WriteLine("\nSupervisor Projection (Removing first and last event):");
+            timer.Restart();
+            var proj = sup.Projection(new[] { sup.Events.First(), sup.Events.Last() });
+            timer.Stop();
+            Console.WriteLine("\tStates: {0}", proj.States.Count()); // proj.States.Count() == proj.Size
+            Console.WriteLine("\tTransitions: {0}", proj.Transitions.Count());
+            Console.WriteLine("\tComputation Time: {0}", timer.ElapsedMilliseconds / 1000.0);
+
             Console.ReadLine();
         }
     }
