@@ -34,10 +34,19 @@ namespace UltraDES
         /// <param name="states">   The states. </param>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        public AdjacencyMatrix(int states, int numEvents)
+        public AdjacencyMatrix(int states, int numEvents, bool preAllocate = false)
         {
             m_internal = new SortedList<int, int>[states];
             m_events = new BitArray[states];
+
+            if (preAllocate)
+            {
+                for(var i = 0; i < states; ++i)
+                {
+                    m_internal[i] = new SortedList<int, int>();
+                    m_events[i] = new BitArray(numEvents, false);
+                }
+            }
             m_numerOfEvents = numEvents;
         }
 
@@ -58,7 +67,7 @@ namespace UltraDES
             }
         }
 
-        public SortedList<int, int> this[uint s]
+        public SortedList<int, int> this[int s]
         {
             get
             {
@@ -66,7 +75,7 @@ namespace UltraDES
             }
         }
 
-        public bool hasEvent(uint s, int e)
+        public bool hasEvent(int s, int e)
         {
             return m_events[s] != null ? m_events[s][e] : false;
         }
@@ -98,8 +107,15 @@ namespace UltraDES
 
             foreach (var value in values)
             {
-                m_internal[origin].Add(value.Item1, value.Item2);
-                m_events[origin][value.Item1] = true;
+                if (!m_events[origin][value.Item1])
+                {
+                    m_internal[origin].Add(value.Item1, value.Item2);
+                    m_events[origin][value.Item1] = true;
+                }
+                else if(m_internal[origin][value.Item1] != value.Item2)
+                {
+                    throw new Exception("Automaton is not deterministic.");
+                }
             }
         }
 
@@ -110,8 +126,15 @@ namespace UltraDES
                 m_internal[origin] = new SortedList<int, int>();
                 m_events[origin] = new BitArray(m_numerOfEvents, false);
             }
-            m_internal[origin].Add(e, dest);
-            m_events[origin][e] = true;
+            if (!m_events[origin][e])
+            {
+                m_internal[origin].Add(e, dest);
+                m_events[origin][e] = true;
+            }
+            else if(m_internal[origin][e] != dest)
+            {
+                throw new Exception("Automaton is not deterministic.");
+            }
         }
 
         public void Remove(int origin, int e)
