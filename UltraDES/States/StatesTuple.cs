@@ -11,7 +11,7 @@ namespace UltraDES
             get;
         }
 
-        public StatesTuple(uint[] states, int[] bits, int size)
+        public StatesTuple(int[] states, int[] bits, int size)
         {
             m_data = new uint[size];
             Set(states, bits);
@@ -22,7 +22,7 @@ namespace UltraDES
             m_data = new uint[k];
         }
 
-        public void Set(uint[] states, int[] bits)
+        public void Set(int[] states, int[] bits)
         {
             int j = -1;
             for (int i = 0; i < bits.Length; i++)
@@ -32,40 +32,29 @@ namespace UltraDES
                     ++j;
                     m_data[j] = 0;
                 }
-                m_data[j] += (states[i] << bits[i]);
+                m_data[j] += ((uint)states[i] << bits[i]);
             }
         }
 
-        public void Get(uint[] states, int[] bits, uint[] maxSize)
+        public void Get(int[] states, int[] bits, int[] maxSize)
         {
             int j = -1;
             for (int i = 0; i < states.Length; i++)
             {
                 if (bits[i] == 0)
                     j++;
-                states[i] = (m_data[j] >> bits[i]) & maxSize[i];
+                states[i] = (int)(m_data[j] >> bits[i]) & maxSize[i];
             }
         }
-    }
 
-    public class StatesTupleComparator : IEqualityComparer<StatesTuple>
-    {
-        public bool Equals(StatesTuple a, StatesTuple b)
+        public StatesTuple Clone()
         {
-            for (int i = a.m_data.Length - 1; i >= 0; --i)
+            var c = new StatesTuple(m_data.Length);
+            for (var i = 0; i < m_data.Length; ++i)
             {
-                if (a.m_data[i] != b.m_data[i])
-                    return false;
+                c.m_data[i] = m_data[i];
             }
-            return true;
-        }
-
-        public int GetHashCode(StatesTuple obj)
-        {
-            uint p = 0;
-            for (int i = obj.m_data.Length - 1; i >= 0; --i)
-                p = (p << 1) + obj.m_data[i];
-            return (int)p;
+            return c;
         }
     }
 }

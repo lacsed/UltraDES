@@ -19,12 +19,11 @@ namespace UltraDES
         /// <summary>   Gets or sets the s 1. </summary>
         /// <value> The s 1. </value>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        public abstract AbstractState S1 { get; protected set; }
+        public abstract AbstractState[] S { get; protected set; }
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Gets or sets the s 2. </summary>
-        /// <value> The s 2. </value>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        public abstract AbstractState S2 { get; protected set; }
+        public AbstractState Join()
+        {
+            return new State(ToString(), Marking);
+        }
     }
 }

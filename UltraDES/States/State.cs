@@ -5,6 +5,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 using System;
+using System.Text;
 
 namespace UltraDES
 {
@@ -92,17 +93,14 @@ namespace UltraDES
         /// <remarks>   Lucas Alves, 11/01/2016. </remarks>
         ///
         /// <param name="s2">           The second AbstractState. </param>
-        /// <param name="count">        Number of. </param>
         /// <param name="allMarked">    true if all marked. </param>
         ///
         /// <returns>   A CompoundState. </returns>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        public override AbstractCompoundState MergeWith(AbstractState s2, int count, bool allMarked)
+        public override AbstractCompoundState MergeWith(AbstractState s2, bool allMarked)
         {
-            return (IsMarked || s2.IsMarked) && !allMarked
-                ? (AbstractCompoundState) new CompoundState(this, s2, count).ToMarked
-                : new CompoundState(this, s2, count);
+            return new CompoundState(new[] { this, s2 }, allMarked);
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
