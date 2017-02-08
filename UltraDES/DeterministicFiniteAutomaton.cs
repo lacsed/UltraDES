@@ -2096,7 +2096,7 @@ namespace UltraDES
             return new DFA(transitions, v_stateSet[0], v_name);
         }
 
-        public DFA InverseProjection(IEnumerable<Event> events)
+        public DFA InverseProjection(IEnumerable<AbstractEvent> events)
         {
             var evs = events.Except(Events).ToList();
 
@@ -2165,7 +2165,7 @@ namespace UltraDES
             return newPos;
         }
 
-        public DFA Projection(IEnumerable<Event> removeEvents)
+        public DFA Projection(IEnumerable<AbstractEvent> removeEvents)
         {
             var evLength = m_eventsUnion.Length;
             simplify();
