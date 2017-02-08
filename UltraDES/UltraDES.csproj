@@ -51,6 +51,7 @@
     <Compile Include="Regular Expressions\RegularExpression.cs" />
     <Compile Include="Regular Expressions\Symbol.cs" />
     <Compile Include="Regular Expressions\Union.cs" />
+    <Compile Include="Comparators.cs" />
     <Compile Include="States\AbstractCompoundState.cs" />
     <Compile Include="States\AbstractState.cs" />
     <Compile Include="States\CompoundState.cs" />

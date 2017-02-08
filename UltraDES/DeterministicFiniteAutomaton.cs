@@ -16,13 +16,17 @@ using System.Threading;
 namespace UltraDES
 {
     using System.Runtime;
+    using System.Text;
     using System.Threading.Tasks;
     using System.Xml;
     using System.Xml.Linq;
+    using UltraDES;
     using DFA = DeterministicFiniteAutomaton;
     [Serializable]
     public sealed class DeterministicFiniteAutomaton
     {
+        private static int m_numberOfThreads = Math.Max(2, Environment.ProcessorCount);
+
         private Dictionary<StatesTuple, bool> m_validStates;
 
         private List<AdjacencyMatrix> m_adjacencyList;
@@ -31,7 +35,7 @@ namespace UltraDES
 
         private List<bool[]> m_eventsList;
 
-        private List<uint> m_initialStatesList;
+        private List<int> m_initialStatesList;
 
         private List<AbstractState[]> m_statesList;
 
@@ -41,10 +45,14 @@ namespace UltraDES
 
         private int m_numberOfRunningThreads;
 
-        private string m_lockObject;
+        private Object m_lockObject = new Object();
+
+        private Object m_lockObject2 = new Object();
+
+        private Object m_lockObject3 = new Object();
 
         private int[] m_bits;
-        private uint[] m_maxSize;
+        private int[] m_maxSize;
         private int m_tupleSize;
         private int m_numberOfPlants;
 
@@ -52,7 +60,7 @@ namespace UltraDES
 
         public string Name { get; private set; }
 
-        private DFA clone(int capacity)
+        public DFA clone(int capacity)
         {
             DFA G = new DFA(capacity);
             G.m_eventsUnion = (AbstractEvent[])m_eventsUnion.Clone();
@@ -73,7 +81,7 @@ namespace UltraDES
             G.m_tupleSize = m_tupleSize;
 
             if (m_validStates != null)
-                G.m_validStates = new Dictionary<StatesTuple, bool>(m_validStates);
+                G.m_validStates = new Dictionary<StatesTuple, bool>(m_validStates, StatesTupleComparator.getInstance());
 
             return G;
         }
@@ -93,7 +101,7 @@ namespace UltraDES
             m_statesList.Add(transitionsLocal.SelectMany(t => new[] { t.Origin, t.Destination }).Distinct().ToArray());
             m_eventsUnion = transitionsLocal.Select(t => t.Trigger).Distinct().OrderBy(i => i.Controllability).ToArray();
             m_adjacencyList.Add(new AdjacencyMatrix(m_statesList[0].Length, m_eventsUnion.Length));
-            m_initialStatesList.Add((uint)Array.IndexOf(m_statesList[0], initial));
+            m_initialStatesList.Add(Array.IndexOf(m_statesList[0], initial));
 
             bool[] events = new bool[m_eventsUnion.Length];
 
@@ -104,7 +112,7 @@ namespace UltraDES
             Size = (ulong)m_statesList[0].Length;
 
             m_bits[0] = 0;
-            m_maxSize[0] = ((uint)1 << (int)Math.Ceiling(Math.Log(Size, 2))) - 1;
+            m_maxSize[0] = (1 << (int)Math.Ceiling(Math.Log(Size, 2))) - 1;
             m_tupleSize = 1;
 
             for (var i = 0; i < m_statesList[0].Length; ++i)
@@ -124,40 +132,69 @@ namespace UltraDES
             m_statesList = new List<AbstractState[]>(n);
             m_eventsList = new List<bool[]>(n);
             m_adjacencyList = new List<AdjacencyMatrix>(n);
-            m_initialStatesList = new List<uint>(n);
+            m_initialStatesList = new List<int>(n);
             m_bits = new int[n];
-            m_maxSize = new uint[n];
-            m_numberOfPlants = 1;
+            m_maxSize = new int[n];
+            m_numberOfPlants = n;
         }
 
         public IEnumerable<AbstractState> States
         {
             get
             {
-                if (m_validStates != null || m_statesList.Count > 1)
-                    simplify();
+                int n = m_statesList.Count;
+                int[] pos = new int[n];
 
-                return new List<AbstractState>(m_statesList[0]);
+                if (m_validStates != null)
+                {
+                    foreach (var s in m_validStates)
+                    {
+                        s.Key.Get(pos, m_bits, m_maxSize);
+                        yield return composeState(pos);
+                    }
+                }
+                else if(!IsEmpty())
+                {
+                    do
+                    {
+                        yield return composeState(pos);
+                    } while (incrementPosition(pos));
+                }
             }
         }
 
         public IEnumerable<AbstractState> MarkedStates
         {
             get {
-                if (m_validStates != null || m_statesList.Count > 1)
-                    simplify();
+                int n = m_statesList.Count;
+                int[] pos = new int[n];
 
-                return m_statesList[0].AsParallel().Where(s => s.IsMarked);
+                if (m_validStates != null)
+                {
+                    foreach (var s in m_validStates)
+                    {
+                        s.Key.Get(pos, m_bits, m_maxSize);
+                        if(IsMarketState(pos))
+                            yield return composeState(pos);
+                    }
+                }
+                else if (!IsEmpty())
+                {
+                    do
+                    {
+                        if(IsMarketState(pos))
+                            yield return composeState(pos);
+                    } while (incrementPosition(pos));
+                }
             }
         }
 
         public AbstractState InitialState
         {
             get {
-                if (m_validStates != null || m_statesList.Count > 1)
-                    simplify();
-
-                return m_statesList[0][m_initialStatesList[0]];
+                if (IsEmpty())
+                    return null;
+                return composeState(m_initialStatesList.ToArray());
             }
         }
 
@@ -165,7 +202,10 @@ namespace UltraDES
         {
             get
             {
-                return new List<AbstractEvent>(m_eventsUnion);
+                foreach(var e in m_eventsUnion)
+                {
+                    yield return e;
+                }
             }
         }
 
@@ -191,8 +231,7 @@ namespace UltraDES
         {
             if (m_validStates == null)
             {
-                StatesTupleComparator comparer = new StatesTupleComparator();
-                m_validStates = new Dictionary<StatesTuple, bool>(comparer);
+                m_validStates = new Dictionary<StatesTuple, bool>(StatesTupleComparator.getInstance());
                 DepthFirstSearch(true);
             }
             else
@@ -204,13 +243,10 @@ namespace UltraDES
         private void findSupervisor(int nPlant, bool nonBlocking)
         {
             m_numberOfRunningThreads = 0;
-            m_lockObject = "mutex";
-            int NumberOfThreads = 4;
             m_statesStack = new Stack<StatesTuple>();
             m_removeBadStates = new Stack<bool>();
 
-            StatesTupleComparator comparer = new StatesTupleComparator();
-            m_validStates = new Dictionary<StatesTuple, bool>(comparer);
+            m_validStates = new Dictionary<StatesTuple, bool>(StatesTupleComparator.getInstance());
 
             makeReverseTransitions();
 
@@ -218,9 +254,9 @@ namespace UltraDES
             m_statesStack.Push(initialIndex);
             m_removeBadStates.Push(false);
 
-            Thread[] v_threads = new Thread[NumberOfThreads - 1];
+            Thread[] v_threads = new Thread[m_numberOfThreads - 1];
 
-            for (int i = 0; i < NumberOfThreads - 1; ++i)
+            for (int i = 0; i < m_numberOfThreads - 1; ++i)
             {
                 v_threads[i] = new Thread(findStates);
                 v_threads[i].Start(nPlant);
@@ -228,7 +264,7 @@ namespace UltraDES
 
             findStates(nPlant);
 
-            for (int i = 0; i < NumberOfThreads - 1; ++i)
+            for (int i = 0; i < m_numberOfThreads - 1; ++i)
             {
                 v_threads[i].Join();
             }
@@ -251,8 +287,8 @@ namespace UltraDES
         {
             int n = m_statesList.Count;
             int e, i, k, nPlant = (int)obj;
-            uint[] pos = new uint[n];
-            uint[] nextPosition = new uint[n];
+            int[] pos = new int[n];
+            int[] nextPosition = new int[n];
             int UncontrollableEventsCount = UncontrollableEvents.Count();
             StatesTuple[] nextStates = new StatesTuple[UncontrollableEventsCount];
             bool plantHasEvent;
@@ -293,7 +329,7 @@ namespace UltraDES
                             }
                             else if (m_adjacencyList[i].hasEvent(pos[i], e))
                             {
-                                nextPosition[i] = (uint)m_adjacencyList[i][(int)pos[i], e];
+                                nextPosition[i] = m_adjacencyList[i][(int)pos[i], e];
                                 plantHasEvent = true;
                             }
                             else
@@ -310,7 +346,7 @@ namespace UltraDES
                             }
                             else if (m_adjacencyList[i].hasEvent(pos[i], e))
                             {
-                                nextPosition[i] = (uint)m_adjacencyList[i][(int)pos[i], e];
+                                nextPosition[i] = m_adjacencyList[i][(int)pos[i], e];
                             }
                             else
                             {
@@ -364,7 +400,7 @@ namespace UltraDES
                             }
                             else if (m_adjacencyList[i].hasEvent(pos[i], e))
                             {
-                                nextPosition[i] = (uint)m_adjacencyList[i][(int)pos[i], e];
+                                nextPosition[i] = m_adjacencyList[i][pos[i], e];
                             }
                             else
                             {
@@ -409,7 +445,7 @@ namespace UltraDES
                     for (int e = 0; e < m_eventsUnion.Count(); ++e)
                         m_reverseTransitionsList[i][state][e] = new List<int>();
                 }
-                for (uint state = 0; state < m_statesList[i].Length; ++state)
+                for (int state = 0; state < m_statesList[i].Length; ++state)
                 {
                     foreach (var tr in m_adjacencyList[i][state])
                     {
@@ -437,15 +473,13 @@ namespace UltraDES
         private bool removeBlockingStates(bool checkForBadStates = false)
         {
             makeReverseTransitions();
-            int NumberOfThreads = 4;
             int n = m_statesList.Count(), i;
             m_numberOfRunningThreads = 0;
-            Thread[] threads = new Thread[NumberOfThreads - 1];
-            m_lockObject = "mutex";
+            Thread[] threads = new Thread[m_numberOfThreads - 1];
 
             List<int>[] markedStates = new List<int>[n];
             int[] pos = new int[n];
-            uint[] statePos = new uint[n];
+            int[] statePos = new int[n];
             pos[n - 1] = -1;
             m_statesStack = new Stack<StatesTuple>();
 
@@ -467,7 +501,7 @@ namespace UltraDES
 
                 for (i = 0; i < n; ++i)
                 {
-                    statePos[i] = (uint)markedStates[i][pos[i]];
+                    statePos[i] = markedStates[i][pos[i]];
                 }
                 StatesTuple tuple = new StatesTuple(statePos, m_bits, m_tupleSize);
                 if (m_validStates.ContainsKey(tuple))
@@ -480,14 +514,14 @@ namespace UltraDES
             markedStates = null;
             Size = 0;
 
-            for (i = 0; i < NumberOfThreads - 1; ++i)
+            for (i = 0; i < m_numberOfThreads - 1; ++i)
             {
                 threads[i] = new Thread(InverseSearchThread);
                 threads[i].Start();
             }
             InverseSearchThread();
 
-            for (i = 0; i < NumberOfThreads - 1; ++i)
+            for (i = 0; i < m_numberOfThreads - 1; ++i)
             {
                 threads[i].Join();
             }
@@ -538,11 +572,13 @@ namespace UltraDES
             }
         }
 
+        /*
         public int KleeneClosure {
             get {
                 return 0;
             }
         }
+        */
 
         public DFA Minimal {
             get
@@ -560,7 +596,7 @@ namespace UltraDES
                     size = partitions.Count;
                     var newPartitions = new List<HashSet<AbstractState>>();
 
-                    foreach (var partition in partitions.ToArray())
+                    foreach (var partition in partitions)
                     {
                         if (partition.Count <= 1)
                         {
@@ -580,7 +616,7 @@ namespace UltraDES
                 }
 
                 var mapping = partitions.Select(
-                    p => Tuple.Create(p, p.Count == 1 ? p.Single() : p.Aggregate((a, b) => a.MergeWith(b, 1))))
+                    p => Tuple.Create(p, p.Count == 1 ? p.Single() : p.Aggregate((a, b) => a.MergeWith(b))))
                     .ToList();
 
                 var transitions = Transitions.Select(t =>
@@ -596,25 +632,90 @@ namespace UltraDES
             }
         }
 
-        /*
-        public int PrefixClosure {
+        public DFA PrefixClosure {
             get
             {
-                simplify();
-                var states = States.AsParallel().AsOrdered().Select(s => s.ToMarked).ToArray();
+                var G = this.Clone();
 
-                return new DFA(states, _events, _adjacency, _initial,
-                    string.Format("PrefixClosure({0})", Name));
+                for(var i = 0; i < G.m_statesList.Count; ++i)
+                {
+                    for(var s = 0; s < G.m_statesList[i].Length; ++s)
+                    {
+                        G.m_statesList[i][s] = G.m_statesList[i][s].ToMarked;
+                    }
+                }
+
+                return G;
             }
         }
-        
 
-        public int ToDotCode {
+        public string ToDotCode {
             get {
-                return 0;
+                var dot = new StringBuilder("digraph {\nrankdir=TB;", (int)Size * InitialState.ToString().Length);
+
+                dot.Append("\nnode [shape = doublecircle];");
+
+                foreach (var ms in MarkedStates)
+                    dot.AppendFormat(" \"{0}\" ", ms);
+
+                dot.Append("\nnode [shape = circle];");
+
+                int n = m_statesList.Count;
+                int[] pos = new int[n];
+
+                var addTransitions = new Action(() => {
+                    foreach (var group in getTransitionsFromState(pos).GroupBy(t => t.Destination))
+                    {
+                        dot.AppendFormat("\"{0}\" -> \"{1}\" [ label = \"", group.First().Origin, group.Key);
+                        bool first = true;
+                        foreach (var t in group)
+                        {
+                            if (!first) dot.Append(",");
+                            else first = false;
+                            dot.Append(t.Trigger);
+                        }
+                        dot.Append("\" ];\n");
+                    }
+                });
+
+                if (m_validStates != null)
+                {
+                    foreach (var s in m_validStates)
+                    {
+                        s.Key.Get(pos, m_bits, m_maxSize);
+                        if (!IsMarketState(pos))
+                            dot.AppendFormat(" \"{0}\" ", composeState(pos));
+                    }
+
+                    dot.AppendFormat("\nnode [shape = point ]; Initial\nInitial -> \"{0}\";\n", InitialState);
+                    foreach (var s in m_validStates)
+                    {
+                        s.Key.Get(pos, m_bits, m_maxSize);
+                        addTransitions();
+                    }
+                }
+                else if (!IsEmpty())
+                {
+                    do
+                    {
+                        if (!IsMarketState(pos))
+                            dot.AppendFormat(" \"{0}\" ", composeState(pos));
+                    } while (incrementPosition(pos));
+
+                    dot.AppendFormat("\nnode [shape = point ]; Initial\nInitial -> \"{0}\";\n", InitialState);
+
+                    do
+                    {
+                        addTransitions();
+                    } while (incrementPosition(pos));
+                }            
+                dot.Append("}");
+
+                return dot.ToString();
             }
         }
 
+        /*
         public int ToRegularExpression {
             get {
                 return 0;
@@ -660,7 +761,7 @@ namespace UltraDES
                 {
                     for (var j = 0; j < m_eventsUnion.Length; j++)
                     {
-                        var k = m_adjacencyList[0].hasEvent((uint)i, j) ? m_adjacencyList[0][i,j] : -1;
+                        var k = m_adjacencyList[0].hasEvent(i, j) ? m_adjacencyList[0][i,j] : -1;
                         if (k == -1) continue;
 
                         var t = (XmlElement)transitions.AppendChild(doc.CreateElement("Transition"));
@@ -675,18 +776,63 @@ namespace UltraDES
             }
         }
 
-        public int TransitionFunction {
-            get {
-                return 0;
+        public Func<AbstractState, AbstractEvent, Option<AbstractState>> TransitionFunction
+        {
+            get
+            {
+                var n = m_statesList.Count;
+                var st = new Dictionary<AbstractState, int>[n];
+                for(var i = 0; i < n; ++i)
+                {
+                    st[i] = new Dictionary<AbstractState, int>(m_statesList[i].Length);
+                    for (var j = 0; j < m_statesList[i].Length; ++j) st[i].Add(m_statesList[i][j], j);
+                }
+
+                return (s, e) =>
+                {
+                    if (e == Epsilon.EpsilonEvent) return Some<AbstractState>.Create(s);
+                    var p = s as CompoundState;
+                    var S = p != null ? p.S : new[] { s };
+                    if (n == 1 && S.Length > 1) S = new[] { p.Join() };
+
+                    if (S.Length != n) return None<AbstractState>.Create();
+
+                    var pos = new int[n];
+                    for (var i = 0; i < n; ++i)
+                    {
+                        if(!st[i].TryGetValue(S[i], out pos[i]))
+                        {
+                            return None<AbstractState>.Create();
+                        }
+                    }
+                    var k = Array.IndexOf(m_eventsUnion, e);
+                    if(k < 0) return None<AbstractState>.Create();
+
+                    for(var i = 0; i < n; ++i)
+                    {
+                        if (m_eventsList[i][k])
+                        {
+                            pos[i] = m_adjacencyList[i][pos[i], k];
+                            if(pos[i] < 0) return None<AbstractState>.Create();
+                        }
+                    }
+
+                    if(m_validStates != null && !m_validStates.ContainsKey(new StatesTuple(pos, m_bits, m_tupleSize)))
+                    {
+                        return None<AbstractState>.Create();
+                    }
+
+                    return Some<AbstractState>.Create(n == 1 ? m_statesList[0][pos[0]] : composeState(pos));
+                };
             }
         }
-
+        
         private void InverseSearchThread()
         {
             int i, length = 0;
             int n = m_statesList.Count;
-            uint[] pos = new uint[n];
-            uint[] nextPos = new uint[n];
+            int[] pos = new int[n];
+            int[] nextPos = new int[n];
             int[] movs = new int[n];
             StatesTuple tuple;
 
@@ -711,7 +857,7 @@ namespace UltraDES
                     {
                         for (i = 0; i < n; ++i)
                         {
-                            if (m_reverseTransitionsList[i][(int)pos[i]][e].Count() == 0)
+                            if (m_reverseTransitionsList[i][pos[i]][e].Count() == 0)
                             {
                                 goto nextEvent;
                             }
@@ -719,7 +865,7 @@ namespace UltraDES
 
                         for (i = 0; i < n - 1; ++i)
                         {
-                            nextPos[i] = (uint)m_reverseTransitionsList[i][(int)pos[i]][e][movs[i]];
+                            nextPos[i] = m_reverseTransitionsList[i][pos[i]][e][movs[i]];
                         }
                         movs[n - 1] = -1;
                         while (true)
@@ -727,13 +873,13 @@ namespace UltraDES
                             for (i = n - 1; i >= 0; --i)
                             {
                                 ++movs[i];
-                                if (movs[i] < m_reverseTransitionsList[i][(int)pos[i]][e].Count()) break;
+                                if (movs[i] < m_reverseTransitionsList[i][pos[i]][e].Count()) break;
                                 movs[i] = 0;
-                                nextPos[i] = (uint)m_reverseTransitionsList[i][(int)pos[i]][e][0];
+                                nextPos[i] = m_reverseTransitionsList[i][pos[i]][e][0];
                             }
                             if (i < 0) break;
 
-                            nextPos[i] = (uint)m_reverseTransitionsList[i][(int)pos[i]][e][movs[i]];
+                            nextPos[i] = m_reverseTransitionsList[i][pos[i]][e][movs[i]];
 
                             tuple = new StatesTuple(nextPos, m_bits, m_tupleSize);
                             lock (m_lockObject)
@@ -768,8 +914,8 @@ namespace UltraDES
             int e, i, n = m_statesList.Count;
             StatesTuple tuple;
             Stack<StatesTuple> stack = new Stack<StatesTuple>();
-            uint[] pos = new uint[n];
-            uint[] nextPos = new uint[n];
+            int[] pos = new int[n];
+            int[] nextPos = new int[n];
             int[] movs = new int[n];
             bool v_value, found = false;
 
@@ -784,14 +930,14 @@ namespace UltraDES
                 {
                     for (i = 0; i < n; ++i)
                     {
-                        if (m_reverseTransitionsList[i][(int)pos[i]][e].Count() == 0)
+                        if (m_reverseTransitionsList[i][pos[i]][e].Count() == 0)
                         {
                             goto nextEvent;
                         }
                     }
                     for (i = 0; i < n; ++i)
                     {
-                        nextPos[i] = (uint)m_reverseTransitionsList[i][(int)pos[i]][e][movs[i]];
+                        nextPos[i] = m_reverseTransitionsList[i][pos[i]][e][movs[i]];
                     }
                     movs[n - 1] = -1;
                     while (true)
@@ -799,12 +945,12 @@ namespace UltraDES
                         for (i = n - 1; i >= 0; --i)
                         {
                             ++movs[i];
-                            if (movs[i] < m_reverseTransitionsList[i][(int)pos[i]][e].Count()) break;
+                            if (movs[i] < m_reverseTransitionsList[i][pos[i]][e].Count()) break;
                             movs[i] = 0;
-                            nextPos[i] = (uint)m_reverseTransitionsList[i][(int)pos[i]][e][movs[i]];
+                            nextPos[i] = m_reverseTransitionsList[i][pos[i]][e][movs[i]];
                         }
                         if (i < 0) break;
-                        nextPos[i] = (uint)m_reverseTransitionsList[i][(int)pos[i]][e][movs[i]];
+                        nextPos[i] = m_reverseTransitionsList[i][pos[i]][e][movs[i]];
 
                         tuple = new StatesTuple(nextPos, m_bits, m_tupleSize);
 
@@ -828,8 +974,8 @@ namespace UltraDES
         {
             int length = 0;
             int n = m_statesList.Count;
-            uint[] pos = new uint[n];
-            uint[] nextPosition = new uint[n];
+            int[] pos = new int[n];
+            int[] nextPosition = new int[n];
             bool acceptAllStates = (bool)param;
             int e, i;
             StatesTuple tuple;
@@ -864,7 +1010,7 @@ namespace UltraDES
                             }
                             else if (m_adjacencyList[i].hasEvent(pos[i], e))
                             {
-                                nextPosition[i] = (uint)m_adjacencyList[i][(int)pos[i], e];
+                                nextPosition[i] = m_adjacencyList[i][pos[i], e];
                             }
                             else
                             {
@@ -908,7 +1054,6 @@ namespace UltraDES
 
         private bool DepthFirstSearch(bool acceptAllStates, bool checkForBadStates = false)
         {
-            int NumberOfThreads = 4;
             m_statesStack = new Stack<StatesTuple>();
             Size = 0;
             m_numberOfRunningThreads = 0;
@@ -921,16 +1066,15 @@ namespace UltraDES
             m_validStates[initialState] = true;
             m_statesStack.Push(initialState);
 
-            m_lockObject = "mutex";
-            Thread[] threads = new Thread[NumberOfThreads - 1];
+            Thread[] threads = new Thread[m_numberOfThreads - 1];
 
-            for (int i = 0; i < NumberOfThreads - 1; ++i)
+            for (int i = 0; i < m_numberOfThreads - 1; ++i)
             {
                 threads[i] = new Thread(DepthFirstSearchThread);
                 threads[i].Start(acceptAllStates);
             }
             DepthFirstSearchThread(acceptAllStates);
-            for (int i = 0; i < NumberOfThreads - 1; ++i)
+            for (int i = 0; i < m_numberOfThreads - 1; ++i)
             {
                 threads[i].Join();
             }
@@ -978,7 +1122,7 @@ namespace UltraDES
             {
                 G1G2.m_bits[i] = k;
                 int p = (int)Math.Ceiling(Math.Log(G1G2.m_statesList[i].Length, 2));
-                G1G2.m_maxSize[i] = ((uint)1 << p) - 1;
+                G1G2.m_maxSize[i] = (1 << p) - 1;
                 k += p;
                 if (k > sizeof(int) * 8)
                 {
@@ -986,7 +1130,6 @@ namespace UltraDES
                     ++G1G2.m_tupleSize;
                     k = p;
                 }
-
             }
 
             for (int i = 0; i < m_adjacencyList.Count; ++i)
@@ -998,7 +1141,7 @@ namespace UltraDES
                     G1G2.m_eventsList[i][Array.IndexOf(G1G2.m_eventsUnion, m_eventsUnion[e])] = m_eventsList[i][e];
                 }
                 G1G2.m_adjacencyList.Add(new AdjacencyMatrix(m_statesList[i].Length, G1G2.m_eventsUnion.Length));
-                for (uint j = 0; j < m_statesList[i].Length; ++j)
+                for (int j = 0; j < m_statesList[i].Length; ++j)
                 {
                     foreach (var p in m_adjacencyList[i][j])
                     {
@@ -1014,7 +1157,7 @@ namespace UltraDES
                     G1G2.m_eventsList[i][Array.IndexOf(G1G2.m_eventsUnion, G2.m_eventsUnion[e])] = G2.m_eventsList[i - m_adjacencyList.Count][e];
                 }
                 G1G2.m_adjacencyList.Add(new AdjacencyMatrix(G1G2.m_statesList[i].Length, G1G2.m_eventsUnion.Length));
-                for (uint j = 0; j < G1G2.m_statesList[i].Length; ++j)
+                for (int j = 0; j < G1G2.m_statesList[i].Length; ++j)
                 {
                     foreach (var q in G2.m_adjacencyList[i - m_adjacencyList.Count][j])
                     {
@@ -1031,15 +1174,6 @@ namespace UltraDES
             }
             return G1G2;
         }
-
-        /*
-                [Obsolete("MonoliticSupervisor is deprecated, please use MonolithicSupervisor instead. (Misspelling)")]
-                public static DFA MonoliticSupervisor(IEnumerable<DFA> plants,
-                    IEnumerable<DFA> specifications, bool nonBlocking = false)
-                {
-                    return MonolithicSupervisor(plants, specifications, nonBlocking);
-                }
-        */
 
         public static DFA MonolithicSupervisor(IEnumerable<DFA> plants,
             IEnumerable<DFA> specifications, bool nonBlocking = false)
@@ -1062,95 +1196,6 @@ namespace UltraDES
             return Size != nStates;
         }
 
-        private bool VerifyControlabillity(DFA plant)
-        {
-            /*
-            var change = false;
-            int nPlant = plant._adjacencyList.Count();
-            int n = _adjacencyList.Count;
-            int eL = _validStates.Length / plant.size;
-            int i, w, mult, s1;
-            bool plantHasEvent, SupHasEvent;
-            int UncontrollableEventsCount = UncontrollableEvents.Count();
-            int[] pos = new int[n];
-            pos[n - 1] = -1;
-
-            for(int p1 = 0; p1 < plant.size; p1++)
-            {
-                for(int e = 0; e < UncontrollableEventsCount; e++)
-                {
-                    plantHasEvent = false;
-                    for (i = 0; i < nPlant; i++)
-                    {
-                        if (plant._eventsList[i][e])
-                        {
-                            if (!plant._adjacencyList[i].hasEvent(pos[i], e)) goto nextEvent;
-                            else if (!plantHasEvent) plantHasEvent = true;
-                        }
-                    }
-                    s1 = p1 * eL;
-                    for (int s0 = 0; s0 < eL; s0++, s1++)
-                    {
-                        for(i = n-1; i >= nPlant; i--)
-                        {
-                            pos[i]++;
-                            if (pos[i] < _statesList[i].Length) break;
-                            pos[i] = 0;
-                        }
-                        if (!_validStates[s1]) continue;
-
-                        SupHasEvent = plantHasEvent;
-                        for (i = nPlant; i < n; i++)
-                        {
-                            if (_eventsList[i][e])
-                            {
-                                if (!_adjacencyList[i].hasEvent(pos[i], e))
-                                {
-                                    SupHasEvent = false;
-                                    break;
-                                }
-                                else if (!SupHasEvent) SupHasEvent = true;
-                            }
-                        }
-                        if (!SupHasEvent && plantHasEvent)
-                        {
-                            _validStates[s1] = false;
-                            change = true;
-                            size--;
-                        }
-                        else if (SupHasEvent)
-                        {
-                            w = 0;
-                            mult = 1;
-                            for (i = n - 1; i >= 0; i--)
-                            {
-                                w += mult * (_adjacencyList[i].hasEvent(pos[i], e) ?
-                                             _adjacencyList[i][pos[i], e] : pos[i]);
-                                mult *= _statesList[i].Length;
-                            }
-                            if (!_validStates[w])
-                            {
-                                _validStates[s1] = false;
-                                change = true;
-                                size--;
-                            }
-                        }
-                    }
-
-                    nextEvent:;
-                }
-                for(i = nPlant-1; i >= 0; i--)
-                {
-                    pos[i]++;
-                    if (pos[i] < _statesList[i].Length) break;
-                    pos[i] = 0;
-                }
-            }
-            return change;
-            */
-            return false;
-        }
-
         public override string ToString()
         {
             return Name;
@@ -1167,12 +1212,10 @@ namespace UltraDES
             };
 
             int n = m_statesList.Count();
-            bool marked;
-            uint[] pos = new uint[n];
-            uint[] nextPos = new uint[n];
-            string name;
-            StatesTupleComparator comparer = new StatesTupleComparator();
-            Dictionary<StatesTuple, ulong> v_states = new Dictionary<StatesTuple, ulong>((int)(Size * 1.4), comparer);
+            int[] pos = new int[n];
+            int[] nextPos = new int[n];
+            Dictionary<StatesTuple, ulong> v_states = new Dictionary<StatesTuple, ulong>((int)Size,
+                StatesTupleComparator.getInstance());
             StatesTuple nextTuple = new StatesTuple(m_tupleSize);
 
             using (var writer = XmlWriter.Create(filepath, settings))
@@ -1185,18 +1228,12 @@ namespace UltraDES
                 var addState = new Action<StatesTuple, ulong>((state, id) => {
                     state.Get(pos, m_bits, m_maxSize);
                     v_states.Add(state, id);
-                    name = m_statesList[0][pos[0]].ToString();
-                    marked = m_statesList[0][pos[0]].IsMarked;
 
-                    for (int i = 1; i < n; ++i)
-                    {
-                        name += "|" + m_statesList[i][pos[i]].ToString();
-                        marked &= m_statesList[i][pos[i]].IsMarked;
-                    }
+                    var s = composeState(pos);
 
                     writer.WriteStartElement("State");
-                    writer.WriteAttributeString("Name", name);
-                    writer.WriteAttributeString("Marking", (marked ? Marking.Marked : Marking.Unmarked).ToString());
+                    writer.WriteAttributeString("Name", s.ToString());
+                    writer.WriteAttributeString("Marking", s.Marking.ToString());
                     writer.WriteAttributeString("Id", id.ToString());
 
                     writer.WriteEndElement();
@@ -1215,12 +1252,7 @@ namespace UltraDES
                     for (ulong id = 0; id < Size; ++id)
                     {
                         addState(new StatesTuple(pos, m_bits, m_tupleSize), id);
-
-                        for (int i = n - 1; i >= 0; --i)
-                        {
-                            if (++pos[i] < m_statesList[i].Length) break;
-                            pos[i] = 0;
-                        }
+                        incrementPosition(pos);
                     }
                 }
 
@@ -1257,7 +1289,7 @@ namespace UltraDES
                             if (m_eventsList[e][j])
                             {
                                 if (m_adjacencyList[e].hasEvent(pos[e], j))
-                                    nextPos[e] = (uint)m_adjacencyList[e][(int)pos[e], j];
+                                    nextPos[e] = m_adjacencyList[e][pos[e], j];
                                 else
                                     goto nextEvent;
                             }
@@ -1341,28 +1373,18 @@ namespace UltraDES
             return obj;
         }
 
-        private IEnumerable<Transition> getTransitionsFromState(uint[] pos)
+        private IEnumerable<Transition> getTransitionsFromState(int[] pos)
         {
             int n = m_statesList.Count;
-            uint[] nextPosition = new uint[n];
-            int e, i, j, k;
+            int[] nextPosition = new int[n];
+            int e, i, k;
             bool plantHasEvent;
             int UncontrollableEventsCount = UncontrollableEvents.Count();
             StatesTuple[] nextStates = new StatesTuple[UncontrollableEventsCount];
             int[] v_events = new int[UncontrollableEventsCount];
-            string name;
-            bool marked;
             k = 0;
 
-            name = m_statesList[0][pos[0]].ToString();
-            marked = m_statesList[0][pos[0]].IsMarked;
-
-            for (j = 1; j < n; ++j)
-            {
-                name += "|" + m_statesList[j][pos[j]].ToString();
-                marked &= m_statesList[j][pos[j]].IsMarked;
-            }
-            State currentState = new State(name, marked ? Marking.Marked : Marking.Unmarked);
+            var currentState = composeState(pos);
 
             for (e = 0; e < UncontrollableEventsCount; ++e)
             {
@@ -1376,7 +1398,7 @@ namespace UltraDES
                     }
                     else if (m_adjacencyList[i].hasEvent(pos[i], e))
                     {
-                        nextPosition[i] = (uint)m_adjacencyList[i][(int)pos[i], e];
+                        nextPosition[i] = m_adjacencyList[i][pos[i], e];
                         plantHasEvent = true;
                     }
                     else
@@ -1393,7 +1415,7 @@ namespace UltraDES
                     }
                     else if (m_adjacencyList[i].hasEvent(pos[i], e))
                     {
-                        nextPosition[i] = (uint)m_adjacencyList[i][(int)pos[i], e];
+                        nextPosition[i] = m_adjacencyList[i][pos[i], e];
                     }
                     else
                     {
@@ -1415,16 +1437,7 @@ namespace UltraDES
             for (i = 0; i < k; ++i)
             {
                 nextStates[i].Get(nextPosition, m_bits, m_maxSize);
-
-                name = m_statesList[0][nextPosition[0]].ToString();
-                marked = m_statesList[0][nextPosition[0]].IsMarked;
-
-                for (j = 1; j < n; ++j)
-                {
-                    name += "|" + m_statesList[j][nextPosition[j]].ToString();
-                    marked &= m_statesList[j][nextPosition[j]].IsMarked;
-                }
-                State nextState = new State(name, marked ? Marking.Marked : Marking.Unmarked);
+                var nextState = composeState(nextPosition);
                 yield return new Transition(currentState, m_eventsUnion[v_events[i]], nextState);
             }
 
@@ -1438,7 +1451,7 @@ namespace UltraDES
                     }
                     else if (m_adjacencyList[i].hasEvent(pos[i], e))
                     {
-                        nextPosition[i] = (uint)m_adjacencyList[i][(int)pos[i], e];
+                        nextPosition[i] = m_adjacencyList[i][pos[i], e];
                     }
                     else
                     {
@@ -1449,15 +1462,7 @@ namespace UltraDES
 
                 if (m_validStates == null || m_validStates.ContainsKey(nextTuple))
                 {
-                    name = m_statesList[0][nextPosition[0]].ToString();
-                    marked = m_statesList[0][nextPosition[0]].IsMarked;
-
-                    for (j = 1; j < n; ++j)
-                    {
-                        name += "|" + m_statesList[j][nextPosition[j]].ToString();
-                        marked &= m_statesList[j][nextPosition[j]].IsMarked;
-                    }
-                    State nextState = new State(name, marked ? Marking.Marked : Marking.Unmarked);
+                    var nextState = composeState(nextPosition);
                     yield return new Transition(currentState, m_eventsUnion[e], nextState);
                 }
                 nextEvent:;
@@ -1470,99 +1475,108 @@ namespace UltraDES
             get
             {
                 int n = m_statesList.Count;
-                uint[] pos = new uint[n];
-                if (m_validStates != null || n > 1)
+                int[] pos = new int[n];
+                if (m_validStates != null)
                 {
-                    if (m_validStates != null)
+                    foreach (var s in m_validStates)
                     {
-                        foreach (var s in m_validStates)
-                        {
-                            s.Key.Get(pos, m_bits, m_maxSize);
-                            foreach (var i in getTransitionsFromState(pos))
-                                yield return i;
-                        }
-                    }
-                    else
-                    {
-                        int k = n-1;
-                        while (pos[0] < m_statesList[0].Length)
-                        {
-                            foreach (var i in getTransitionsFromState(pos))
-                                yield return i;
-
-                            k = n - 1;
-                            ++pos[k];
-                            while (k > 0 && pos[k] == m_statesList[k].Length)
-                            {
-                                pos[k] = 0;
-                                ++pos[--k];
-                            }
-                        }
+                        s.Key.Get(pos, m_bits, m_maxSize);
+                        foreach (var i in getTransitionsFromState(pos))
+                            yield return i;
                     }
                 }
-                else
+                else if(!IsEmpty())
                 {
-                    for (var i = 0; i < m_adjacencyList[0].Length; ++i)
+                    do
                     {
-                        var s1 = m_statesList[0][i];
-                        foreach (var kvp in m_adjacencyList[0][(uint)i])
-                        {
-                            var e = m_eventsUnion[kvp.Key];
-                            var s2 = m_statesList[0][kvp.Value];
-
-                            yield return new Transition(s1, e, s2);
-                        }
-                    }
+                        foreach (var i in getTransitionsFromState(pos))
+                            yield return i;
+                    }while(incrementPosition(pos));
                 }
             }
         }
 
+        private AbstractState composeState(int[] p_pos)
+        {
+            int n = p_pos.Length;
+
+            if (n == 1) return m_statesList[0][p_pos[0]];
+
+            bool marked = m_statesList[0][p_pos[0]].IsMarked;
+            var states = new AbstractState[n];
+            states[0] = m_statesList[0][p_pos[0]];
+            for (int j = 1; j < n; ++j)
+            {
+                states[j] = m_statesList[j][p_pos[j]];
+                marked &= m_statesList[j][p_pos[j]].IsMarked;
+            }
+            return new CompoundState(states, marked ? Marking.Marked : Marking.Unmarked);
+        }
+
+        private State mergeStates(List<int> p_states, int p_index)
+        {
+            string first = m_statesList[p_index][p_states[0]].ToString();
+            StringBuilder name = new StringBuilder(first, (first.Length + 2) * p_states.Count);
+            bool marked = m_statesList[p_index][p_states[0]].IsMarked;
+
+            for (var i = 1; i < p_states.Count; ++i)
+            {
+                name.Append("|");
+                name.Append(m_statesList[p_index][p_states[i]].ToString());
+                marked |= m_statesList[p_index][p_states[i]].IsMarked;
+            }
+            return new State(name.ToString(), marked ? Marking.Marked : Marking.Unmarked);
+        }
+
         private void simplify()
         {
-            AbstractState[] newStates = new State[Size];
-            AdjacencyMatrix newAdjacencyMatrix = new AdjacencyMatrix((int)Size, m_eventsUnion.Length);
-            int e, j, k, id = 0, n = m_statesList.Count();
-            uint[] pos = new uint[n];
-            uint[] nextPos = new uint[n];
-            string name;
-            bool marked;
-            StatesTuple nextTuple = new StatesTuple(m_tupleSize);
-            var comparer = new StatesTupleComparator();
-            Dictionary<StatesTuple, int> positionNewStates = new Dictionary<StatesTuple, int>(comparer);
+            AbstractState[] newStates = new AbstractState[Size];
+            AdjacencyMatrix newAdjacencyMatrix = new AdjacencyMatrix((int)Size, m_eventsUnion.Length, true);
+            int id = 0, n = m_statesList.Count();
+            var positionNewStates = new Dictionary<StatesTuple, int>(StatesTupleComparator.getInstance());
 
-            if (m_validStates == null)
+            if (m_validStates == null && n == 1)
                 return;
 
             id = 0;
-            foreach(var state in m_validStates)
+            int[] pos0 = new int[n];
+
+            if (m_validStates != null)
             {
-                state.Key.Get(pos, m_bits, m_maxSize);
-
-                name = m_statesList[0][pos[0]].ToString();
-                marked = m_statesList[0][pos[0]].IsMarked;
-
-                for (j = 1; j < n; ++j)
+                foreach (var state in m_validStates)
                 {
-                    name += "|" + m_statesList[j][pos[j]].ToString();
-                    marked &= m_statesList[j][pos[j]].IsMarked;
+                    state.Key.Get(pos0, m_bits, m_maxSize);
+                    newStates[id] = composeState(pos0);
+                    positionNewStates.Add(state.Key, id);
+                    ++id;
                 }
-                newStates[id] = new State(name, marked ? Marking.Marked : Marking.Unmarked);
-                positionNewStates.Add(state.Key, id);
-                ++id;
+            }
+            else
+            {
+                do
+                {
+                    newStates[id] = composeState(pos0);
+                    positionNewStates.Add(new StatesTuple(pos0, m_bits, m_tupleSize), id);
+                    ++id;
+                } while (incrementPosition(pos0));
             }
 
-            foreach (var state in positionNewStates)
+            Parallel.ForEach(positionNewStates, (state) =>
             {
+                int[] pos = new int[n];
+                int[] nextPos = new int[n];
+                var nextTuple = new StatesTuple(m_tupleSize);
+
                 state.Key.Get(pos, m_bits, m_maxSize);
 
-                for (e = 0; e < m_eventsUnion.Length; ++e)
+                for (var e = 0; e < m_eventsUnion.Length; ++e)
                 {
-                    for (j = n - 1; j >= 0; --j)
+                    for (var j = n - 1; j >= 0; --j)
                     {
                         if (m_eventsList[j][e])
                         {
                             if (m_adjacencyList[j].hasEvent(pos[j], e))
-                                nextPos[j] = (uint)m_adjacencyList[j][(int)pos[j], e];
+                                nextPos[j] = m_adjacencyList[j][pos[j], e];
                             else
                                 goto nextEvent;
                         }
@@ -1570,12 +1584,14 @@ namespace UltraDES
                             nextPos[j] = pos[j];
                     }
                     nextTuple.Set(nextPos, m_bits);
+                    int k = 0;
                     if (positionNewStates.TryGetValue(nextTuple, out k))
+                    {
                         newAdjacencyMatrix.Add(state.Value, e, k);
-
+                    }
                     nextEvent:;
                 }
-            }
+            });
 
             m_statesList.Clear();
             m_initialStatesList.Clear();
@@ -1585,10 +1601,11 @@ namespace UltraDES
 
             m_statesList.Add(newStates);
             m_initialStatesList.Add(0);
+            newAdjacencyMatrix.TrimExcess();
             m_adjacencyList.Add(newAdjacencyMatrix);
 
             m_eventsList.Add(new bool[m_eventsUnion.Length]);
-            for (j = 0; j < m_eventsUnion.Length; ++j)
+            for (var j = 0; j < m_eventsUnion.Length; ++j)
                 m_eventsList[0][j] = true;
 
             m_statesList.TrimExcess();
@@ -1599,14 +1616,13 @@ namespace UltraDES
             m_bits = new int[1];
             m_tupleSize = 1;
             m_numberOfPlants = 1;
-            m_maxSize = new uint[1];
-            m_maxSize[0] = ((uint)1 << (int)Math.Ceiling(Math.Log(Size, 2))) - 1;
+            m_maxSize = new int[1];
+            m_maxSize[0] = (1 << (int)Math.Ceiling(Math.Log(Size, 2))) - 1;
 
-            GC.Collect();
             GC.Collect();
         }
 
-        public static void removeUnusedTransitions(DFA[] composition)
+        private static void removeUnusedTransitions(DFA[] composition)
         {
             int s1, s2;
             Stack<int> stack1 = new Stack<int>();
@@ -1649,7 +1665,7 @@ namespace UltraDES
 
                         for (int e = 0; e < composition[i].m_eventsUnion.Length; ++e)
                         {
-                            if (!composition[i].m_adjacencyList[0].hasEvent((uint)s1, e)) continue;
+                            if (!composition[i].m_adjacencyList[0].hasEvent(s1, e)) continue;
 
                             if (otherEvents[e] < 0)
                             {
@@ -1657,7 +1673,7 @@ namespace UltraDES
                                 stack2.Push(s2);
                                 validEvents[s1][e] = true;
                             }
-                            else if (other.m_adjacencyList[0].hasEvent((uint)s2, otherEvents[e]))
+                            else if (other.m_adjacencyList[0].hasEvent(s2, otherEvents[e]))
                             {
                                 stack1.Push(composition[i].m_adjacencyList[0][s1, e]);
                                 stack2.Push(other.m_adjacencyList[0][s2, otherEvents[e]]);
@@ -1666,7 +1682,7 @@ namespace UltraDES
                         }
                         for (int e = 0; e < extraEvents.Length; ++e)
                         {
-                            if (other.m_adjacencyList[0].hasEvent((uint)s2, extraEvents[e]))
+                            if (other.m_adjacencyList[0].hasEvent(s2, extraEvents[e]))
                             {
                                 stack1.Push(s1);
                                 stack2.Push(other.m_adjacencyList[0][s2, extraEvents[e]]);
@@ -1677,7 +1693,7 @@ namespace UltraDES
                     {
                         for (int e = 0; e < validEvents[k].Count; ++e)
                         {
-                            if (!validEvents[k][e] && composition[i].m_adjacencyList[0].hasEvent((uint)k, e))
+                            if (!validEvents[k][e] && composition[i].m_adjacencyList[0].hasEvent(k, e))
                             {
                                 composition[i].m_adjacencyList[0].Remove(k, e);
                             }
@@ -2080,114 +2096,233 @@ namespace UltraDES
             return new DFA(transitions, v_stateSet[0], v_name);
         }
 
-	    public DFA InverseProjection(){
-            simplify();
-            var evs = Events.Except(Events).ToList();
-
-            var transitions = Transitions as HashSet<Transition> ?? new HashSet<Transition>();
-
-            transitions.UnionWith(States.SelectMany(s => evs.Select(e => new Transition(s, e, s))));
-
-            return Determinize(transitions, InitialState, string.Format("InvProjection({0})", Name));
-        }
-
-        /*
-	    public void ProductWith(){
-
-	    }
-        */
-
-        private static HashSet<AbstractState> EpsilonJumps(Transition[] transitions, AbstractState initial)
+        public DFA InverseProjection(IEnumerable<Event> events)
         {
-            var accessible = new HashSet<AbstractState>();
-            var frontier = new HashSet<AbstractState> { initial };
+            var evs = events.Except(Events).ToList();
 
-            while (frontier.Count > 0)
+            var invProj = this.Clone();
+
+            if (evs.Count > 0)
             {
-                var newFrontier = new HashSet<AbstractState>();
-                foreach (var s in frontier)
+                int envLength = m_eventsUnion.Length + evs.Count;
+
+                invProj.m_eventsUnion = invProj.m_eventsUnion.Union(evs).OrderBy(i => i.Controllability).ToArray();
+                int[] evMap = m_eventsUnion.Select(i => Array.IndexOf(invProj.m_eventsUnion, i)).ToArray();
+                int[] evMapNew = evs.Select(i => Array.IndexOf(invProj.m_eventsUnion, i)).ToArray();
+
+                for (var i = 0; i < m_statesList.Count; ++i)
                 {
-                    accessible.Add(s);
-                    newFrontier.UnionWith(
-                        transitions.Where(
-                            t =>
-                                t.Origin == s && t.Trigger == Epsilon.EpsilonEvent &&
-                                !accessible.Contains(t.Destination)).Select(t => t.Destination));
-                }
-                frontier = newFrontier;
-            }
-
-            return accessible;
-        }
-
-        public static DFA Determinize(IEnumerable<Transition> transitions, AbstractState initial, string name)
-        {
-            var visited = new HashSet<AbstractState>();
-            var newTransitions = new List<Transition>();
-            var localTransitions = transitions as Transition[] ?? transitions.ToArray();
-            var events = localTransitions.Select(t => t.Trigger).Distinct().ToArray();
-            var initialSet = EpsilonJumps(localTransitions, initial);
-            var frontier = new HashSet<HashSet<AbstractState>>(HashSet<AbstractState>.CreateSetComparer()) { initialSet };
-
-            while (frontier.Count > 0)
-            {
-                var newFrontier = new HashSet<HashSet<AbstractState>>(HashSet<AbstractState>.CreateSetComparer());
-
-                foreach (var states in frontier)
-                {
-                    var origin = states.Count == 1
-                        ? states.Single()
-                        : states.OrderBy(s => s.ToString())
-                            .ThenBy(s => s.Marking)
-                            .Aggregate((a, b) => a.MergeWith(b, 0, false));
-                    visited.Add(origin);
-                    foreach (var e in events)
+                    invProj.m_adjacencyList[i] = new AdjacencyMatrix(m_statesList[i].Length, envLength);
+                    for(var j = 0; j < m_statesList[i].Length; ++j)
                     {
-                        if (e == Epsilon.EpsilonEvent || e == Empty.EmptyEvent) continue;
-
-                        var destinationSet = new HashSet<AbstractState>();
-
-                        foreach (var s in states)
+                        for(var e = 0; e < m_eventsUnion.Length; ++e)
                         {
-                            destinationSet.UnionWith(localTransitions.Where(t => t.Origin == s && t.Trigger == e)
-                                .Select(t => t.Destination)
-                                .SelectMany(s2 => EpsilonJumps(localTransitions, s2)));
+                            if(m_adjacencyList[i].hasEvent(j, e))
+                                invProj.m_adjacencyList[i].Add(j, evMap[e], m_adjacencyList[i][j, e]);
                         }
-
-                        if (destinationSet.Count == 0) continue;
-
-                        var destination = destinationSet.Count == 1
-                            ? destinationSet.Single()
-                            : destinationSet.OrderBy(s => s.ToString())
-                                .ThenBy(s => s.Marking)
-                                .Aggregate((a, b) => a.MergeWith(b, 0, false));
-
-                        if (!visited.Contains(destination)) newFrontier.Add(destinationSet);
-
-                        newTransitions.Add(new Transition(origin, e, destination));
+                        for(var e = 0; e < evs.Count; ++e)
+                            invProj.m_adjacencyList[i].Add(j, evMapNew[e], j);
                     }
+                    invProj.m_eventsList[i] = new bool[envLength];
+                    for (var e = 0; e < m_eventsUnion.Length; ++e)
+                        invProj.m_eventsList[i][evMap[e]] = m_eventsList[i][e];
+                    for (var e = 0; e < evs.Count; ++e)
+                        invProj.m_eventsList[i][evMapNew[e]] = true;
                 }
-
-                frontier = newFrontier;
             }
-            var newInitial = initialSet.Count == 1
-                ? initialSet.Single()
-                : initialSet.OrderBy(s => s.ToString())
-                    .ThenBy(s => s.Marking)
-                    .Aggregate((a, b) => a.MergeWith(b, 0, false));
+            invProj.Name = string.Format("InvProjection({0})", this.Name);
+            return invProj;
+        }
 
-            return new DFA(newTransitions, newInitial, string.Format("Det({0})", name));
+        private HashSet<int> getExtendedState(int state, IEnumerable<int> toRemove)
+        {
+            var exp = new HashSet<int>();
+            exp.Add(state);
+            foreach (var e in toRemove)
+            {
+                if (m_adjacencyList[0].hasEvent(state, e))
+                {
+                    int next = m_adjacencyList[0][state, e];
+                    if (!exp.Contains(next)) exp.Add(next);
+                }
+            }
+            return exp;
+        }
+
+        private int getNewPosition(List<int> states, Dictionary<List<int>, int> statesHash, List<AbstractState> statesList)
+        {
+            int newPos;
+
+            lock (m_lockObject3)
+            {
+                if (!statesHash.TryGetValue(states, out newPos))
+                {
+                    newPos = statesHash.Count;
+                    statesHash.Add(states, newPos);
+                    statesList.Add(mergeStates(states, 0));
+                }
+            }
+            return newPos;
         }
 
         public DFA Projection(IEnumerable<Event> removeEvents)
         {
+            var evLength = m_eventsUnion.Length;
             simplify();
-            var evs = new HashSet<Event>(removeEvents);
-            var transitions =
-                Transitions.Select(
-                    t => !evs.Contains(t.Trigger) ? t : new Transition(t.Origin, Epsilon.EpsilonEvent, t.Destination));
 
-            return Determinize(transitions, InitialState, string.Format("Projection({0})", Name));
+            var proj = new DFA(1);
+
+            var transitions = new HashSet<int[]>(IntArrayComparator.getInstance());
+            var statesList = new List<AbstractState>();
+            var statesHash = new Dictionary<List<int>, int>(IntListComparator.getInstance());
+
+            var evs = removeEvents.Select(e => Array.IndexOf(m_eventsUnion, e)).Where(i => i >= 0);
+            var removeEventsHash = new bool[evLength];
+            foreach (var e in evs) removeEventsHash[e] = true;
+
+            if (evs.Count() == 0)
+            {
+                return this.Clone();
+            }
+
+            var visitedStates = new Dictionary<int, bool>((int)this.Size);
+
+            var initial = getExtendedState(m_initialStatesList[0], evs);
+            var frontier = new Stack<Tuple<HashSet<int>, int>>();
+
+            proj.m_tupleSize = 1;
+            proj.m_bits[0] = 0;
+            proj.m_maxSize[0] = m_maxSize[0];
+
+            var newPosition = getNewPosition(initial.OrderBy(i => i).ToList(), statesHash, statesList);
+            visitedStates.Add(newPosition, true);
+
+            frontier.Push(new Tuple<HashSet<int>, int>(initial, newPosition));
+
+            var threadsRunning = 0;
+
+            proj.Size = 0;
+
+            var projectionAction = new Action(() => {
+                ulong statesCount = 0;
+                int p = 0, position, nextPos;
+
+                while (true)
+                {
+                    lock (m_lockObject2)
+                    {
+                        ++threadsRunning;
+                    }
+                    while (true)
+                    {
+                        HashSet<int> states;
+                        lock (m_lockObject2)
+                        {
+                            if (frontier.Count == 0) break;
+
+                            var tuple = frontier.Pop();
+                            states = tuple.Item1;
+                            position = tuple.Item2;
+                        }
+                        ++statesCount;
+
+                        p = 0;
+                        for (var e = 0; e < evLength; ++e)
+                        {
+                            if (removeEventsHash[e]) continue;
+
+                            var nextStateHash = new HashSet<int>();
+
+                            foreach (var st in states)
+                            {
+                                if (!m_eventsList[0][e])
+                                    nextPos = st;
+                                else if (m_adjacencyList[0].hasEvent(st, e))
+                                    nextPos = m_adjacencyList[0][st, e];
+                                else
+                                    continue;
+
+                                foreach (var ePos in getExtendedState(nextPos, evs))
+                                {
+                                    if (!nextStateHash.Contains(ePos)) nextStateHash.Add(ePos);
+                                }
+                            }
+                            if (nextStateHash.Count > 0)
+                            {
+                                var nextPosition = getNewPosition(nextStateHash.OrderBy(i => i).ToList(), statesHash, statesList);
+                                if (m_eventsList[0][e])
+                                {
+                                    var transitionTuple = new int[] { position, p, nextPosition };
+                                    lock (m_lockObject)
+                                    {
+                                        if (!transitions.Contains(transitionTuple))
+                                            transitions.Add(transitionTuple);
+                                    }
+                                }
+                                lock (m_lockObject2)
+                                {
+                                    if (!visitedStates.ContainsKey(nextPosition))
+                                    {
+                                        visitedStates.Add(nextPosition, true);
+                                        frontier.Push(new Tuple<HashSet<int>, int>(nextStateHash, nextPosition));
+                                    }
+                                }
+                            }
+                            ++p;
+                        }
+                    }
+                    lock (m_lockObject2)
+                    {
+                        --threadsRunning;
+                        if (threadsRunning == 0) break;
+                    }
+                    Thread.Sleep(5);
+                }
+                lock (m_lockObject2)
+                {
+                    proj.Size += statesCount;
+                }
+            });
+
+            Thread[] threads = new Thread[m_numberOfThreads - 1];
+
+            for (var i = 0; i < m_numberOfThreads - 1; ++i)
+            {
+                threads[i] = new Thread(new ParameterizedThreadStart(j => projectionAction()));
+                threads[i].Start();
+            }
+
+            projectionAction();
+
+            for (var i = 0; i < m_numberOfThreads - 1; ++i)
+            {
+                threads[i].Join();
+            }
+
+            var newEvCount = evLength - evs.Count();
+            proj.m_eventsUnion = new Event[newEvCount];
+
+            proj.m_initialStatesList.Add(0);
+            proj.m_statesList.Add(statesList.ToArray());
+            proj.m_eventsList.Add(new bool[newEvCount]);
+            proj.m_adjacencyList.Add(new AdjacencyMatrix(proj.m_statesList[0].Length, newEvCount));
+            var k = 0;
+            for (var e = 0; e < evLength; ++e)
+            {
+                if (removeEventsHash[e]) continue;
+                proj.m_eventsUnion[k] = m_eventsUnion[e];
+                proj.m_eventsList[0][k] = m_eventsList[0][e];
+                ++k;
+            }
+            foreach (var j in transitions)
+            {
+                proj.m_adjacencyList[0].Add(j[0], j[1], j[2]);
+            }
+            proj.m_adjacencyList[0].TrimExcess();
+
+            proj.Name = string.Format("Projection({0})", Name);
+
+            return proj;
         }
 
         public void ToAdsFile(string filepath, int odd = 1, int even = 2)
@@ -2261,6 +2396,37 @@ namespace UltraDES
             }
 
             return line;
+        }
+
+        private bool IsEmpty()
+        {
+            return Size == 0;
+        }
+
+        private bool IsMarketState(int[] p_pos)
+        {
+            int n = m_statesList.Count;
+            for (int i = 0; i < n; ++i)
+            {
+                if (!m_statesList[i][p_pos[i]].IsMarked)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private bool incrementPosition(int[] p_pos)
+        {
+            int k = m_statesList.Count - 1;
+            while (k >= 0)
+            {
+                if (++p_pos[k] < m_statesList[k].Length)
+                    return true;
+                p_pos[k] = 0;
+                --k;
+            }
+            return false;
         }
     }
 }
