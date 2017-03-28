@@ -483,9 +483,16 @@ namespace UltraDES
             pos[n - 1] = -1;
             m_statesStack = new Stack<StatesTuple>();
 
+            bool v_NotCheckValidState = false;
+            if(m_validStates == null)
+            {
+                v_NotCheckValidState = true;
+                m_validStates = new Dictionary<StatesTuple, bool>(StatesTupleComparator.getInstance());
+            }
+
             for (i = 0; i < n; ++i)
             {
-                markedStates[i] = m_statesList[i].Cast<State>().Where(st => st.IsMarked).
+                markedStates[i] = m_statesList[i].Where(st => st.IsMarked).
                     Select(st => Array.IndexOf(m_statesList[i], st)).ToList();
             }
 
@@ -504,7 +511,8 @@ namespace UltraDES
                     statePos[i] = markedStates[i][pos[i]];
                 }
                 StatesTuple tuple = new StatesTuple(statePos, m_bits, m_tupleSize);
-                if (m_validStates.ContainsKey(tuple))
+                bool v_value;
+                if ((m_validStates.TryGetValue(tuple, out v_value) || v_NotCheckValidState) && !v_value)
                 {
                     m_validStates[tuple] = true;
                     m_statesStack.Push(tuple);
@@ -517,9 +525,9 @@ namespace UltraDES
             for (i = 0; i < m_numberOfThreads - 1; ++i)
             {
                 threads[i] = new Thread(InverseSearchThread);
-                threads[i].Start();
+                threads[i].Start(v_NotCheckValidState);
             }
-            InverseSearchThread();
+            InverseSearchThread(v_NotCheckValidState);
 
             for (i = 0; i < m_numberOfThreads - 1; ++i)
             {
@@ -572,13 +580,12 @@ namespace UltraDES
             }
         }
 
-        /*
         public int KleeneClosure {
             get {
+                Console.WriteLine("Sorry. This is still in TO-DO List");
                 return 0;
             }
         }
-        */
 
         public DFA Minimal {
             get
@@ -715,13 +722,12 @@ namespace UltraDES
             }
         }
 
-        /*
         public int ToRegularExpression {
             get {
+                Console.WriteLine("Sorry. This is still in TO-DO List");
                 return 0;
             }
         }
-        */
 
         public string ToXML {
             get
@@ -827,7 +833,7 @@ namespace UltraDES
             }
         }
         
-        private void InverseSearchThread()
+        private void InverseSearchThread(object p_param)
         {
             int i, length = 0;
             int n = m_statesList.Count;
@@ -835,6 +841,8 @@ namespace UltraDES
             int[] nextPos = new int[n];
             int[] movs = new int[n];
             StatesTuple tuple;
+
+            bool v_NotCheckValidState = (bool)p_param;
 
             while (true)
             {
@@ -885,7 +893,7 @@ namespace UltraDES
                             lock (m_lockObject)
                             {
                                 bool value;
-                                if (m_validStates.TryGetValue(tuple, out value) && !value)
+                                if ((m_validStates.TryGetValue(tuple, out value) || v_NotCheckValidState) && !value)
                                 {
                                     m_validStates[tuple] = true;
                                     m_statesStack.Push(tuple);
@@ -1101,10 +1109,19 @@ namespace UltraDES
             return v_newBadStates;
         }
 
-        public DFA ParallelCompositionWith(DFA G2, bool removeNoAccessibleStates = true)
+        private static DFA ConcatDFA(DFA G1, DFA G2)
         {
-            int n = m_adjacencyList.Count + G2.m_adjacencyList.Count;
-            DFA G1G2 = this.clone(n);
+            if(G1.m_validStates != null)
+            {
+                G1.simplify();
+            }
+            if(G2.m_validStates != null)
+            {
+                G2.simplify();
+            }
+
+            int n = G1.m_adjacencyList.Count + G2.m_adjacencyList.Count;
+            DFA G1G2 = G1.clone(n);
 
             G1G2.Name += "||" + G2.Name;
             G1G2.m_adjacencyList.Clear();
@@ -1132,39 +1149,46 @@ namespace UltraDES
                 }
             }
 
-            for (int i = 0; i < m_adjacencyList.Count; ++i)
+            for (int i = 0; i < G1.m_adjacencyList.Count; ++i)
             {
-
                 G1G2.m_eventsList.Add(new bool[G1G2.m_eventsUnion.Length]);
-                for (int e = 0; e < m_eventsUnion.Length; ++e)
+                for (int e = 0; e < G1.m_eventsUnion.Length; ++e)
                 {
-                    G1G2.m_eventsList[i][Array.IndexOf(G1G2.m_eventsUnion, m_eventsUnion[e])] = m_eventsList[i][e];
+                    G1G2.m_eventsList[i][Array.IndexOf(G1G2.m_eventsUnion, G1.m_eventsUnion[e])] = G1.m_eventsList[i][e];
                 }
-                G1G2.m_adjacencyList.Add(new AdjacencyMatrix(m_statesList[i].Length, G1G2.m_eventsUnion.Length));
-                for (int j = 0; j < m_statesList[i].Length; ++j)
+                G1G2.m_adjacencyList.Add(new AdjacencyMatrix(G1.m_statesList[i].Length, G1G2.m_eventsUnion.Length));
+                for (int j = 0; j < G1.m_statesList[i].Length; ++j)
                 {
-                    foreach (var p in m_adjacencyList[i][j])
+                    foreach (var p in G1.m_adjacencyList[i][j])
                     {
-                        G1G2.m_adjacencyList[i].Add((int)j, Array.IndexOf(G1G2.m_eventsUnion, m_eventsUnion[p.Key]), p.Value);
+                        G1G2.m_adjacencyList[i].Add((int)j, Array.IndexOf(G1G2.m_eventsUnion, G1.m_eventsUnion[p.Key]), p.Value);
                     }
                 }
             }
-            for (int i = m_adjacencyList.Count; i < n; ++i)
+            for (int i = G1.m_adjacencyList.Count; i < n; ++i)
             {
                 G1G2.m_eventsList.Add(new bool[G1G2.m_eventsUnion.Length]);
                 for (int e = 0; e < G2.m_eventsUnion.Length; ++e)
                 {
-                    G1G2.m_eventsList[i][Array.IndexOf(G1G2.m_eventsUnion, G2.m_eventsUnion[e])] = G2.m_eventsList[i - m_adjacencyList.Count][e];
+                    G1G2.m_eventsList[i][Array.IndexOf(G1G2.m_eventsUnion, G2.m_eventsUnion[e])] = G2.m_eventsList[i - G1.m_adjacencyList.Count][e];
                 }
                 G1G2.m_adjacencyList.Add(new AdjacencyMatrix(G1G2.m_statesList[i].Length, G1G2.m_eventsUnion.Length));
                 for (int j = 0; j < G1G2.m_statesList[i].Length; ++j)
                 {
-                    foreach (var q in G2.m_adjacencyList[i - m_adjacencyList.Count][j])
+                    foreach (var q in G2.m_adjacencyList[i - G1.m_adjacencyList.Count][j])
                     {
                         G1G2.m_adjacencyList[i].Add((int)j, Array.IndexOf(G1G2.m_eventsUnion, G2.m_eventsUnion[q.Key]), q.Value);
                     }
                 }
             }
+
+            return G1G2;
+
+        }
+
+        public DFA ParallelCompositionWith(DFA G2, bool removeNoAccessibleStates = true)
+        {
+            DFA G1G2 = ConcatDFA(this, G2);
 
             if (removeNoAccessibleStates)
             {
@@ -1172,6 +1196,90 @@ namespace UltraDES
                 GC.Collect();
                 GC.Collect();
             }
+            return G1G2;
+        }
+
+        public DFA ParallelCompositionWith(IEnumerable<DFA> list, bool removeNoAccessibleStates = true)
+        {
+            return this.ParallelCompositionWith(
+                    list.Aggregate((a, b) => a.ParallelCompositionWith(b, removeNoAccessibleStates)),
+                    removeNoAccessibleStates
+                );
+        }
+
+        public static DFA ParallelComposition(IEnumerable<DFA> list, bool removeNoAccessibleStates = true)
+        {
+            return list.Aggregate((a, b) => a.ParallelCompositionWith(b, removeNoAccessibleStates));
+        }
+
+        private void BuildProduct()
+        {
+            int n = m_statesList.Count;
+            int[] pos = m_initialStatesList.ToArray();
+            int[] nextPos = new int[n];
+            m_statesStack = new Stack<StatesTuple>();
+
+            var initialState = new StatesTuple(pos, m_bits, m_tupleSize);
+
+            m_statesStack.Push(initialState);
+
+            m_validStates = new Dictionary<StatesTuple, bool>(StatesTupleComparator.getInstance());
+            m_validStates.Add(initialState, false);
+
+            while(m_statesStack.Count > 0)
+            {
+                m_statesStack.Pop().Get(pos, m_bits, m_maxSize);
+
+                for(var e = 0; e < m_eventsUnion.Length; ++e)
+                {
+                    for(var i = 0; i < n; ++i)
+                    {
+                        if(m_adjacencyList[i].hasEvent(pos[i], e))
+                        {
+                            nextPos[i] = m_adjacencyList[i][pos[i], e];
+                        }
+                        else
+                        {
+                            goto nextEvent;
+                        }
+                    }
+                    var nextState = new StatesTuple(nextPos, m_bits, m_tupleSize);
+
+                    if (!m_validStates.ContainsKey(nextState))
+                    {
+                        m_statesStack.Push(nextState);
+                        m_validStates.Add(nextState, false);
+                    }
+                    nextEvent:;
+                }
+            }
+            Size = (ulong)m_validStates.Count;
+        }
+
+        public DFA ProductWith(DFA G2)
+        {
+            simplify();
+            G2.simplify();
+
+            DFA G1G2 = ConcatDFA(this, G2);
+            G1G2.BuildProduct();
+
+            return G1G2;
+        }
+
+        public DFA ProductWith(IEnumerable<DFA> list)
+        {
+            return Product(new[] { this }.Union(list));
+        }
+
+        public static DFA Product(IEnumerable<DFA> list)
+        {
+            foreach(var g in list)
+            {
+                g.simplify();
+            }
+            DFA G1G2 = list.Aggregate((a, b) => ConcatDFA(a, b));
+            G1G2.BuildProduct();
             return G1G2;
         }
 
@@ -1710,30 +1818,6 @@ namespace UltraDES
                s.simplify();
             });
 
-            /*
-
-            DFA[] composition = new DFA[supervisors.Count()];
-            for(int i = 0; i < supervisors.Count(); i++)
-            {
-                composition[i] = supervisors.ElementAt(i).Clone();
-            }
-
-            removeUnusedTransitions(composition);
-
-            for(int i = 0; i < composition.Length; ++i)
-            {
-                for(int j = i + 1; j < composition.Length; ++j)
-                {
-                    var comp = composition[i].ParallelCompositionWith(composition[j], true);
-                    int oldSize = comp.size;
-                    comp.removeBlockingStates();
-                    if (comp.size != oldSize)
-                        return true;
-                }
-            }
-
-            return false;
-            */
             DFA composition = supervisors.Aggregate((a, b) => a.ParallelCompositionWith(b));
             ulong oldSize = composition.Size;
             composition.removeBlockingStates();
@@ -2066,7 +2150,7 @@ namespace UltraDES
                         .ToArray();
             }
 
-            if (!NextValidLine(v_file).Contains("Vocal states"))
+            if (!v_line.Contains("Vocal states"))
                 throw new Exception("File is not on ADS Format.");
 
             v_line = NextValidLine(v_file);
@@ -2076,7 +2160,7 @@ namespace UltraDES
             var evs = new Dictionary<int, AbstractEvent>();
             var transitions = new List<Transition>();
 
-            while (v_file.EndOfStream)
+            while (!v_file.EndOfStream)
             {
                 v_line = NextValidLine(v_file);
                 if (v_line == string.Empty) continue;
@@ -2327,55 +2411,100 @@ namespace UltraDES
 
         public void ToAdsFile(string filepath, int odd = 1, int even = 2)
         {
-            simplify();
-            var events = new Dictionary<AbstractEvent, int>();
-            //int odd = 1, even = 2;
+            ToAdsFile(new[] { this }, new[] { filepath }, odd, even);
+        }
 
-            foreach (var e in m_eventsUnion)
+        public static void ToAdsFile(IEnumerable<DFA> automota, IEnumerable<string> filepaths, int odd = 1, int even = 2)
+        {
+            foreach (var g in automota)
+            {
+                g.simplify();
+            }
+
+            var v_eventsUnion = automota.SelectMany(g => g.Events).Distinct();
+            var v_events = new Dictionary<AbstractEvent, int>();
+
+            foreach(var e in v_eventsUnion)
             {
                 if (!e.IsControllable)
                 {
-                    events.Add(e, even);
+                    v_events.Add(e, even);
                     even += 2;
                 }
                 else
                 {
-                    events.Add(e, odd);
+                    v_events.Add(e, odd);
                     odd += 2;
                 }
             }
 
-            var file = File.CreateText(filepath);
+            var v_filepaths = filepaths.ToArray();
+            int i = -1;
 
-            file.WriteLine("# UltraDES ADS FILE - LACSED | UFMG\r\n");
-
-            file.WriteLine("{0}\r\n", Name);
-
-            file.WriteLine("State size (State set will be (0,1....,size-1)):");
-            file.WriteLine("{0}\r\n", Size);
-
-            file.WriteLine("Marker states:");
-            file.WriteLine("{0}\r\n",
-                m_statesList[0].Select((s, i) => new { ss = s, ii = i })
-                    .Aggregate("", (a, b) => a + (b.ss.IsMarked ? b.ii.ToString() : "") + " ")
-                    .Trim());
-
-            file.WriteLine("Vocal states:\r\n");
-
-            file.WriteLine("Transitions:");
-
-            var map = m_statesList[0].Select((s, i) => new { ss = s, ii = i }).ToDictionary(o => o.ss, o => o.ii);
-
-
-            map[m_statesList[0][0]] = (int)m_initialStatesList[0];
-            map[m_statesList[0][m_initialStatesList[0]]] = 0;
-
-            foreach (var t in Transitions)
+            foreach (var g in automota)
             {
-                file.WriteLine("{0} {1} {2}", map[t.Origin], events[t.Trigger], map[t.Destination]);
-            }
+                ++i;
+                var v_eventsMaps = new Dictionary<int, int>();
 
-            file.Close();
+                for (var e = 0; e < g.m_eventsUnion.Length; ++e)
+                {
+                    v_eventsMaps.Add(e, v_events[g.m_eventsUnion[e]]);
+                }
+
+                var file = File.CreateText(v_filepaths[i]);
+
+                file.WriteLine("# UltraDES ADS FILE - LACSED | UFMG\r\n");
+
+                file.WriteLine("{0}\r\n", g.Name);
+
+                file.WriteLine("State size (State set will be (0,1....,size-1)):");
+                file.WriteLine("{0}\r\n", g.Size);
+
+                file.WriteLine("Marker states:");
+                string v_markedStates = "";
+                bool v_first = true;
+                for (var s = 0; s < g.m_statesList[0].Length; ++s)
+                {
+                    if (g.m_statesList[0][s].IsMarked)
+                    {
+                        if (v_first)
+                        {
+                            v_first = false;
+                            v_markedStates = s.ToString();
+                        }
+                        else
+                        {
+                            v_markedStates += " " + s.ToString();
+                        }
+                    }
+                }
+                file.WriteLine("{0}\r\n", v_markedStates);
+
+                file.WriteLine("Vocal states:\r\n");
+
+                file.WriteLine("Transitions:");
+
+                bool v_check = (g.m_initialStatesList[0] != 0);
+
+                for (int s = 0; s < g.m_statesList[0].Length; ++s)
+                {
+                    foreach (var t in g.m_adjacencyList[0][s])
+                    {
+                        if (v_check)
+                        {
+                            var origin = s == 0 ? g.m_initialStatesList[0] : (s == g.m_initialStatesList[0]) ? 0 : s;
+                            var dest = t.Value == 0 ? g.m_initialStatesList[0] : (t.Value == g.m_initialStatesList[0]) ? 0 : t.Value;
+                            file.WriteLine("{0} {1} {2}", origin, v_eventsMaps[t.Key], dest);
+                        }
+                        else
+                        {
+                            file.WriteLine("{0} {1} {2}", s, v_eventsMaps[t.Key], t.Value);
+                        }
+                    }
+                }
+
+                file.Close();
+            }
         }
 
         private static string NextValidLine(StreamReader file)
@@ -2384,7 +2513,7 @@ namespace UltraDES
             while (line == string.Empty && !file.EndOfStream)
             {
                 line = file.ReadLine();
-                if (line[0] == '#')
+                if (line == "" || line[0] == '#')
                 {
                     line = string.Empty;
                     continue;
@@ -2429,4 +2558,7 @@ namespace UltraDES
             return false;
         }
     }
+
+    // TODO: Composição de uma lista
+    // TODO: Comparar automatos
 }

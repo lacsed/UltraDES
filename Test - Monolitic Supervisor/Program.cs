@@ -10,6 +10,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
+using System.Threading;
 using UltraDES;
 
 namespace Monolithic
@@ -134,6 +136,7 @@ namespace Monolithic
             //----------------------------
             // Plants
             //----------------------------
+
 
             // C1
             var c1 = new DeterministicFiniteAutomaton(
@@ -315,11 +318,28 @@ namespace Monolithic
 
         private static void Main()
         {
-
             List<DeterministicFiniteAutomaton> plants;
             List<DeterministicFiniteAutomaton> specs;
 
-            //ClusterTool(3, out plants, out specs);
+            var estados = new List<State>();
+            var teste  = new State("teste", Marking.Marked);
+            var ev = new Event("e1", Controllability.Controllable);
+            var t = new Transition(teste, ev, teste);
+
+            var list = new List<Transition>();
+            list.Add(t);
+
+            var G = new DeterministicFiniteAutomaton(list, teste, "G");
+
+            for(int i = 0; i < 10; ++i)
+            {
+                estados.Add(new State(
+                    String.Format("teste{0}", i), 
+                    Marking.Marked));
+            }
+
+
+            //ClusterTool(4, out plants, out specs);
             FSM(out plants, out specs);
 
             Console.WriteLine("Supervisor:");
@@ -327,13 +347,15 @@ namespace Monolithic
             timer.Start();
             var sup = DeterministicFiniteAutomaton.MonolithicSupervisor(plants, specs, true);
             timer.Stop();
+            
             Console.WriteLine("\tStates: {0}", sup.Size);
             Console.WriteLine("\tTransitions: {0}", sup.Transitions.Count());
             Console.WriteLine("\tComputation Time: {0}", timer.ElapsedMilliseconds / 1000.0);
 
             Console.WriteLine("\nSupervisor Projection (Removing first and last event):");
+
             timer.Restart();
-            var proj = sup.Projection(new[] { sup.Events.First(), sup.Events.Last() });
+            var proj = sup.Projection(sup.UncontrollableEvents);
             timer.Stop();
             Console.WriteLine("\tStates: {0}", proj.States.Count()); // proj.States.Count() == proj.Size
             Console.WriteLine("\tTransitions: {0}", proj.Transitions.Count());
