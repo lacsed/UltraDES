@@ -321,24 +321,6 @@ namespace Monolithic
             List<DeterministicFiniteAutomaton> plants;
             List<DeterministicFiniteAutomaton> specs;
 
-            var estados = new List<State>();
-            var teste  = new State("teste", Marking.Marked);
-            var ev = new Event("e1", Controllability.Controllable);
-            var t = new Transition(teste, ev, teste);
-
-            var list = new List<Transition>();
-            list.Add(t);
-
-            var G = new DeterministicFiniteAutomaton(list, teste, "G");
-
-            for(int i = 0; i < 10; ++i)
-            {
-                estados.Add(new State(
-                    String.Format("teste{0}", i), 
-                    Marking.Marked));
-            }
-
-
             //ClusterTool(4, out plants, out specs);
             FSM(out plants, out specs);
 
