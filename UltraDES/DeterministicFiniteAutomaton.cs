@@ -2557,8 +2557,29 @@ namespace UltraDES
             }
             return false;
         }
-    }
 
-    // TODO: Composição de uma lista
-    // TODO: Comparar automatos
+        public bool IsControllable()
+        {
+            return false;
+        }
+
+        public void drawSVGFigure(string p_fileName = null, bool p_openAfterFinish = false)
+        {
+            if(p_fileName == null)
+            {
+                p_fileName = Name;
+            }
+            Drawing.drawSVG(this, p_fileName, p_openAfterFinish);
+        }
+
+        public void drawLatexFigure(string p_fileName = "")
+        {
+            if (p_fileName == "")
+            {
+                p_fileName = Name;
+            }
+            Drawing.drawLatexFigure(this, p_fileName);
+        }
+    }
+    
 }

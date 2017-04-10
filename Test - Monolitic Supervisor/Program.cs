@@ -316,7 +316,7 @@ namespace Monolithic
             specs = new[] { e1, e2, e3, e4, e5, e6, e7, e8 }.ToList();
         }
 
-        private static void Main()
+        private static void OldMain()
         {
             List<DeterministicFiniteAutomaton> plants;
             List<DeterministicFiniteAutomaton> specs;
@@ -341,6 +341,32 @@ namespace Monolithic
             timer.Stop();
             Console.WriteLine("\tStates: {0}", proj.States.Count()); // proj.States.Count() == proj.Size
             Console.WriteLine("\tTransitions: {0}", proj.Transitions.Count());
+            Console.WriteLine("\tComputation Time: {0}", timer.ElapsedMilliseconds / 1000.0);
+
+            Console.ReadLine();
+        }
+
+        private static void Main(string[] args)
+        {
+            List<DeterministicFiniteAutomaton> plants;
+            List<DeterministicFiniteAutomaton> specs;
+
+            if(args.Length == 0)
+            {
+                Console.WriteLine("Please type the wmod file:");
+                DeterministicFiniteAutomaton.FromWmodFile(Console.ReadLine(), out plants, out specs);
+            }
+            else
+            {
+                DeterministicFiniteAutomaton.FromWmodFile(args[0], out plants, out specs);
+            }
+
+            var timer = new Stopwatch();
+            timer.Start();
+            var sup = DeterministicFiniteAutomaton.MonolithicSupervisor(plants, specs, true);
+            timer.Stop();
+
+            Console.WriteLine("\tStates: {0}", sup.Size);
             Console.WriteLine("\tComputation Time: {0}", timer.ElapsedMilliseconds / 1000.0);
 
             Console.ReadLine();
