@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Windows;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace UltraDES
 {
@@ -12,125 +9,125 @@ namespace UltraDES
         public Vector position { get; set; }
         public bool initialState { get; set; }
 
-        public Dictionary<DrawingState, Tuple<string, int>> estadosDestino;
-        public Dictionary<DrawingState, int> estadosAnterior;
+        public Dictionary<DrawingState, Tuple<string, int>> destinationStates;
+        public Dictionary<DrawingState, int> originStates;
 
         public DrawingState(string name, Marking marking) : base(name, marking)
         {
             this.position = new Vector();
             this.initialState = false;
-            this.estadosDestino = new Dictionary<DrawingState, Tuple<string, int>>();
-            this.estadosAnterior = new Dictionary<DrawingState, int>();
+            this.destinationStates = new Dictionary<DrawingState, Tuple<string, int>>();
+            this.originStates = new Dictionary<DrawingState, int>();
         }
 
         // verifica se o estado dado eh igual a algum anterior 
-        public bool IgualAnterior(DrawingState estado)
+        public bool isAOrigin(DrawingState state)
         {
-            return estadosAnterior.ContainsKey(estado);
+            return originStates.ContainsKey(state);
         }
 
         // verifica se o estado dado eh igual a algum na lista de destino
-        public bool IgualDestino(DrawingState estado)
+        public bool IsADestination(DrawingState state)
         {
-            return estadosDestino.ContainsKey(estado);
+            return destinationStates.ContainsKey(state);
         } 
 
         //insere um estado na lita de estado de destino
-        public void addDestination (DrawingState estado, string eventName)
+        public void addDestination (DrawingState state, string eventName)
         {
             Tuple<string, int> value;
-            if (estadosDestino.TryGetValue(estado, out value))
+            if (destinationStates.TryGetValue(state, out value))
             {
                 value = new Tuple<string, int>(value.Item1 + ", " + eventName, value.Item2 + 1);
-                estadosDestino[estado] = value;
+                destinationStates[state] = value;
             }
             else
             {
-                estadosDestino.Add(estado, new Tuple<string, int>(eventName, 1));
+                destinationStates.Add(state, new Tuple<string, int>(eventName, 1));
             }
         }
 
         //insere um estado na lista de estado de anterior
-        public void addOrigin(DrawingState estado)
+        public void addOrigin(DrawingState state)
         {
             int value;
-            if(estadosAnterior.TryGetValue(estado, out value))
+            if(originStates.TryGetValue(state, out value))
             {
-                estadosAnterior[estado] = value + 1;
+                originStates[state] = value + 1;
             }
             else
             {
-                estadosAnterior.Add(estado, 1);
+                originStates.Add(state, 1);
             }
         }
 
         //calcula a força de atraçao total dado o comprimento da mola, uma constatne e o estado de referencia.
-        public Vector forcaAtracao( double constanteMola, double comprimentoMola)
+        public Vector attractionForce( double springConstant, double springLength)
         {
-            Vector vetorComprimentoMola = new Vector();       //comprimento da mola representado como um vetor;
-            Vector distancia = new Vector();
-            double teta;
+            Vector springLengthVector = new Vector();       //comprimento da mola representado como um vetor;
+            Vector distance = new Vector();
+            double theta;
 
-            Vector forcaSaidaDestino = new Vector(0, 0);
-            Vector forcaSaidaAnterior = new Vector(0, 0);
+            Vector destinationForce = new Vector(0, 0);
+            Vector originForce = new Vector(0, 0);
 
-            foreach (var item in this.estadosDestino)
+            foreach (var item in this.destinationStates)
             {
                 if (!this.Equals(item.Key))
                 {
-                    distancia = item.Key.position - this.position;
-                    teta = Math.Atan2(distancia.Y, distancia.X);
-                    vetorComprimentoMola.X = comprimentoMola * Math.Cos(teta);
-                    vetorComprimentoMola.Y = comprimentoMola * Math.Sin(teta);
+                    distance = item.Key.position - this.position;
+                    theta = Math.Atan2(distance.Y, distance.X);
+                    springLengthVector.X = springLength * Math.Cos(theta);
+                    springLengthVector.Y = springLength * Math.Sin(theta);
 
-                    forcaSaidaDestino += constanteMola * (distancia - vetorComprimentoMola) * item.Value.Item2;
+                    destinationForce += springConstant * (distance - springLengthVector) * item.Value.Item2;
                 }
             }
 
-            foreach (var item in this.estadosAnterior)
+            foreach (var item in this.originStates)
             {
                 if (!this.Equals(item.Key))
                 {
-                    distancia = item.Key.position - this.position;
-                    teta = Math.Atan2(distancia.Y, distancia.X);
-                    vetorComprimentoMola.X = comprimentoMola * Math.Cos(teta);
-                    vetorComprimentoMola.Y = comprimentoMola * Math.Sin(teta);
+                    distance = item.Key.position - this.position;
+                    theta = Math.Atan2(distance.Y, distance.X);
+                    springLengthVector.X = springLength * Math.Cos(theta);
+                    springLengthVector.Y = springLength * Math.Sin(theta);
 
-                    forcaSaidaAnterior += constanteMola * (distancia - vetorComprimentoMola) * item.Value;
+                    originForce += springConstant * (distance - springLengthVector) * item.Value;
                 }
             }
 
-            return (forcaSaidaDestino + forcaSaidaAnterior);
+            return (destinationForce + originForce);
         }
 
         //calcula a força de repulsão total dado uma constante, o estado de referencia e uma lista de todos os estados
-        public Vector forcaRepulsao(double constanteRepulsao, Dictionary<string, DrawingState> listaEstados)
+        public Vector repulsionForce(double repulsionConstant, Dictionary<string, DrawingState> statesList)
         {
-            double forcaModulo;
-            Vector forcaResultante = new Vector(0, 0);
-            Vector forca = new Vector(0, 0);
-            Vector distancia = new Vector();
-            double teta;                // radianos
+            double forceModule;
+            Vector resultantForce = new Vector(0, 0);
+            Vector force = new Vector(0, 0);
+            Vector distance = new Vector();
+            double theta;                // radianos
 
 
-            foreach (var item in listaEstados)
+            foreach (var item in statesList)
             {
-                distancia = item.Value.position - this.position;
+                distance = item.Value.position - this.position;
 
-                if (!this.Equals(item.Value) && distancia.Length < Constants.REPULSION_RADIUS)
+                if (!this.Equals(item.Value) && distance.Length < Constants.REPULSION_RADIUS)
                 {
-                    teta = Math.Atan2(distancia.Y, distancia.X);              //angulo da direçao da força
-                    forcaModulo = constanteRepulsao / (distancia.Length * distancia.Length);
+                    theta = Math.Atan2(distance.Y, distance.X);              //angulo da direçao da força
+                    forceModule = repulsionConstant / (distance.Length * distance.Length);
 
                     //define a direção da força utilizano o metodo sign
-                    forca.X = -Math.Sign(distancia.X) * Math.Abs(forcaModulo * Math.Cos(teta));
-                    forca.Y = -Math.Sign(distancia.Y) * Math.Abs(forcaModulo * Math.Sin(teta));
+                    force.X = -Math.Sign(distance.X) * Math.Abs(forceModule * Math.Cos(theta));
+                    force.Y = -Math.Sign(distance.Y) * Math.Abs(forceModule * Math.Sin(theta));
 
-                    forcaResultante += forca;
+                    resultantForce += force;
                 }
             }
 
-            return forcaResultante;
+            return resultantForce;
         }
     }
 }

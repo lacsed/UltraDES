@@ -236,8 +236,8 @@ namespace UltraDES
 
                 foreach (var item in drawingStatesList)
                 {
-                    attractionForce = item.Value.forcaAtracao(Constants.SPRING_CONSTANT, Constants.SPRING_LENGTH);
-                    repulsionForce = item.Value.forcaRepulsao(Constants.CONSTANT_OF_REPULSION, drawingStatesList);
+                    attractionForce = item.Value.attractionForce(Constants.SPRING_CONSTANT, Constants.SPRING_LENGTH);
+                    repulsionForce = item.Value.repulsionForce(Constants.CONSTANT_OF_REPULSION, drawingStatesList);
                     force = attractionForce + repulsionForce;
 
                     if(force.Length > biggestForce.Length)

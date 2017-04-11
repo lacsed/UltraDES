@@ -18,6 +18,117 @@ namespace Monolithic
 {
     internal class Program
     {
+        private static void ITL(out List<DeterministicFiniteAutomaton> plants, out List<DeterministicFiniteAutomaton> specs)
+        {
+            var s =
+                Enumerable.Range(0, 6)
+                    .Select(i =>
+                        new State(i.ToString(),
+                            i == 0
+                                ? Marking.Marked
+                                : Marking.Unmarked)
+                    ).ToArray();
+
+
+            var e =
+               Enumerable.Range(0, 100)
+                   .Select(i =>
+                       new Event(i.ToString(),
+                           i % 2 != 0
+                               ? Controllability.Controllable
+                               : Controllability.Uncontrollable)
+                   ).ToArray();
+
+            //plants
+
+            //M1
+            var M1 = new DeterministicFiniteAutomaton(
+                new[]
+                {
+                    new Transition(s[0], e[1], s[1]),
+                    new Transition(s[1], e[2], s[0])
+                },
+                s[0], "M1");
+
+            var M2 = new DeterministicFiniteAutomaton(
+                new[]
+                {
+                    new Transition(s[0], e[3], s[1]),
+                    new Transition(s[1], e[4], s[0])
+                },
+                s[0], "M2");
+
+            var M3 = new DeterministicFiniteAutomaton(
+                new[]
+                {
+                    new Transition(s[0], e[5], s[1]),
+                    new Transition(s[1], e[6], s[0])
+                },
+                s[0], "M3");
+
+            var M4 = new DeterministicFiniteAutomaton(
+                new[]
+                {
+                    new Transition(s[0], e[7], s[1]),
+                    new Transition(s[1], e[8], s[0])
+                },
+                s[0], "M4");
+
+            var M5 = new DeterministicFiniteAutomaton(
+                new[]
+                {
+                    new Transition(s[0], e[9], s[1]),
+                    new Transition(s[1], e[10], s[0])
+                },
+                s[0], "M5");
+
+            var M6 = new DeterministicFiniteAutomaton(
+                new[]
+                {
+                    new Transition(s[0], e[11], s[1]),
+                    new Transition(s[1], e[12], s[0])
+                },
+                s[0], "M6");
+
+            //Specifications
+
+            var e1 = new DeterministicFiniteAutomaton(
+                new[]
+                {
+                    new Transition(s[0], e[2], s[1]),
+                    new Transition(s[1], e[3], s[0])
+                },
+                s[0], "E1");
+
+            var e2 = new DeterministicFiniteAutomaton(
+                new[]
+                {
+                    new Transition(s[0], e[6], s[1]),
+                    new Transition(s[1], e[7], s[0])
+                },
+                s[0], "E2");
+
+            var e3 = new DeterministicFiniteAutomaton(
+                new[]
+                {
+                    new Transition(s[0], e[4], s[1]),
+                    new Transition(s[0], e[8], s[1]),
+                    new Transition(s[1], e[9], s[0])
+                },
+                s[0], "E3");
+
+            var e4 = new DeterministicFiniteAutomaton(
+                new[]
+                {
+                    new Transition(s[0], e[10], s[1]),
+                    new Transition(s[1], e[11], s[0])
+                },
+                s[0], "E4");
+
+            plants = new[] { M1, M2, M3, M4, M5, M6 }.ToList();
+            specs = new[] { e1, e2, e3, e4 }.ToList();
+        }
+
         private static void ClusterTool(int clusters, out List<DeterministicFiniteAutomaton> plants, out List<DeterministicFiniteAutomaton> specs)
         {
             var s = Enumerable.Range(0, 4).Select(
@@ -316,58 +427,34 @@ namespace Monolithic
             specs = new[] { e1, e2, e3, e4, e5, e6, e7, e8 }.ToList();
         }
 
-        private static void OldMain()
+        private static void Main()
         {
             List<DeterministicFiniteAutomaton> plants;
             List<DeterministicFiniteAutomaton> specs;
 
-            //ClusterTool(4, out plants, out specs);
-            FSM(out plants, out specs);
+            ITL(out plants, out specs);
 
             Console.WriteLine("Supervisor:");
             var timer = new Stopwatch();
             timer.Start();
             var sup = DeterministicFiniteAutomaton.MonolithicSupervisor(plants, specs, true);
             timer.Stop();
-            
+
             Console.WriteLine("\tStates: {0}", sup.Size);
             Console.WriteLine("\tTransitions: {0}", sup.Transitions.Count());
             Console.WriteLine("\tComputation Time: {0}", timer.ElapsedMilliseconds / 1000.0);
 
-            Console.WriteLine("\nSupervisor Projection (Removing first and last event):");
+            Console.WriteLine("\nSupervisor Projection:");
 
             timer.Restart();
             var proj = sup.Projection(sup.UncontrollableEvents);
+            proj = proj.Minimal;
             timer.Stop();
             Console.WriteLine("\tStates: {0}", proj.States.Count()); // proj.States.Count() == proj.Size
             Console.WriteLine("\tTransitions: {0}", proj.Transitions.Count());
             Console.WriteLine("\tComputation Time: {0}", timer.ElapsedMilliseconds / 1000.0);
 
-            Console.ReadLine();
-        }
-
-        private static void Main(string[] args)
-        {
-            List<DeterministicFiniteAutomaton> plants;
-            List<DeterministicFiniteAutomaton> specs;
-
-            if(args.Length == 0)
-            {
-                Console.WriteLine("Please type the wmod file:");
-                DeterministicFiniteAutomaton.FromWmodFile(Console.ReadLine(), out plants, out specs);
-            }
-            else
-            {
-                DeterministicFiniteAutomaton.FromWmodFile(args[0], out plants, out specs);
-            }
-
-            var timer = new Stopwatch();
-            timer.Start();
-            var sup = DeterministicFiniteAutomaton.MonolithicSupervisor(plants, specs, true);
-            timer.Stop();
-
-            Console.WriteLine("\tStates: {0}", sup.Size);
-            Console.WriteLine("\tComputation Time: {0}", timer.ElapsedMilliseconds / 1000.0);
+            proj.simplifyNames();
 
             Console.ReadLine();
         }

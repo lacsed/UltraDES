@@ -1,10 +1,9 @@
 using System;
-using System.Collections.Generic;
 
 namespace UltraDES
 {
     [Serializable]
-    public class StatesTuple
+    public struct StatesTuple
     {
         public uint[] m_data
         {

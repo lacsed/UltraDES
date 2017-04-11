@@ -152,8 +152,8 @@ namespace UltraDES
 
         }
 
-        public static void TransicaoReta(StreamWriter file, DrawingState origem, DrawingState destino, 
-            string nomeTransicao, string preenchimentoFonte, int tamanhoFonte)
+        public static void TransicaoReta(StreamWriter file, DrawingState origin, DrawingState destination, 
+            string transitionName, string preenchimentoFonte, int fontSize)
         {
             Vector comprimento, pontoOrigemReta, pontoDestinoReta, localSeta;
             Vector localTexto = new Vector();
@@ -161,7 +161,7 @@ namespace UltraDES
             double x, y, offsetanguloTexto = 0, aberturaTransicao = 0;
             double anguloEstado = 0, offsetAnguloSeta = 0, inclinacaoSeta = 0;
 
-            comprimento = destino.position - origem.position;
+            comprimento = destination.position - origin.position;
             anguloEstado = Math.Atan2(-comprimento.Y, comprimento.X);
 
             if (anguloEstado < 0)
@@ -169,7 +169,7 @@ namespace UltraDES
                 anguloEstado += 2 * Math.PI;
             }
 
-            if (origem.IgualAnterior(destino))
+            if (origin.isAOrigin(destination))
             {
                 aberturaTransicao = Constants.TRANSITION_OFFSET;
                 offsetAnguloSeta = Math.Atan2(aberturaTransicao, comprimento.Length - Constants.STATE_RADIUS - Constants.DISTANCE);
@@ -182,21 +182,21 @@ namespace UltraDES
 
             }
 
-            x = origem.position.X + Constants.STATE_RADIUS + Constants.DISTANCE;
-            y = origem.position.Y - aberturaTransicao;
+            x = origin.position.X + Constants.STATE_RADIUS + Constants.DISTANCE;
+            y = origin.position.Y - aberturaTransicao;
             pontoOrigemReta = new Vector(x, y);
 
-            x = origem.position.X + comprimento.Length - Constants.STATE_RADIUS - Constants.DISTANCE;
+            x = origin.position.X + comprimento.Length - Constants.STATE_RADIUS - Constants.DISTANCE;
             y = pontoOrigemReta.Y;
             pontoDestinoReta = new Vector(x, y);
 
-            x = origem.position.X + Math.Cos(anguloEstado + offsetAnguloSeta) * (comprimento.Length - Constants.STATE_RADIUS - Constants.DISTANCE);
-            y = origem.position.Y - Math.Sin(anguloEstado + offsetAnguloSeta) * (comprimento.Length - Constants.STATE_RADIUS - Constants.DISTANCE);
+            x = origin.position.X + Math.Cos(anguloEstado + offsetAnguloSeta) * (comprimento.Length - Constants.STATE_RADIUS - Constants.DISTANCE);
+            y = origin.position.Y - Math.Sin(anguloEstado + offsetAnguloSeta) * (comprimento.Length - Constants.STATE_RADIUS - Constants.DISTANCE);
             localSeta = new Vector(x, y);
 
             inclinacaoSeta = anguloEstado + Math.PI;
 
-            drawSVGLine(file, pontoOrigemReta, pontoDestinoReta, -anguloEstado, origem.position);
+            drawSVGLine(file, pontoOrigemReta, pontoDestinoReta, -anguloEstado, origin.position);
             drawSVGArrow(file, localSeta, inclinacaoSeta, localSeta);
 
 
@@ -216,16 +216,14 @@ namespace UltraDES
             }
 
 
-            x = origem.position.X + Math.Cos(offsetanguloTexto + anguloEstado) * (comprimento.Length / 2) + correcaoPosTexto.X;
-            y = origem.position.Y - Math.Sin(offsetanguloTexto + anguloEstado) * (comprimento.Length / 2) + correcaoPosTexto.Y;
+            x = origin.position.X + Math.Cos(offsetanguloTexto + anguloEstado) * (comprimento.Length / 2) + correcaoPosTexto.X;
+            y = origin.position.Y - Math.Sin(offsetanguloTexto + anguloEstado) * (comprimento.Length / 2) + correcaoPosTexto.Y;
 
 
             Vector gap = new Vector();
             // gap=Geral.RetornaOffset(Constantes.OFFSETTEXTO, anguloEstado);
 
-            WriteSVGText(file, localTexto, nomeTransicao, anguloEstado, gap, preenchimentoFonte, tamanhoFonte);
-
-
+            WriteSVGText(file, localTexto, transitionName, anguloEstado, gap, preenchimentoFonte, fontSize);
         }
 
         public static void TransicaoRetaLatex(StreamWriter fileLatex, DrawingState origem, DrawingState destino, string nomeTransicao, string tamanhoFonte)
@@ -247,7 +245,7 @@ namespace UltraDES
                 anguloEstado += 2 * Math.PI;
             }
 
-            if (origem.IgualAnterior(destino))
+            if (origem.isAOrigin(destino))
             {
                 aberturaTransicao = Constants.TRANSITION_OFFSET;
                 offsetAnguloSeta = Math.Atan2(aberturaTransicao, comprimento.Length - Constants.STATE_RADIUS - Constants.DISTANCE);
@@ -647,7 +645,7 @@ namespace UltraDES
 
             foreach (var item in listaEstados)
             {
-                foreach (var elemento in item.Value.estadosDestino)
+                foreach (var elemento in item.Value.destinationStates)
                 {
                     string nomeEventos = elemento.Value.Item1;
 
@@ -663,7 +661,7 @@ namespace UltraDES
                         }
                         else
                         {
-                            if (elemento.Key.IgualDestino(item.Value))
+                            if (elemento.Key.IsADestination(item.Value))
                             {
                                 TransicaoCurva2(file, item.Value, elemento.Key, nomeEventos, "none", 18);
                             }
@@ -684,7 +682,7 @@ namespace UltraDES
                         double abertura = Math.PI / 4;
                         double anguloEstado;
 
-                        foreach (var objeto in item.Value.estadosDestino)
+                        foreach (var objeto in item.Value.destinationStates)
                         {
                             comprimento = objeto.Key.position - item.Value.position;
                             anguloEstado = Math.Atan2(-comprimento.Y, comprimento.X);
@@ -699,7 +697,7 @@ namespace UltraDES
                                 angulos.Add(anguloEstado);
                             }
                         }
-                        foreach (var objeto in item.Value.estadosAnterior)
+                        foreach (var objeto in item.Value.originStates)
                         {
                             comprimento = objeto.Key.position - item.Value.position;
                             anguloEstado = Math.Atan2(-comprimento.Y, comprimento.X);
@@ -779,7 +777,7 @@ namespace UltraDES
 
             foreach (var item in listaEstados)
             {
-                foreach (var elemento in item.Value.estadosDestino)
+                foreach (var elemento in item.Value.destinationStates)
                 {
 
                     //string nomeEventos = Geral.GeraStringTransicoes(elemento.estado, item.Value.estadosDestino);
@@ -798,7 +796,7 @@ namespace UltraDES
                         }
                         else
                         {
-                            if (elemento.Key.IgualDestino(item.Value))
+                            if (elemento.Key.IsADestination(item.Value))
                             {
                                 TransicaoCurvaLatex(fileLatex, item.Value, elemento.Key, nomeEventos, tamanhofonte);
                             }
@@ -818,7 +816,7 @@ namespace UltraDES
                         double abertura = Math.PI / 4;
                         double anguloEstado;
 
-                        foreach (var objeto in item.Value.estadosDestino)
+                        foreach (var objeto in item.Value.destinationStates)
                         {
                             comprimento = objeto.Key.position - item.Value.position;
                             anguloEstado = Math.Atan2(-comprimento.Y, comprimento.X);
@@ -833,7 +831,7 @@ namespace UltraDES
                                 angulos.Add(anguloEstado);
                             }
                         }
-                        foreach (var objeto in item.Value.estadosAnterior)
+                        foreach (var objeto in item.Value.originStates)
                         {
                             comprimento = objeto.Key.position - item.Value.position;
                             anguloEstado = Math.Atan2(-comprimento.Y, comprimento.X);

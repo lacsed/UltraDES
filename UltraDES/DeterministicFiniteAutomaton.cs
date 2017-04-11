@@ -138,6 +138,25 @@ namespace UltraDES
             m_numberOfPlants = n;
         }
 
+        private DeterministicFiniteAutomaton(string name, AbstractState[] states, AdjacencyMatrix transitions, int initial, AbstractEvent[] events) :
+            this(1)
+        {
+            m_statesList.Add(states);
+            m_eventsUnion = events;
+            var evList = new bool[events.Length];
+            for(var e = 0; e < events.Length; ++e)
+            {
+                evList[e] = true;
+            }
+            m_eventsList.Add(evList);
+            m_adjacencyList.Add(transitions);
+            m_initialStatesList.Add(initial);
+            m_tupleSize = 1;
+            m_maxSize[0] = (1 << (int)Math.Ceiling(Math.Log(states.Length, 2))) - 1;
+            Size = (ulong)states.Length;
+            Name = name;
+        }
+
         public IEnumerable<AbstractState> States
         {
             get
@@ -587,55 +606,91 @@ namespace UltraDES
             }
         }
 
-        public DFA Minimal {
+        public DFA Minimal
+        {
             get
             {
                 simplify();
-                var g1 = new HashSet<AbstractState>(MarkedStates);
-                var g2 = new HashSet<AbstractState>(States.Except(g1));
+                var numEvents = m_eventsUnion.Length;
+                var numStatesOld = m_statesList[0].Length;
+                var hasEvents = new bool[numEvents];
+                var transitions = new int[numEvents];
+                var statesMap = new int[numStatesOld];
+                bool changed;
+                int numStates;
+                for (var i = 0; i < numStatesOld; ++i) statesMap[i] = i;
 
-                var partitions = new List<HashSet<AbstractState>> { g1, g2 };
-
-                var size = 0;
-
-                while (partitions.Count > size)
+                // There is another way more smart to do this.
+                // [ It is in my TODO List :D ]
+                while (true)
                 {
-                    size = partitions.Count;
-                    var newPartitions = new List<HashSet<AbstractState>>();
-
-                    foreach (var partition in partitions)
+                    numStates = 0;
+                    changed = false;
+                    for (var i = 0; i < numStatesOld; ++i)
                     {
-                        if (partition.Count <= 1)
+                        if (statesMap[i] != i) continue;
+                        ++numStates;
+
+                        for (var e = 0; e < numEvents; ++e)
                         {
-                            newPartitions.Add(partition);
-                            continue;
+                            hasEvents[e] = m_adjacencyList[0].hasEvent(i, e);
+                            if (hasEvents[e]) transitions[e] = statesMap[m_adjacencyList[0][i, e]];
                         }
 
-                        var groups = partition.GroupBy(s =>
-                            new HashSet<HashSet<AbstractState>>(
-                                Transitions.Where(t => t.Origin == s)
-                                    .Select(ns => partitions.First(p => p.Contains(ns.Destination)))),
-                            HashSet<HashSet<AbstractState>>.CreateSetComparer());
-
-                        newPartitions.AddRange(groups.Select(g => new HashSet<AbstractState>(g)));
+                        for (var j = i + 1; j < numStatesOld; ++j)
+                        {
+                            if (statesMap[j] != j) continue;
+                            for (var e = 0; e < numEvents; ++e)
+                            {
+                                if (hasEvents[e] != m_adjacencyList[0].hasEvent(j, e)) goto nextState;
+                                if (hasEvents[e] && transitions[e] != statesMap[m_adjacencyList[0][j, e]]) goto nextState;
+                            }
+                            statesMap[j] = i;
+                            changed = true;
+                            nextState:;
+                        }
                     }
-                    partitions = newPartitions;
+                    if (!changed) break;
+                    for (var i = 0; i < numStatesOld; ++i)
+                    {
+                        int k = i;
+                        while (statesMap[k] != k) k = statesMap[k];
+                        if(i != k) statesMap[i] = k;
+                    }
                 }
 
-                var mapping = partitions.Select(
-                    p => Tuple.Create(p, p.Count == 1 ? p.Single() : p.Aggregate((a, b) => a.MergeWith(b))))
-                    .ToList();
+                var newStates = new AbstractState[numStates];
+                var newTransitions = new AdjacencyMatrix(numStates, numEvents, true);
 
-                var transitions = Transitions.Select(t =>
+                int iState = 0;
+                for(var i = 0; i < numStatesOld; ++i)
                 {
-                    var s1 = mapping.Single(m => m.Item1.Contains(t.Origin)).Item2;
-                    var s2 = mapping.Single(m => m.Item1.Contains(t.Destination)).Item2;
+                    if(statesMap[i] == i)
+                    {
+                        newStates[iState] = m_statesList[0][i];
+                        statesMap[i] = iState++;
+                    }
+                    else
+                    {
+                        var pos = statesMap[statesMap[i]];
+                        newStates[pos] = newStates[pos].MergeWith(m_statesList[0][i]);
+                        statesMap[i] = pos;
+                    }
+                }
 
-                    return new Transition(s1, t.Trigger, s2);
-                }).Distinct();
+                for (var i = 0; i < numStatesOld; ++i)
+                {
+                    for(var e = 0; e < numEvents; ++e)
+                    {
+                        if(m_adjacencyList[0].hasEvent(i, e))
+                        {
+                            newTransitions.Add(statesMap[i], e, statesMap[m_adjacencyList[0][i, e]]);
+                        }
+                    }
+                }
 
-                return new DFA(transitions,
-                    mapping.Single(m => m.Item1.Contains(InitialState)).Item2, string.Format("Min({0})", Name));
+                return new DFA("Min(" + Name + ")", newStates, newTransitions, 
+                    statesMap[m_initialStatesList[0]], (AbstractEvent[])m_eventsUnion.Clone());
             }
         }
 
@@ -2567,7 +2622,7 @@ namespace UltraDES
         {
             if(p_fileName == null)
             {
-                p_fileName = Name;
+                p_fileName = Name.Replace('|', '_');
             }
             Drawing.drawSVG(this, p_fileName, p_openAfterFinish);
         }
@@ -2576,9 +2631,23 @@ namespace UltraDES
         {
             if (p_fileName == "")
             {
-                p_fileName = Name;
+                p_fileName = Name.Replace('|', '_');
             }
             Drawing.drawLatexFigure(this, p_fileName);
+        }
+
+        public Dictionary<string, string> simplifyNames()
+        {
+            simplify();
+            var namesMap = new Dictionary<string, string>(m_statesList[0].Length);
+
+            for(var s = 0; s < m_statesList[0].Length; ++s)
+            {
+                string newName = string.Format("s{0}", s + 1);
+                namesMap.Add(newName, m_statesList[0][s].ToString());
+                m_statesList[0][s] = new State(newName, m_statesList[0][s].Marking);
+            }
+            return namesMap;
         }
     }
     
