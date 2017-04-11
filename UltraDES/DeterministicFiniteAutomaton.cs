@@ -2636,17 +2636,23 @@ namespace UltraDES
             Drawing.drawLatexFigure(this, p_fileName);
         }
 
-        public Dictionary<string, string> simplifyNames()
+        public Dictionary<string, string> simplifyNames(string newName = null)
         {
             simplify();
             var namesMap = new Dictionary<string, string>(m_statesList[0].Length);
 
             for(var s = 0; s < m_statesList[0].Length; ++s)
             {
-                string newName = string.Format("s{0}", s + 1);
-                namesMap.Add(newName, m_statesList[0][s].ToString());
-                m_statesList[0][s] = new State(newName, m_statesList[0][s].Marking);
+                string newStateName = string.Format("s{0}", s + 1);
+                namesMap.Add(newStateName, m_statesList[0][s].ToString());
+                m_statesList[0][s] = new State(newStateName, m_statesList[0][s].Marking);
             }
+
+            if(newName != null)
+            {
+                Name = newName;
+            }
+
             return namesMap;
         }
     }
