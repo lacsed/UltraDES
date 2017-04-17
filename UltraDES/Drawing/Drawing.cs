@@ -15,6 +15,12 @@ namespace UltraDES
             return new Vector(x, y);
         }
 
+        public static string round(double p, int precision = -1)
+        {
+            if (precision == -1) precision = Constants.NUMBER_OF_DIGITS_TO_ROUND;
+            return Math.Round(p, precision).ToString().Replace(',', '.');
+        }
+
         //coloca o automato em na configuração inicial na forma de um circulo
         private static void initialConfiguration(Dictionary<string, DrawingState> statesList, double radius, Vector center)
         {
@@ -134,7 +140,7 @@ namespace UltraDES
                 FigureStream.drawSVGState(writer, item.Value, Constants.STATE_RADIUS);
             }
 
-            FigureStream.TransicaoDrawing(writer, statesList, 1);
+            FigureStream.drawFigureSVG(writer, statesList);
 
             //termina arquivo
             FigureStream.WriteSVGEnd(writer);
@@ -176,7 +182,7 @@ namespace UltraDES
                 FigureStream.drawLatexState(writer, item.Value, Constants.STATE_RADIUS, fontSize);
             }
 
-            FigureStream.TransicaoDrawinglLatex(writer, statesList, 1, fontSize);
+            FigureStream.drawFigureLatex(writer, statesList, fontSize);
 
 
             //termina arquivo

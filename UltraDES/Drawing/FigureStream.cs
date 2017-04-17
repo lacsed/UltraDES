@@ -4,28 +4,23 @@ using System.Linq;
 using System.IO;
 using System.Windows;
 
-
 namespace UltraDES
 {
     internal static class FigureStream
     {
-
         public static void WriteSVGHeader(StreamWriter file, double width, double heigth)
         {
-            width = Math.Round(width);
-            heigth = Math.Round(heigth);
+            string widthString = Drawing.round(width, 0);
+            string heigthString = Drawing.round(heigth, 0);
 
             file.WriteLine("<?xml version=\"1.0\" encoding=\"ISO-8859-1\" standalone=\"no\"?> ");
             file.WriteLine("<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 20010904//EN\" \"http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd\"> ");
             file.WriteLine("<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xml:space=\"preserve\"" +
-                    " width=\"" + width + "px\" height=\" " + heigth + "px\" viewBox=\"0 0 " + width + " " + heigth + "\" >  ");
+                    " width=\"" + widthString + "px\" height=\" " + heigthString + "px\" viewBox=\"0 0 " + widthString + " " + heigthString + "\" >  ");
         }
 
         public static void WriteLatexHeader(StreamWriter file, double width, double heigth)
         {
-            width = Math.Round(width);
-            heigth = Math.Round(heigth);
-
             file.WriteLine("\\centering");
             file.WriteLine("\\begin{tikzpicture}[scale=0.3, x=0.1 cm, y=0.1 cm]");
             file.WriteLine("\\tikzstyle{every node}+=[inner sep=0pt]");
@@ -43,33 +38,33 @@ namespace UltraDES
 
         public static void drawSVGState(StreamWriter file, DrawingState state, int radius)
         {
-            state.position = Drawing.RoundVector(state.position);
+            string y = Drawing.round(state.position.Y);
+            string x = Drawing.round(state.position.X);
 
-            file.WriteLine("\t <circle cx=\"" + state.position.X + "\" cy=\"" + state.position.Y + "\" r=\"" + radius + "\" stroke=\"black\" stroke-width=\"1\" fill=\"none\" /> \n");
+            file.WriteLine("\t<circle cx=\"" + x + "\" cy=\"" + y + "\" r=\"" + radius + "\" stroke=\"black\" stroke-width=\"1\" fill=\"none\" />");
 
             if (state.IsMarked)
             {
-                file.WriteLine("\t <circle cx=\"" + state.position.X + "\" cy=\"" + state.position.Y + "\" r=\"" + (radius - 4) + "\" stroke=\"black\" stroke-width=\"1\" fill=\"none\" /> \n");
+                file.WriteLine("\t<circle cx=\"" + x + "\" cy=\"" + y + "\" r=\"" + (radius - 4) + "\" stroke=\"black\" stroke-width=\"1\" fill=\"none\" />");
             }
 
             int fontSize = 17;
             Vector gap = new Vector(0, fontSize / 3);
-            WriteSVGText(file, state.position, state.Alias, 0, gap, "none", fontSize);
-
+            writeTextSVG(file, state.position, state.Alias, 0, gap, "none", fontSize);
         }
 
         public static void drawLatexState(StreamWriter file, DrawingState state, int radius, string fontSize)
         {
-            state.position = Drawing.RoundVector(state.position);
+            string y = Drawing.round(state.position.Y);
+            string x = Drawing.round(state.position.X);
 
-            file.WriteLine("\\draw [black, line width= 0.8pt] " + state.position.ToString() + " circle (" + radius + ");");
+            file.WriteLine("\\draw [black, line width= 0.8pt] (" + x + "," + y + ") circle (" + radius + ");");
 
             if (state.IsMarked)
             {
-                file.WriteLine("\\draw [black, line width= 0.8pt] " + state.position.ToString() + " circle (" + (radius - 4) + ");");
+                file.WriteLine("\\draw [black, line width= 0.8pt] (" + x + "," + y + ") circle (" + (radius - 4) + ");");
             }
-
-            WriteLatexText(file, state.position, state.Alias, fontSize, 0);
+            writeTextLatex(file, state.position, state.Alias, fontSize, 0);
         }
 
         public static void drawSVGArrow(StreamWriter file, Vector arrowLocation, double arrowInclination, Vector inclinationReference)
@@ -88,17 +83,26 @@ namespace UltraDES
             secondPosition.X = firstPosition.X;
             secondPosition.Y = arrowLocation.Y - arrowLength * Math.Tan(arrowAngle);
 
+            string x1 = Drawing.round(arrowLocation.X);
+            string y1 = Drawing.round(arrowLocation.Y);
+            string x2 = Drawing.round(firstPosition.X);
+            string y2 = Drawing.round(firstPosition.Y);
+            string x3 = Drawing.round(secondPosition.X);
+            string y3 = Drawing.round(secondPosition.Y);
+
+            string xi = Drawing.round(inclinationReference.X);
+            string yi = Drawing.round(inclinationReference.Y);
+            string anglei = Drawing.round(arrowInclinationDegrees);
+
             //escreve em arquivo SVG
-            file.WriteLine("\t <polygon points=\"" + arrowLocation.X + "," + arrowLocation.Y + " " + firstPosition.X + "," +
-                firstPosition.Y + " " + secondPosition.X + "," + secondPosition.Y +
-                "\" style=\"fill:black;stroke:black;stroke-width:3\" transform =\"rotate(" + arrowInclinationDegrees +
-                " " + (inclinationReference.X) + "," + inclinationReference.Y + ")\" /> ");
+            file.WriteLine("\t<polygon points=\"" + x1 + "," + y1 + " " + x2 + "," + y2 + " " + x3 + "," + y3 +
+                "\" style=\"fill:black;stroke:black;stroke-width:3\" transform =\"rotate(" + anglei + " " + 
+                xi + "," + yi + ")\" />");
 
         }
 
         public static void drawLatexArrow(StreamWriter file, Vector arrowLocation, double arrowInclination, Vector inclinationReference)
         {
-
             int arrowLength = 15;
             double arrowAngle = Math.PI / 12;                //angulo de abertura da seta 15 graus
             Vector firstPosition = new Vector();
@@ -112,784 +116,665 @@ namespace UltraDES
             secondPosition.X = firstPosition.X;
             secondPosition.Y = arrowLocation.Y - arrowLength * Math.Tan(arrowAngle);
 
-            //arredondamento dos valores para que o latex possa suportar arquivos grandes
-            inclinationReference = Drawing.RoundVector(inclinationReference);
-            arrowLocation = Drawing.RoundVector(arrowLocation);
-            firstPosition = Drawing.RoundVector(firstPosition);
-            secondPosition = Drawing.RoundVector(secondPosition);
+            string x1 = Drawing.round(arrowLocation.X);
+            string y1 = Drawing.round(arrowLocation.Y);
+            string x2 = Drawing.round(firstPosition.X);
+            string y2 = Drawing.round(firstPosition.Y);
+            string x3 = Drawing.round(secondPosition.X);
+            string y3 = Drawing.round(secondPosition.Y);
+
+            string xi = Drawing.round(inclinationReference.X);
+            string yi = Drawing.round(inclinationReference.Y);
+            string anglei = Drawing.round(arrowInclinationDegrees);
 
             //escreve no arquivo .txt
-            file.WriteLine("\\fill [black, rotate around={" + arrowInclinationDegrees + ":" + inclinationReference.ToString() + "} ] " +
-                arrowLocation.ToString() + " -- " + firstPosition.ToString() + " -- " + secondPosition.ToString() + ";");
+            file.WriteLine("\\fill [black, rotate around={" + anglei + ":(" + xi + "," + yi + ")} ] (" +
+                x1+","+y1 + ") -- (" + x2+","+y2 + ") -- (" + x3+","+y3 + ");");
         }
 
         public static void drawSVGLine(StreamWriter file, Vector originPosition, Vector destinationPosition, double inclination, Vector inclinationReference)
         {
-            double inclinationDegrees = (inclination * 180) / Math.PI;
+            string x1 = Drawing.round(originPosition.X);
+            string y1 = Drawing.round(originPosition.Y);
+            string x2 = Drawing.round(destinationPosition.X);
+            string y2 = Drawing.round(destinationPosition.Y);
 
-            file.WriteLine("\t <line x1=\"" + originPosition.X + "\" y1=\"" + originPosition.Y + "\" x2=\"" + destinationPosition.X + "\" y2=\"" +
-                destinationPosition.Y + "\" style=\"stroke:black;stroke-width:1\" transform =\"rotate(" + inclinationDegrees + " " + (inclinationReference.X) + "," +
-                inclinationReference.Y + ")\" />");
+            string xi = Drawing.round(inclinationReference.X);
+            string yi = Drawing.round(inclinationReference.Y);
 
-            //escreve arquivo .svg (Por que você não arredondou acima?, ficou muito ruim?)
-            //inclinationReference = Drawing.RoundVector(inclinationReference);
-            //inclinationDegrees = Math.Round(inclinationDegrees, Constants.NUMBER_OF_DIGITS_TO_ROUND);
-            //originPosition = Drawing.RoundVector(originPosition);
-            //destinationPosition = Drawing.RoundVector(destinationPosition);
+            string inclinationDegrees = Drawing.round((inclination * 180) / Math.PI);
+
+            file.WriteLine("\t<line x1=\"" + x1 + "\" y1=\"" + y1 + "\" x2=\"" + x2 + "\" y2=\"" + y2 + 
+                "\" style=\"stroke:black;stroke-width:1\" transform =\"rotate(" + 
+                inclinationDegrees + " " + (xi) + "," + yi + ")\" />");
         }
 
         public static void drawLatexLine(StreamWriter file, Vector originPosition, Vector destinationPosition, double inclination, Vector inclinationReference)
         {
-            double inclinationDegrees = Math.Round(-(inclination * 180) / Math.PI, Constants.NUMBER_OF_DIGITS_TO_ROUND);
-            inclinationReference = Drawing.RoundVector(inclinationReference);
-            originPosition = Drawing.RoundVector(originPosition);
-            destinationPosition = Drawing.RoundVector(destinationPosition);
+            string x1 = Drawing.round(originPosition.X);
+            string y1 = Drawing.round(originPosition.Y);
+            string x2 = Drawing.round(destinationPosition.X);
+            string y2 = Drawing.round(destinationPosition.Y);
+
+            string xi = Drawing.round(inclinationReference.X);
+            string yi = Drawing.round(inclinationReference.Y);
+
+            string inclinationDegrees = Drawing.round(-(inclination * 180) / Math.PI);
 
             //escreve arquivo latex
 
-            file.WriteLine("\\draw [black, line width= 0.8pt, rotate around={" + inclinationDegrees + ":" + inclinationReference.ToString() + "}] " + originPosition.ToString() +
-                " -- " + destinationPosition.ToString() + ";");
+            file.WriteLine("\\draw [black, line width= 0.8pt, rotate around={" + inclinationDegrees + ":(" + xi + "," + yi + 
+                ")}] (" +  x1 + "," + y1 + ") -- (" + x2 + "," + y2 + ");");
 
         }
 
-        public static void TransicaoReta(StreamWriter file, DrawingState origin, DrawingState destination, 
-            string transitionName, string preenchimentoFonte, int fontSize)
+        public static void drawLineTransition(StreamWriter file, DrawingState origin, DrawingState destination, 
+            string transitionName, string fontFill, int fontSize)
         {
-            Vector comprimento, pontoOrigemReta, pontoDestinoReta, localSeta;
-            Vector localTexto = new Vector();
-            Vector correcaoPosTexto = new Vector();
-            double x, y, offsetanguloTexto = 0, aberturaTransicao = 0;
-            double anguloEstado = 0, offsetAnguloSeta = 0, inclinacaoSeta = 0;
+            Vector length, originPoint, destinationPoint, arrowPoint;
+            Vector textPoint = new Vector();
+            Vector fixTextPosition = new Vector();
+            double x, y, textOffset = 0, transitionGap = 0;
+            double stateAngle = 0, arrowAngleOffset = 0, arrowInclination = 0;
 
-            comprimento = destination.position - origin.position;
-            anguloEstado = Math.Atan2(-comprimento.Y, comprimento.X);
+            length = destination.position - origin.position;
+            stateAngle = Math.Atan2(-length.Y, length.X);
 
-            if (anguloEstado < 0)
-            {
-                anguloEstado += 2 * Math.PI;
-            }
+            if (stateAngle < 0) stateAngle += 2 * Math.PI;
 
             if (origin.isAOrigin(destination))
             {
-                aberturaTransicao = Constants.TRANSITION_OFFSET;
-                offsetAnguloSeta = Math.Atan2(aberturaTransicao, comprimento.Length - Constants.STATE_RADIUS - Constants.DISTANCE);
+                transitionGap = Constants.TRANSITION_OFFSET;
+                arrowAngleOffset = Math.Atan2(transitionGap, length.Length - 
+                                                Constants.STATE_RADIUS - Constants.DISTANCE);
 
-                if (offsetAnguloSeta < 0)
-                {
-                    offsetAnguloSeta += 2 * Math.PI;
-                }
-
-
+                if (arrowAngleOffset < 0) arrowAngleOffset += 2 * Math.PI;
             }
 
             x = origin.position.X + Constants.STATE_RADIUS + Constants.DISTANCE;
-            y = origin.position.Y - aberturaTransicao;
-            pontoOrigemReta = new Vector(x, y);
+            y = origin.position.Y - transitionGap;
+            originPoint = new Vector(x, y);
 
-            x = origin.position.X + comprimento.Length - Constants.STATE_RADIUS - Constants.DISTANCE;
-            y = pontoOrigemReta.Y;
-            pontoDestinoReta = new Vector(x, y);
+            x = origin.position.X + length.Length - Constants.STATE_RADIUS - Constants.DISTANCE;
+            y = originPoint.Y;
+            destinationPoint = new Vector(x, y);
 
-            x = origin.position.X + Math.Cos(anguloEstado + offsetAnguloSeta) * (comprimento.Length - Constants.STATE_RADIUS - Constants.DISTANCE);
-            y = origin.position.Y - Math.Sin(anguloEstado + offsetAnguloSeta) * (comprimento.Length - Constants.STATE_RADIUS - Constants.DISTANCE);
-            localSeta = new Vector(x, y);
+            x = origin.position.X + Math.Cos(stateAngle + arrowAngleOffset) * (length.Length - Constants.STATE_RADIUS - Constants.DISTANCE);
+            y = origin.position.Y - Math.Sin(stateAngle + arrowAngleOffset) * (length.Length - Constants.STATE_RADIUS - Constants.DISTANCE);
+            arrowPoint = new Vector(x, y);
 
-            inclinacaoSeta = anguloEstado + Math.PI;
+            arrowInclination = stateAngle + Math.PI;
 
-            drawSVGLine(file, pontoOrigemReta, pontoDestinoReta, -anguloEstado, origin.position);
-            drawSVGArrow(file, localSeta, inclinacaoSeta, localSeta);
+            drawSVGLine(file, originPoint, destinationPoint, -stateAngle, origin.position);
+            drawSVGArrow(file, arrowPoint, arrowInclination, arrowPoint);
 
+            textOffset = Math.Atan2(Constants.TEXT_OFFSET + transitionGap, length.Length / 2);
 
-            offsetanguloTexto = Math.Atan2(Constants.TEXT_OFFSET + aberturaTransicao, comprimento.Length / 2);
-
-            if (offsetanguloTexto < 0)
+            if (textOffset < 0)
             {
-                offsetanguloTexto += 2 * Math.PI;
+                textOffset += 2 * Math.PI;
             }
 
             //correcão do posicionamnto do texto quando angulo vara entre 90 e 270 graus
-
-            if (anguloEstado >= Math.PI / 2 && anguloEstado <= 3 * Math.PI / 2)
+            if (stateAngle >= Math.PI / 2 && stateAngle <= 3 * Math.PI / 2)
             {
-                correcaoPosTexto.X = -Math.Sin(anguloEstado) * Constants.TEXT_OFFSET;
-                correcaoPosTexto.Y = -Math.Cos(anguloEstado) * Constants.TEXT_OFFSET;
+                fixTextPosition.X = -Math.Sin(stateAngle) * Constants.TEXT_OFFSET;
+                fixTextPosition.Y = -Math.Cos(stateAngle) * Constants.TEXT_OFFSET;
             }
 
-
-            x = origin.position.X + Math.Cos(offsetanguloTexto + anguloEstado) * (comprimento.Length / 2) + correcaoPosTexto.X;
-            y = origin.position.Y - Math.Sin(offsetanguloTexto + anguloEstado) * (comprimento.Length / 2) + correcaoPosTexto.Y;
-
+            x = origin.position.X + Math.Cos(textOffset + stateAngle) * (length.Length / 2) + fixTextPosition.X;
+            y = origin.position.Y - Math.Sin(textOffset + stateAngle) * (length.Length / 2) + fixTextPosition.Y;
 
             Vector gap = new Vector();
-            // gap=Geral.RetornaOffset(Constantes.OFFSETTEXTO, anguloEstado);
-
-            WriteSVGText(file, localTexto, transitionName, anguloEstado, gap, preenchimentoFonte, fontSize);
+            writeTextSVG(file, textPoint, transitionName, stateAngle, gap, fontFill, fontSize);
         }
 
-        public static void TransicaoRetaLatex(StreamWriter fileLatex, DrawingState origem, DrawingState destino, string nomeTransicao, string tamanhoFonte)
+        public static void drawLineTransitionLatex(StreamWriter file, DrawingState origin, DrawingState destination, string transitionName, string fontSize)
         {
-            Vector comprimento;
-            Vector pontoOrigemReta = new Vector();
-            Vector pontoDestinoReta = new Vector();
-            Vector localSeta = new Vector();
-            Vector localTexto = new Vector();
-            double offsetanguloTexto = 0, aberturaTransicao = 0, anguloEstado = 0;
-            double offsetAnguloSeta = 0, inclinacaoSeta = 0;
+            Vector length;
+            Vector arrowOrigin = new Vector();
+            Vector arrowDestination = new Vector();
+            Vector arrowPoint = new Vector();
+            Vector textPoint = new Vector();
+            double textOffset = 0, transitionGap = 0, stateAngle = 0;
+            double arrowAngleOffset = 0, arrowInclination = 0;
 
+            length = destination.position - origin.position;
+            stateAngle = Math.Atan2(-length.Y, length.X);
 
-            comprimento = destino.position - origem.position;
-            anguloEstado = Math.Atan2(-comprimento.Y, comprimento.X);
+            if (stateAngle < 0) stateAngle += 2 * Math.PI;
 
-            if (anguloEstado < 0)
+            if (origin.isAOrigin(destination))
             {
-                anguloEstado += 2 * Math.PI;
+                transitionGap = Constants.TRANSITION_OFFSET;
+                arrowAngleOffset = Math.Atan2(transitionGap, length.Length - 
+                                                Constants.STATE_RADIUS - Constants.DISTANCE);
+
+                if (arrowAngleOffset < 0) arrowAngleOffset += 2 * Math.PI;
             }
 
-            if (origem.isAOrigin(destino))
-            {
-                aberturaTransicao = Constants.TRANSITION_OFFSET;
-                offsetAnguloSeta = Math.Atan2(aberturaTransicao, comprimento.Length - Constants.STATE_RADIUS - Constants.DISTANCE);
+            arrowOrigin.X = origin.position.X + Constants.STATE_RADIUS + Constants.DISTANCE;
+            arrowOrigin.Y = origin.position.Y - transitionGap;
 
-                if (offsetAnguloSeta < 0)
-                {
-                    offsetAnguloSeta += 2 * Math.PI;
-                }
-            }
-
-            pontoOrigemReta.X = origem.position.X + Constants.STATE_RADIUS + Constants.DISTANCE;
-            pontoOrigemReta.Y = origem.position.Y - aberturaTransicao;
-
-            pontoDestinoReta.X = origem.position.X + comprimento.Length - Constants.STATE_RADIUS - Constants.DISTANCE;
-            pontoDestinoReta.Y = pontoOrigemReta.Y;
+            arrowDestination.X = origin.position.X + length.Length - Constants.STATE_RADIUS - Constants.DISTANCE;
+            arrowDestination.Y = arrowOrigin.Y;
 
 
-            localSeta.X = origem.position.X + Math.Cos(anguloEstado + offsetAnguloSeta) * (comprimento.Length - Constants.STATE_RADIUS - Constants.DISTANCE);
-            localSeta.Y = origem.position.Y - Math.Sin(anguloEstado + offsetAnguloSeta) * (comprimento.Length - Constants.STATE_RADIUS - Constants.DISTANCE);
+            arrowPoint.X = origin.position.X + Math.Cos(stateAngle + arrowAngleOffset) * (length.Length - Constants.STATE_RADIUS - Constants.DISTANCE);
+            arrowPoint.Y = origin.position.Y - Math.Sin(stateAngle + arrowAngleOffset) * (length.Length - Constants.STATE_RADIUS - Constants.DISTANCE);
 
-            inclinacaoSeta = anguloEstado + Math.PI;
+            arrowInclination = stateAngle + Math.PI;
 
-            drawLatexLine(fileLatex, pontoOrigemReta, pontoDestinoReta, anguloEstado, origem.position);
-            drawLatexArrow(fileLatex, localSeta, -inclinacaoSeta, localSeta);
+            drawLatexLine(file, arrowOrigin, arrowDestination, stateAngle, origin.position);
+            drawLatexArrow(file, arrowPoint, -arrowInclination, arrowPoint);
 
-            offsetanguloTexto = Math.Atan2(Constants.TEXT_OFFSET + aberturaTransicao, comprimento.Length / 2);
+            textOffset = Math.Atan2(Constants.TEXT_OFFSET + transitionGap, length.Length / 2);
 
-            if (offsetanguloTexto < 0)
-            {
-                offsetanguloTexto += 2 * Math.PI;
-            }
+            if (textOffset < 0) textOffset += 2 * Math.PI;
 
+            textPoint.X = origin.position.X + Math.Cos(-textOffset + stateAngle) * (length.Length / 2);
+            textPoint.Y = origin.position.Y - Math.Sin(-textOffset + stateAngle) * (length.Length / 2);
 
-            localTexto.X = origem.position.X + Math.Cos(-offsetanguloTexto + anguloEstado) * (comprimento.Length / 2);
-            localTexto.Y = origem.position.Y - Math.Sin(-offsetanguloTexto + anguloEstado) * (comprimento.Length / 2);
-
-            WriteLatexText(fileLatex, localTexto, nomeTransicao, tamanhoFonte, -anguloEstado);
-
+            writeTextLatex(file, textPoint, transitionName, fontSize, -stateAngle);
         }
 
-        public static void TransicaoCurva2(StreamWriter file, DrawingState origem, DrawingState destino, string nomeTransicao, string preenchimentoFonte, int tamanhoFonte)
+        public static void drawCurveTransition2(StreamWriter file, DrawingState origin, DrawingState destination, string transitionName, string fontFill, int fontSize)
         {
-
-            Vector distanciaEstado = new Vector();
-            distanciaEstado = destino.position - origem.position;
-            double alturaCurva;
-            double inclinacaoTransicao = Math.Atan2(-distanciaEstado.Y, distanciaEstado.X);
-            double anguloInicioSeta = 0;
-            double anguloFinalSeta = 0;
+            Vector stateDistance = destination.position - origin.position;
+            double curveHeight;
+            double transitionInclination = Math.Atan2(-stateDistance.Y, stateDistance.X);
+            double startArrowAngle = 0;
+            double endArrowAngle = 0;
             double offset = 0;
-            double correcaoAnguloSeta;
-            double correcaoAnguloTexto = 0;
-            double correcaoLocalTexto = 0;
-            double anguloSeta;
-            double pontoIncioArcoRef, comprimentoArco;
-            Vector pontoIncioArco = new Vector();
-            Vector pontoDestinoArco = new Vector();
+            double arrowAngleFix;
+            double textAngleFix = 0;
+            double textPointFix = 0;
+            double arrowAngle;
+            double ArcLength;
+            Vector startArcPoint = new Vector();
+            Vector destinationArcPoint = new Vector();
+            string startArcBeginRef;
 
+            if (transitionInclination < 0) transitionInclination += 2 * Math.PI;
 
-            if (inclinacaoTransicao < 0)
-            {
-                inclinacaoTransicao += 2 * Math.PI;
-            }
+            double transitionIncDegree = -Math.Round(180 * transitionInclination / Math.PI);
 
-            double inclinacaoTransicaoGraus = -Math.Round(180 * inclinacaoTransicao / Math.PI);
-
-            pontoIncioArcoRef = Math.Round(origem.position.X + Constants.STATE_RADIUS + Constants.DISTANCE);
-            comprimentoArco = distanciaEstado.Length - 2 * (Constants.STATE_RADIUS + Constants.DISTANCE);
-            alturaCurva = -Math.Round(comprimentoArco / 3);
+            startArcBeginRef = Drawing.round(origin.position.X + Constants.STATE_RADIUS + Constants.DISTANCE, 0);
+            ArcLength = stateDistance.Length - 2 * (Constants.STATE_RADIUS + Constants.DISTANCE);
+            curveHeight = -Math.Round(ArcLength / 3);
 
             offset = -Constants.TRANSITION_OFFSET;
-            anguloInicioSeta = Math.Atan2(-offset, (Constants.STATE_RADIUS + Constants.DISTANCE));
-            anguloFinalSeta = Math.Atan2(-offset, (Constants.STATE_RADIUS + Constants.DISTANCE + comprimentoArco));
+            startArrowAngle = Math.Atan2(-offset, (Constants.STATE_RADIUS + Constants.DISTANCE));
+            endArrowAngle = Math.Atan2(-offset, (Constants.STATE_RADIUS + Constants.DISTANCE + ArcLength));
 
-            correcaoAnguloSeta = Math.PI - Math.Atan2(-alturaCurva, comprimentoArco / 2);
-            anguloSeta = inclinacaoTransicao + correcaoAnguloSeta;
+            arrowAngleFix = Math.PI - Math.Atan2(-curveHeight, ArcLength / 2);
+            arrowAngle = transitionInclination + arrowAngleFix;
+            
+            startArcPoint.X = origin.position.X + Math.Cos(transitionInclination + startArrowAngle) * (Constants.STATE_RADIUS + Constants.DISTANCE);
+            startArcPoint.Y = origin.position.Y - Math.Sin(transitionInclination + startArrowAngle) * (Constants.STATE_RADIUS + Constants.DISTANCE);
 
+            destinationArcPoint.X = origin.position.X + Math.Cos(transitionInclination + endArrowAngle) * (Constants.STATE_RADIUS + Constants.DISTANCE + ArcLength);
+            destinationArcPoint.Y = origin.position.Y - Math.Sin(transitionInclination + endArrowAngle) * (Constants.STATE_RADIUS + Constants.DISTANCE + ArcLength);
 
-            pontoIncioArco.X = origem.position.X + Math.Cos(inclinacaoTransicao + anguloInicioSeta) * (Constants.STATE_RADIUS + Constants.DISTANCE);
-            pontoIncioArco.Y = origem.position.Y - Math.Sin(inclinacaoTransicao + anguloInicioSeta) * (Constants.STATE_RADIUS + Constants.DISTANCE);
+            string p1 = Drawing.round(origin.position.Y + offset);
+            string x1 = Drawing.round(origin.position.X);
+            string y1 = Drawing.round(origin.position.Y);
 
-            pontoDestinoArco.X = origem.position.X + Math.Cos(inclinacaoTransicao + anguloFinalSeta) * (Constants.STATE_RADIUS + Constants.DISTANCE + comprimentoArco);
-            pontoDestinoArco.Y = origem.position.Y - Math.Sin(inclinacaoTransicao + anguloFinalSeta) * (Constants.STATE_RADIUS + Constants.DISTANCE + comprimentoArco);
+            file.WriteLine("\t<path d=\"M " + startArcBeginRef + " " + p1 + " q " + Math.Round(ArcLength / 2)
+                + " " +  curveHeight + " " + Math.Round(ArcLength) + " " + 0 + 
+                "\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"  transform =\"rotate(" + 
+                transitionIncDegree + " " + x1 + "," + y1 + ")\" />");
 
+            drawSVGArrow(file, destinationArcPoint, arrowAngle, destinationArcPoint);
 
-            origem.position = Drawing.RoundVector(origem.position);
-            destino.position = Drawing.RoundVector(destino.position);
-
-            file.WriteLine("\t <path d=\"M " + pontoIncioArcoRef + " " + (origem.position.Y + offset) + " q " + Math.Round(comprimentoArco / 2) + " " + alturaCurva + " " + Math.Round(comprimentoArco) + " " + 0 +
-                "\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"  transform =\"rotate(" + inclinacaoTransicaoGraus + " " + (origem.position.X) + "," +
-                origem.position.Y + ")\" />");
-
-
-            drawSVGArrow(file, pontoDestinoArco, anguloSeta, pontoDestinoArco);
-
-            correcaoLocalTexto = Constants.TEXT_OFFSET;
-            if (inclinacaoTransicao > Math.PI / 2 && inclinacaoTransicao < 3 * Math.PI / 2)
+            textPointFix = Constants.TEXT_OFFSET;
+            if (transitionInclination > Math.PI / 2 && transitionInclination < 3 * Math.PI / 2)
             {
-                correcaoLocalTexto = Constants.TEXT_OFFSET + 6;
+                textPointFix = Constants.TEXT_OFFSET + 6;
             }
 
-            Vector localTexto = new Vector();
-            double distanciaOrigemSetaTexto = Math.Sqrt((-alturaCurva / 2 + correcaoLocalTexto) * (-alturaCurva / 2 + correcaoLocalTexto) + (comprimentoArco / 2) * (comprimentoArco / 2));
-            correcaoAnguloTexto = Math.Atan2(-alturaCurva / 2 + correcaoLocalTexto, comprimentoArco / 2);
+            Vector textPoint = new Vector();
+            double distanceArrowOriginText = Math.Sqrt((-curveHeight / 2 + textPointFix) * (-curveHeight / 2 + textPointFix) + (ArcLength / 2) * (ArcLength / 2));
+            textAngleFix = Math.Atan2(-curveHeight / 2 + textPointFix, ArcLength / 2);
 
-            localTexto.X = pontoIncioArco.X + Math.Cos(inclinacaoTransicao + correcaoAnguloTexto) * distanciaOrigemSetaTexto;
-            localTexto.Y = pontoIncioArco.Y - Math.Sin(inclinacaoTransicao + correcaoAnguloTexto) * distanciaOrigemSetaTexto;
-            localTexto = Drawing.RoundVector(localTexto);
-
+            textPoint.X = startArcPoint.X + Math.Cos(transitionInclination + textAngleFix) * distanceArrowOriginText;
+            textPoint.Y = startArcPoint.Y - Math.Sin(transitionInclination + textAngleFix) * distanceArrowOriginText;
+            textPoint = Drawing.RoundVector(textPoint);
 
             Vector gap = new Vector();
-
-            WriteSVGText(file, localTexto, nomeTransicao, inclinacaoTransicao, gap, preenchimentoFonte, tamanhoFonte);
-
-
+            writeTextSVG(file, textPoint, transitionName, transitionInclination, gap, fontFill, fontSize);
         }
 
-        public static void TransicaoCurvaLatex(StreamWriter fileLatex, DrawingState origem, DrawingState destino, string nomeTransicao, string tamanhoFonte)
+        public static void drawCurveTransitionLatex(StreamWriter file, DrawingState origin, DrawingState destination, string transitionName, string fontSize)
         {
+            Vector startArc = new Vector();
+            Vector arcDestination = new Vector();
+            Vector firstArcPoint = new Vector();
+            Vector secondArcPoint = new Vector();
+            Vector statesDistance = new Vector();
+            Vector transitionNamePoint = new Vector();
+            Vector distanceArrowDestination = new Vector();           //distancia entre estado origem e destino seta
+            Vector arrowPoint = new Vector();
+            double startArcAngle = Math.PI / 8;
+            double stateAngle;
+            double arrowAnglePointFix;
+            double arrowInclination, arrowAngleFix;
+            string stateAngleDegree;
 
-            Vector inicioArco = new Vector();
-            Vector destinoArco = new Vector();
+            statesDistance = destination.position - origin.position;
+            stateAngle = Math.Atan2(statesDistance.Y, statesDistance.X);
 
-            Vector destinoSeta = new Vector();
+            if (stateAngle < 0) stateAngle += 2 * Math.PI;
 
-            Vector primeiroPontoArco = new Vector();
-            Vector segundoPontoArco = new Vector();
-            Vector distanciaEstados = new Vector();
-            Vector localNomeTransicao = new Vector();
-            Vector distanciaDestinoSeta = new Vector();           //distancia entre estado oriem e destino seta
-            Vector localSeta = new Vector();
-            double anguloInicioArco = Math.PI / 8;
-            double anguloEstado;
-            double anguloEstadoGraus;
-            double anguloCorrecaoLocalseta;
-            double inclinacaoSeta, anguloCorrecaoSeta;
-
-            distanciaEstados = destino.position - origem.position;
-            anguloEstado = Math.Atan2(distanciaEstados.Y, distanciaEstados.X);
-
-            if (anguloEstado < 0)
-            {
-                anguloEstado += 2 * Math.PI;
-            }
-
-            anguloEstadoGraus = anguloEstado * 180 / Math.PI;
+            stateAngleDegree = Drawing.round(stateAngle * 180 / Math.PI);
 
             //calculo do ponto de incio transiçao
-            inicioArco.X = origem.position.X + Math.Cos(anguloInicioArco) * Constants.STATE_RADIUS;
-            inicioArco.Y = origem.position.Y + Math.Sin(anguloInicioArco) * Constants.STATE_RADIUS;
+            startArc.X = origin.position.X + Math.Cos(startArcAngle) * Constants.STATE_RADIUS;
+            startArc.Y = origin.position.Y + Math.Sin(startArcAngle) * Constants.STATE_RADIUS;
 
             //calculo do ponto de destino transição
-            destinoArco.X = origem.position.X + distanciaEstados.Length - Math.Cos(anguloInicioArco) * Constants.STATE_RADIUS;
-            destinoArco.Y = inicioArco.Y;
+            arcDestination.X = origin.position.X + statesDistance.Length - Math.Cos(startArcAngle) * Constants.STATE_RADIUS;
+            arcDestination.Y = startArc.Y;
 
             //calculo primeiro ponto do arco
-            primeiroPontoArco.X = origem.position.X + distanciaEstados.Length / 3;
-            primeiroPontoArco.Y = origem.position.Y + distanciaEstados.Length / 5;
+            firstArcPoint.X = origin.position.X + statesDistance.Length / 3;
+            firstArcPoint.Y = origin.position.Y + statesDistance.Length / 5;
 
             //calculo segundo ponto do arco
-            segundoPontoArco.X = origem.position.X + 2 * distanciaEstados.Length / 3;
-            segundoPontoArco.Y = origem.position.Y + distanciaEstados.Length / 5;
-
+            secondArcPoint.X = origin.position.X + 2 * statesDistance.Length / 3;
+            secondArcPoint.Y = origin.position.Y + statesDistance.Length / 5;
 
             //calculo posião seta
-
-            distanciaDestinoSeta = destinoArco - origem.position;
-            anguloCorrecaoLocalseta = Math.Atan2(distanciaDestinoSeta.Y, distanciaDestinoSeta.X);
-            localSeta.X = origem.position.X + Math.Cos(anguloCorrecaoLocalseta + anguloEstado) * distanciaDestinoSeta.Length;
-            localSeta.Y = origem.position.Y + Math.Sin(anguloCorrecaoLocalseta + anguloEstado) * distanciaDestinoSeta.Length;
-            anguloCorrecaoSeta = Math.Atan2(primeiroPontoArco.Y - inicioArco.Y, primeiroPontoArco.X - inicioArco.X) * 0.75;
-            inclinacaoSeta = anguloEstado + Math.PI - anguloCorrecaoSeta;
-
-
-
+            distanceArrowDestination = arcDestination - origin.position;
+            arrowAnglePointFix = Math.Atan2(distanceArrowDestination.Y, distanceArrowDestination.X);
+            arrowPoint.X = origin.position.X + Math.Cos(arrowAnglePointFix + stateAngle) * distanceArrowDestination.Length;
+            arrowPoint.Y = origin.position.Y + Math.Sin(arrowAnglePointFix + stateAngle) * distanceArrowDestination.Length;
+            arrowAngleFix = Math.Atan2(firstArcPoint.Y - startArc.Y, firstArcPoint.X - startArc.X) * 0.75;
+            arrowInclination = stateAngle + Math.PI - arrowAngleFix;
 
             //arredondamento
-            inicioArco = Drawing.RoundVector(inicioArco);
-            destinoArco = Drawing.RoundVector(destinoArco);
-            primeiroPontoArco = Drawing.RoundVector(primeiroPontoArco);
-            segundoPontoArco = Drawing.RoundVector(segundoPontoArco);
-            anguloEstadoGraus = Math.Round(anguloEstadoGraus, Constants.NUMBER_OF_DIGITS_TO_ROUND);
-            destinoSeta = Drawing.RoundVector(destinoSeta);
+            string x1 = Drawing.round(origin.position.X);
+            string y1 = Drawing.round(origin.position.Y);
+            string x2 = Drawing.round(startArc.X);
+            string y2 = Drawing.round(startArc.Y);
+            string x3 = Drawing.round(firstArcPoint.X);
+            string y3 = Drawing.round(firstArcPoint.Y);
+            string x4 = Drawing.round(secondArcPoint.X);
+            string y4 = Drawing.round(secondArcPoint.Y);
+            string x5 = Drawing.round(arcDestination.X);
+            string y5 = Drawing.round(arcDestination.Y);
 
-
-
-            fileLatex.WriteLine("\\draw[line width= 0.8pt, rotate around={" + anguloEstadoGraus + ":" + origem.position.ToString() + "}, line width=.5pt, smooth] " + inicioArco.ToString() +
-                " .. controls " + primeiroPontoArco.ToString() + " and " + segundoPontoArco.ToString() + " .. " + destinoArco.ToString() + ";");
+            file.WriteLine("\\draw[line width=0.8pt, rotate around={" + stateAngleDegree + ":(" + x1 + "," + y1 + 
+                ")}, line width=.5pt, smooth] (" + x2 + "," + y2 +  ") .. controls (" + x3 + "," + y3 + ") and (" +
+                x4 + "," + y4 + ") .. (" + x5 + "," + y5 + ");");
 
             //COLCOCAR SETA NA TRANSICAO
-
-            drawLatexArrow(fileLatex, localSeta, inclinacaoSeta, localSeta);
-
+            drawLatexArrow(file, arrowPoint, arrowInclination, arrowPoint);
 
             // COLOCAR A CODIGO PARA INSERIR NOME NAS TRANSIÇOES
-            double correcaoAnguloTexto = Math.Atan2(distanciaEstados.Length / 4, distanciaEstados.Length / 2);
+            double textAngleFix = Math.Atan2(statesDistance.Length / 4, statesDistance.Length / 2);
             
-            localNomeTransicao.X = origem.position.X + Math.Cos(anguloEstado + correcaoAnguloTexto) * distanciaEstados.Length / 2;
-            localNomeTransicao.Y = origem.position.Y + Math.Sin(anguloEstado + correcaoAnguloTexto) * distanciaEstados.Length / 2;
-            localNomeTransicao = Drawing.RoundVector(localNomeTransicao);
+            transitionNamePoint.X = origin.position.X + Math.Cos(stateAngle + textAngleFix) * statesDistance.Length / 2;
+            transitionNamePoint.Y = origin.position.Y + Math.Sin(stateAngle + textAngleFix) * statesDistance.Length / 2;
+            transitionNamePoint = Drawing.RoundVector(transitionNamePoint);
 
-            WriteLatexText(fileLatex, localNomeTransicao, nomeTransicao, tamanhoFonte, anguloEstado);
-
-
-
+            writeTextLatex(file, transitionNamePoint, transitionName, fontSize, stateAngle);
         }
 
-        public static void AutoTransicao(StreamWriter file, Vector cordenadaEstado, double angulo, string nomeEventos, string preenchimentoFonte, int tamanhoFonte)  //angulo em radianos
+        public static void drawAutoTransition(StreamWriter file, Vector stateCoord, double angle, string statesName, string fontFill, int fontSize)  //angulo em radianos
         {
-            double abertura = 6;
-            double teta;
-            Vector posicaoSeta = new Vector();
-            Vector ponto = new Vector();
+            double gapValue = 6;
+            double theta;
+            Vector arrowPosition = new Vector();
+            Vector point = new Vector();
 
-            ponto.X = Math.Round(cordenadaEstado.X + Math.Cos(angulo) * (Constants.STATE_RADIUS + 5));
-            ponto.Y = Math.Round(cordenadaEstado.Y - Math.Sin(angulo) * (Constants.STATE_RADIUS + 5));
+            point.X = Math.Round(stateCoord.X + Math.Cos(angle) * (Constants.STATE_RADIUS + 5));
+            point.Y = Math.Round(stateCoord.Y - Math.Sin(angle) * (Constants.STATE_RADIUS + 5));
 
-            Vector pontoAcima = Drawing.RoundVector(new Vector(ponto.X, ponto.Y - abertura));
-            Vector pontoAcimaRef = Drawing.RoundVector(new Vector(pontoAcima.X - 10 * abertura, pontoAcima.Y - abertura));
-            Vector pontoAbaixo = Drawing.RoundVector(new Vector(ponto.X, ponto.Y + abertura));
-            Vector pontoAbaixoRef = Drawing.RoundVector(new Vector(pontoAbaixo.X - 10 * abertura, pontoAbaixo.Y + abertura));
+            string x1 = Drawing.round(point.X + gapValue);
+            string y1 = Drawing.round(point.Y - gapValue);
+            string x2 = Drawing.round(point.X - 10 * gapValue);
+            string y2 = Drawing.round(point.Y - 2 * gapValue);
+            string x3 = Drawing.round(point.X - 10 * gapValue);
+            string y3 = Drawing.round(point.Y + 2 * gapValue);
+            string y4 = Drawing.round(point.Y + gapValue);
+            string x5 = Drawing.round(point.X);
+            string y5 = Drawing.round(point.Y);
 
-            teta = -(angulo - Math.PI);
-            double tetaGraus = Math.Round((teta * 180) / Math.PI, Constants.NUMBER_OF_DIGITS_TO_ROUND);
+            theta = -(angle - Math.PI);
+            string thetaDegree = Drawing.round((theta * 180) / Math.PI);
 
 
-            file.WriteLine("\t <path d=\"M" + pontoAcima.X + " " + pontoAcima.Y + " " + "C" + " " + pontoAcimaRef.X + " " + pontoAcimaRef.Y + ", " +
-                pontoAbaixoRef.X + " " + pontoAbaixoRef.Y + ", " + pontoAbaixo.X + " " + pontoAbaixo.Y +
-                "\" stroke=\"black\" fill=\"transparent\"  transform=\"rotate(" + tetaGraus + " " + ponto.X + ", " + ponto.Y + ")\" />");
+            file.WriteLine("\t<path d=\"M" + x1 + " " + y1 + " " + "C" + " " + x2 + " " + y2 + ", " + x3 + " " + y3
+                + ", " + x5 + " " + y4 + "\" stroke=\"black\" fill=\"transparent\"  transform=\"rotate(" + 
+                thetaDegree + " " + x5 + ", " + y5 + ")\" />");
 
-            posicaoSeta.X = ponto.X + Math.Cos(3 * Math.PI / 2 - teta) * abertura;
-            posicaoSeta.Y = ponto.Y - Math.Sin(3 * Math.PI / 2 - teta) * abertura;
-            posicaoSeta = Drawing.RoundVector(posicaoSeta);
+            arrowPosition.X = point.X + Math.Cos(3 * Math.PI / 2 - theta) * gapValue;
+            arrowPosition.Y = point.Y - Math.Sin(3 * Math.PI / 2 - theta) * gapValue;
+            arrowPosition = Drawing.RoundVector(arrowPosition);
 
-            drawSVGArrow(file, posicaoSeta, -teta + Math.PI, posicaoSeta);
+            drawSVGArrow(file, arrowPosition, -theta + Math.PI, arrowPosition);
 
             // localização do local do texto
-            Vector distanciaTexto = new Vector();
-            Vector pontoNomeTransicao = new Vector();
+            Vector textDistance = new Vector();
+            Vector transitionNamePoint = new Vector();
             Vector gap = new Vector();
 
-            angulo = angulo % (2 * Math.PI);
-            if ((angulo > Math.PI / 2) && (angulo < 3 * Math.PI / 2))
+            angle = angle % (2 * Math.PI);
+            if ((angle > Math.PI / 2) && (angle < 3 * Math.PI / 2))
             {
-                distanciaTexto.X = Math.Sin(angulo) * (Constants.TEXT_OFFSET + 7);
-                distanciaTexto.Y = Math.Cos(angulo) * (Constants.TEXT_OFFSET + 7);
+                textDistance.X = Math.Sin(angle) * (Constants.TEXT_OFFSET + 7);
+                textDistance.Y = Math.Cos(angle) * (Constants.TEXT_OFFSET + 7);
             }
 
-            if ((angulo >= 0 && angulo <= Math.PI / 2) || (angulo >= 3 * Math.PI / 2 && angulo < 2 * Math.PI))
+            if ((angle >= 0 && angle <= Math.PI / 2) || (angle >= 3 * Math.PI / 2 && angle < 2 * Math.PI))
             {
-                distanciaTexto.X = -Math.Sin(angulo) * (Constants.TEXT_OFFSET + 7);
-                distanciaTexto.Y = -Math.Cos(angulo) * (Constants.TEXT_OFFSET + 7);
+                textDistance.X = -Math.Sin(angle) * (Constants.TEXT_OFFSET + 7);
+                textDistance.Y = -Math.Cos(angle) * (Constants.TEXT_OFFSET + 7);
             }
 
+            transitionNamePoint.X = stateCoord.X + 2.5 * Math.Cos(angle) * Constants.STATE_RADIUS + textDistance.X;
+            transitionNamePoint.Y = stateCoord.Y - 2.5 * Math.Sin(angle) * Constants.STATE_RADIUS + textDistance.Y;
+            transitionNamePoint = Drawing.RoundVector(transitionNamePoint);
 
-            pontoNomeTransicao.X = cordenadaEstado.X + 2.5 * Math.Cos(angulo) * Constants.STATE_RADIUS + distanciaTexto.X;
-            pontoNomeTransicao.Y = cordenadaEstado.Y - 2.5 * Math.Sin(angulo) * Constants.STATE_RADIUS + distanciaTexto.Y;
-            pontoNomeTransicao = Drawing.RoundVector(pontoNomeTransicao);
-
-            WriteSVGText(file, pontoNomeTransicao, nomeEventos, angulo, gap, preenchimentoFonte, tamanhoFonte);
-
-
+            writeTextSVG(file, transitionNamePoint, statesName, angle, gap, fontFill, fontSize);
         }
 
-        public static void AutoTransicaoLatex(StreamWriter fileLatex, Vector cordenadaEstado, double angulo, string nomeEventos)  //angulo em radianos
+        public static void drawAutoTransitionLatex(StreamWriter file, Vector stateCoord, double angle, string eventsName)  //angulo em radianos
         {
-            angulo *= -1;
-            double anguloInicioArco = Math.PI / 15;
-            double correcaoAnguloSeta, correcaoAnguloTexto;
-            Vector localNomeTransicao = new Vector();
-            Vector parametroReferencia = new Vector(50, 10);
-            Vector inicioAtutoTransicao = new Vector();
-            Vector destinoAtutoTransicao = new Vector();
-            Vector localSeta = new Vector();
-            Vector primeiraReferenciaAtutoTransicao = new Vector();
-            Vector segundaReferenciaAtutoTransicao = new Vector();
-            double anguloGraus = Math.Round(angulo * 180 / Math.PI, Constants.NUMBER_OF_DIGITS_TO_ROUND);
+            //angle *= -1;
+            double startArcAngle = Math.PI / 15;
+            double arrowAngleFix, textAngleFix;
+            Vector transitionNamePoint = new Vector();
+            Vector parameterRef = new Vector(50, 10);
+            Vector startAutoTransition = new Vector();
+            Vector endAutoTransition = new Vector();
+            Vector arrowPoint = new Vector();
+            Vector firstRefAutoTransition = new Vector();
+            Vector secondRefAutoTransition = new Vector();
+            string angleDegree = Drawing.round(angle * 180 / Math.PI);
 
             // Calculo ponto incio Arco
-            inicioAtutoTransicao.X = cordenadaEstado.X + Math.Cos(anguloInicioArco) * Constants.STATE_RADIUS;
-            inicioAtutoTransicao.Y = cordenadaEstado.Y - Math.Sin(anguloInicioArco) * Constants.STATE_RADIUS;
+            startAutoTransition.X = stateCoord.X + Math.Cos(startArcAngle) * Constants.STATE_RADIUS;
+            startAutoTransition.Y = stateCoord.Y - Math.Sin(startArcAngle) * Constants.STATE_RADIUS;
 
             // Calculo ponto destino Arco
-            destinoAtutoTransicao.X = inicioAtutoTransicao.X;
-            destinoAtutoTransicao.Y = cordenadaEstado.Y + Math.Sin(anguloInicioArco) * Constants.STATE_RADIUS;
+            endAutoTransition.X = startAutoTransition.X;
+            endAutoTransition.Y = stateCoord.Y + Math.Sin(startArcAngle) * Constants.STATE_RADIUS;
 
             // Calculo ponto primeira referencia Arco
-            primeiraReferenciaAtutoTransicao.X = inicioAtutoTransicao.X + parametroReferencia.X;
-            primeiraReferenciaAtutoTransicao.Y = inicioAtutoTransicao.Y - parametroReferencia.Y;
+            firstRefAutoTransition.X = startAutoTransition.X + parameterRef.X;
+            firstRefAutoTransition.Y = startAutoTransition.Y - parameterRef.Y;
 
             // Calculo ponto primeira referencia Arco
-            segundaReferenciaAtutoTransicao.X = inicioAtutoTransicao.X + parametroReferencia.X;
-            segundaReferenciaAtutoTransicao.Y = destinoAtutoTransicao.Y + parametroReferencia.Y;
+            secondRefAutoTransition.X = startAutoTransition.X + parameterRef.X;
+            secondRefAutoTransition.Y = endAutoTransition.Y + parameterRef.Y;
 
             //arredondamentos
-            inicioAtutoTransicao = Drawing.RoundVector(inicioAtutoTransicao);
-            destinoAtutoTransicao = Drawing.RoundVector(destinoAtutoTransicao);
-            primeiraReferenciaAtutoTransicao = Drawing.RoundVector(primeiraReferenciaAtutoTransicao);
-            segundaReferenciaAtutoTransicao = Drawing.RoundVector(segundaReferenciaAtutoTransicao);
-            cordenadaEstado = Drawing.RoundVector(cordenadaEstado);
+            string x1 = Drawing.round(stateCoord.X);
+            string y1 = Drawing.round(stateCoord.Y);
+            string x2 = Drawing.round(startAutoTransition.X);
+            string y2 = Drawing.round(startAutoTransition.Y);
+            string x3 = Drawing.round(firstRefAutoTransition.X);
+            string y3 = Drawing.round(firstRefAutoTransition.Y);
+            string x4 = Drawing.round(secondRefAutoTransition.X);
+            string y4 = Drawing.round(secondRefAutoTransition.Y);
+            string x5 = Drawing.round(endAutoTransition.X);
+            string y5 = Drawing.round(endAutoTransition.Y);
 
             // gera código para desenho em latex
 
-            fileLatex.WriteLine("\\draw[ line width= 0.8pt, rotate around={" + anguloGraus + ":" + cordenadaEstado.ToString() + "}, line width=.5pt, smooth] " + inicioAtutoTransicao.ToString() +
-                " .. controls " + primeiraReferenciaAtutoTransicao.ToString() + " and " + segundaReferenciaAtutoTransicao.ToString() + " .. " + destinoAtutoTransicao.ToString() + ";");
+            file.WriteLine("\\draw[ line width= 0.8pt, rotate around={" + angleDegree + ":(" + x1 + "," + y1 + 
+                ")}, line width=.5pt, smooth] (" + x2 + "," + y2 + ") .. controls (" + x3 + "," + y3 + ") and (" + 
+                x4 + "," + y4 + ") .. (" + x5 + "," + y5 + ");");
 
             //correçao angulo seta
-            correcaoAnguloSeta = Math.Atan2(parametroReferencia.Y, parametroReferencia.X + Constants.STATE_RADIUS);
+            arrowAngleFix = Math.Atan2(parameterRef.Y, parameterRef.X + Constants.STATE_RADIUS);
 
             //caculo ponto local seta
-            localSeta.X = cordenadaEstado.X + Math.Cos(angulo + anguloInicioArco) * Constants.STATE_RADIUS;
-            localSeta.Y = cordenadaEstado.Y + Math.Sin(angulo + anguloInicioArco) * Constants.STATE_RADIUS;
+            arrowPoint.X = stateCoord.X + Math.Cos(angle + startArcAngle) * Constants.STATE_RADIUS;
+            arrowPoint.Y = stateCoord.Y + Math.Sin(angle + startArcAngle) * Constants.STATE_RADIUS;
 
-            drawLatexArrow(fileLatex, localSeta, angulo + correcaoAnguloSeta, localSeta);
+            drawLatexArrow(file, arrowPoint, angle + arrowAngleFix, arrowPoint);
 
+            Vector textDistance = new Vector();
+
+            if ((angle > Math.PI / 2) && (angle < 3 * Math.PI / 2))
+            {
+                textDistance.X = Math.Sin(angle) * (Constants.TEXT_OFFSET + 7);
+                textDistance.Y = Math.Cos(angle) * (Constants.TEXT_OFFSET + 7);
+            }
+
+            if ((angle >= 0 && angle <= Math.PI / 2) || (angle >= 3 * Math.PI / 2 && angle < 2 * Math.PI))
+            {
+                textDistance.X = -Math.Sin(angle) * (Constants.TEXT_OFFSET + 7);
+                textDistance.Y = -Math.Cos(angle) * (Constants.TEXT_OFFSET + 7);
+            }
 
             //calculo local nome transição
-            correcaoAnguloTexto = Math.Atan2(parametroReferencia.Y + 10, parametroReferencia.X + Constants.STATE_RADIUS - 10);
-            localNomeTransicao.X = cordenadaEstado.X + Math.Cos(angulo + correcaoAnguloTexto) * (Constants.STATE_RADIUS + parametroReferencia.X - 10);
-            localNomeTransicao.Y = cordenadaEstado.Y + Math.Sin(angulo + correcaoAnguloTexto) * (Constants.STATE_RADIUS + parametroReferencia.X - 10);
+            textAngleFix = Math.Atan2(parameterRef.Y + 10, parameterRef.X + Constants.STATE_RADIUS - 10);
+            transitionNamePoint.X = stateCoord.X + 2.5 * Math.Cos(angle) * Constants.STATE_RADIUS + textDistance.X;
+            transitionNamePoint.Y = stateCoord.Y + 2.5 * Math.Sin(angle) * Constants.STATE_RADIUS - textDistance.Y;
 
-            WriteLatexText(fileLatex, localNomeTransicao, nomeEventos, "footnotesize", angulo);
-
-
-
-
+            writeTextLatex(file, transitionNamePoint, eventsName, "normalsize", angle);
         }
 
-        public static void WriteSVGText(StreamWriter file, Vector ponto, string texto, double tetaRadianos, Vector gap, string preenchimentoFonte, int tamanhofonte)
+        public static void writeTextSVG(StreamWriter file, Vector position, string text, double thetaInRad, Vector gap, string fontFill, int fontSize)
         {
             //Vector pontoRound = new Vector(Math.Round(ponto.X), Math.Round(ponto.Y));
-            double tetaGrau = (180 * tetaRadianos) / Math.PI;
+            double thetaDegree = (180 * thetaInRad) / Math.PI;
             //tetaGrau = Math.Round(tetaGrau);
 
-            if (tetaGrau < 0)
-            {
-                tetaGrau += 360;
-            }
+            if (thetaDegree < 0) thetaDegree += 360;
 
-            if (tetaGrau > 90 && tetaGrau <= 180)
-            {
-                tetaGrau += 180;
-            }
-            else if (tetaGrau > 180 && tetaGrau < 270)
-            {
-                tetaGrau = (tetaGrau + 180) % 360;
-            }
-            gap = Drawing.RoundVector(gap);
+            if (thetaDegree > 90 && thetaDegree <= 180) thetaDegree += 180;
 
+            else if (thetaDegree > 180 && thetaDegree < 270) thetaDegree = (thetaDegree + 180) % 360;
 
-            file.WriteLine("<text x=\"" + ponto.X + "\" y=\"" + ponto.Y +
-                "\" dx=\"" + gap.X + "\" dy=\"" + gap.Y + "\" font-size=\"" + tamanhofonte + "\" fill=\"black\" stroke=\"" +
-                preenchimentoFonte + "\" text-anchor=\"middle\" transform=\"rotate(-" + tetaGrau + " " + ponto.X + "," + ponto.Y + ")\">" + texto + "</text>");
+            string x1 = Drawing.round(position.X);
+            string y1 = Drawing.round(position.Y);
+            string x2 = Drawing.round(gap.X);
+            string y2 = Drawing.round(gap.Y);
+            string theta = Drawing.round(thetaDegree);
 
+            file.WriteLine("\t<text x=\"" + x1 + "\" y=\"" + y1 + "\" dx=\"" + x2 + "\" dy=\"" + y2 + 
+                "\" font-size=\"" + fontSize + "\" fill=\"black\" stroke=\"" + fontFill + 
+                "\" text-anchor=\"middle\" transform=\"rotate(-" + theta + " " + x1 + "," + y1 + ")\">" + 
+                text + "</text>");
         }
 
-        //escreve texo no arquivo latex
-        public static void WriteLatexText(StreamWriter fileLatex, Vector ponto, string texto, string tamanhoFonte, double tetaRadianos)
+        public static void writeTextLatex(StreamWriter file, Vector position, string text, string fontSize, double thetaInRad)
         {
-            if (tetaRadianos<0)
-            {
-                tetaRadianos += 2 * Math.PI;
-            }
-            tetaRadianos %= (2 * Math.PI);
+            if (thetaInRad<0) thetaInRad += 2 * Math.PI;
+
+            thetaInRad %= (2 * Math.PI);
             //Vector pontoRound = new Vector(Math.Round(ponto.X), Math.Round(ponto.Y));
-            double tetaGrau = (180 * tetaRadianos) / Math.PI;
+            double thetaDegree = (180 * thetaInRad) / Math.PI;
 
+            if (thetaDegree < 0) thetaDegree += 360;
 
-            if (tetaGrau < 0)
-            {
-                tetaGrau += 360;
-            }
+            if (thetaDegree > 90 && thetaDegree <= 180) thetaDegree += 180;
 
-            if (tetaGrau > 90 && tetaGrau <= 180)
-            {
-                tetaGrau += 180;
-            }
-            else if (tetaGrau > 180 && tetaGrau < 270)
-            {
-                tetaGrau = (tetaGrau + 180) % 360;
-            }
+            else if (thetaDegree > 180 && thetaDegree < 270) thetaDegree = (thetaDegree + 180) % 360;
 
-            ponto = Drawing.RoundVector(ponto);
-            tetaGrau = Math.Round(tetaGrau, Constants.NUMBER_OF_DIGITS_TO_ROUND);
+            string x1 = Drawing.round(position.X);
+            string y1 = Drawing.round(position.Y);
+            string theta = Drawing.round(thetaDegree);
 
-            fileLatex.WriteLine("\\draw " + ponto.ToString() + " node [rotate= " + tetaGrau + "] {\\" + tamanhoFonte + " $" + texto + "$};");
-
-
+            file.WriteLine("\\draw (" + x1 + "," + y1 + ") node [rotate=" + theta + "] {\\" + fontSize + " $" + 
+                text + "$};");
         }
 
-        public static void TransicaoDrawing(StreamWriter file, Dictionary<string, DrawingState> listaEstados,int transicao)
+        public static void drawFigureSVG(StreamWriter file, Dictionary<string, DrawingState> statesList)
         {
-            Vector comprimento = new Vector();
-            Vector origemSeta = new Vector();
-            Vector destinoSeta = new Vector();
+            Vector length = new Vector();
+            Vector arrowOrigin = new Vector();
+            Vector arrowDestination = new Vector();
 
-
-            foreach (var item in listaEstados)
+            foreach (var item in statesList)
             {
-                foreach (var elemento in item.Value.destinationStates)
+                foreach (var element in item.Value.destinationStates)
                 {
-                    string nomeEventos = elemento.Value.Item1;
+                    string eventsNames = element.Value.Item1;
 
-                    if (item.Value.Alias != elemento.Key.Alias)
+                    if (item.Value.Alias != element.Key.Alias)
                     {
-                        if (transicao.Equals(0))
-                        {
-                            TransicaoReta(file, item.Value, elemento.Key, nomeEventos, "none", 18);
-                        }
-                        else if (transicao.Equals(1))
-                        {
-                            TransicaoCurva2(file, item.Value, elemento.Key, nomeEventos, "none", 18);
-                        }
-                        else
-                        {
-                            if (elemento.Key.IsADestination(item.Value))
-                            {
-                                TransicaoCurva2(file, item.Value, elemento.Key, nomeEventos, "none", 18);
-                            }
-                            else
-                            {
-                                TransicaoReta(file, item.Value, elemento.Key, nomeEventos, "none", 18);
-                            }
-                        }
-                        
-                        
+                        drawCurveTransition2(file, item.Value, element.Key, eventsNames, "none", 18);
                     }
                     else
                     {
                         //calcula posiçao para inserir a auto transição
+                        List<double> angles = new List<double>();
 
-                        List<double> angulos = new List<double>();
+                        double gap = Math.PI / 4;
+                        double stateAngle;
 
-                        double abertura = Math.PI / 4;
-                        double anguloEstado;
-
-                        foreach (var objeto in item.Value.destinationStates)
+                        foreach (var destinationStatePair in item.Value.destinationStates)
                         {
-                            comprimento = objeto.Key.position - item.Value.position;
-                            anguloEstado = Math.Atan2(-comprimento.Y, comprimento.X);
+                            length = destinationStatePair.Key.position - item.Value.position;
+                            stateAngle = Math.Atan2(-length.Y, length.X);
 
-                            if (anguloEstado < 0)
-                            {
-                                anguloEstado += 2 * Math.PI;
-                            }
+                            if (stateAngle < 0) stateAngle += 2 * Math.PI;
 
-                            if (!angulos.Contains(anguloEstado) && !anguloEstado.Equals(0))
+                            if (!angles.Contains(stateAngle) && !stateAngle.Equals(0))
                             {
-                                angulos.Add(anguloEstado);
+                                angles.Add(stateAngle);
                             }
                         }
-                        foreach (var objeto in item.Value.originStates)
+                        foreach (var originStatePair in item.Value.originStates)
                         {
-                            comprimento = objeto.Key.position - item.Value.position;
-                            anguloEstado = Math.Atan2(-comprimento.Y, comprimento.X);
+                            length = originStatePair.Key.position - item.Value.position;
+                            stateAngle = Math.Atan2(-length.Y, length.X);
 
-                            if (anguloEstado < 0)
-                            {
-                                anguloEstado += 2 * Math.PI;
-                            }
+                            if (stateAngle < 0) stateAngle += 2 * Math.PI;
 
-                            if (!angulos.Contains(anguloEstado) && !anguloEstado.Equals(0))
+                            if (!angles.Contains(stateAngle) && !stateAngle.Equals(0))
                             {
-                                angulos.Add(anguloEstado);
+                                angles.Add(stateAngle);
                             }
                         }
 
-                        angulos.Sort();                     //organiza os Vector de angulos em ordem crescente
+                        angles.Sort();                     //organiza os Vector de angulos em ordem crescente
 
-                        if (item.Value.initialState)
-                        {
-                            abertura = 3 * Math.PI / 4;
-                        }
+                        if (item.Value.initialState) gap = 3 * Math.PI / 4;
                         else
                         {
-                            if (angulos.Count() > 1)
+                            if (angles.Count() > 1)
                             {
-                                int iterador = angulos.Count() - 1;
-                                if (angulos[iterador] - angulos[iterador - 1] > 2 * Math.PI - angulos[iterador] + angulos[0])
+                                int iterador = angles.Count() - 1;
+                                if (angles[iterador] - angles[iterador - 1] > 2 * Math.PI - angles[iterador] + angles[0])
                                 {
-                                    abertura = ((angulos[iterador] - angulos[iterador - 1]) / 2 + angulos[iterador - 1]) % (2 * Math.PI);
+                                    gap = ((angles[iterador] - angles[iterador - 1]) / 2 + angles[iterador - 1]) % (2 * Math.PI);
                                 }
                                 else
                                 {
-                                    abertura = ((2 * Math.PI - angulos[iterador] + angulos[0]) / 2 + angulos[iterador]) % (2 * Math.PI);
+                                    gap = ((2 * Math.PI - angles[iterador] + angles[0]) / 2 + angles[iterador]) % (2 * Math.PI);
                                 }
 
                             }
                             else
-                            {
-                                abertura = angulos[0] + Math.PI;
-                            }
+                                gap = angles[0] + Math.PI;
                         }
-
-                        AutoTransicao(file, item.Value.position, abertura, nomeEventos, "none", 18);
-
+                        drawAutoTransition(file, item.Value.position, gap, eventsNames, "none", 18);
                     }
-
-
 
                     if (item.Value.initialState)
                     {
-                        origemSeta.X = item.Value.position.X - (Constants.STATE_RADIUS + Constants.DISTANCE + 50);
-                        origemSeta.Y = item.Value.position.Y;
+                        arrowOrigin.X = item.Value.position.X - (Constants.STATE_RADIUS + Constants.DISTANCE + 50);
+                        arrowOrigin.Y = item.Value.position.Y;
 
-                        destinoSeta.X = item.Value.position.X - (Constants.STATE_RADIUS + Constants.DISTANCE);
-                        destinoSeta.Y = item.Value.position.Y;
+                        arrowDestination.X = item.Value.position.X - (Constants.STATE_RADIUS + Constants.DISTANCE);
+                        arrowDestination.Y = item.Value.position.Y;
 
-                        Vector referencia = new Vector();
+                        Vector reference = new Vector();
 
-                        drawSVGLine(file, origemSeta, destinoSeta, 0, referencia);
-                        drawSVGArrow(file, destinoSeta, Math.PI, destinoSeta);
-
-
-
+                        drawSVGLine(file, arrowOrigin, arrowDestination, 0, reference);
+                        drawSVGArrow(file, arrowDestination, Math.PI, arrowDestination);
                     }
-
                 }
-
             }
         }
 
-        public static void TransicaoDrawinglLatex(StreamWriter fileLatex, Dictionary<string, DrawingState> listaEstados, int transicao, string tamanhofonte)
+        public static void drawFigureLatex(StreamWriter file, Dictionary<string, DrawingState> statesList, string fontSize)
         {
-            Vector comprimento = new Vector();
-            Vector origemSeta = new Vector();
-            Vector destinoSeta = new Vector();
+            Vector length = new Vector();
+            Vector arrowOrigin = new Vector();
+            Vector arrowDestination = new Vector();
 
-
-            foreach (var item in listaEstados)
+            foreach (var item in statesList)
             {
-                foreach (var elemento in item.Value.destinationStates)
+                foreach (var element in item.Value.destinationStates)
                 {
-
                     //string nomeEventos = Geral.GeraStringTransicoes(elemento.estado, item.Value.estadosDestino);
-                    string nomeEventos = elemento.Value.Item1;
+                    string eventsName = element.Value.Item1;
 
-
-                    if (item.Value.Alias != elemento.Key.Alias)
+                    if (item.Value.Alias != element.Key.Alias)
                     {
-                        if (transicao.Equals(0))
-                        {
-                            TransicaoRetaLatex(fileLatex, item.Value, elemento.Key, nomeEventos, tamanhofonte);
-                        }
-                        else if(transicao.Equals(1))
-                        {
-                            TransicaoCurvaLatex(fileLatex, item.Value, elemento.Key, nomeEventos, tamanhofonte);
-                        }
-                        else
-                        {
-                            if (elemento.Key.IsADestination(item.Value))
-                            {
-                                TransicaoCurvaLatex(fileLatex, item.Value, elemento.Key, nomeEventos, tamanhofonte);
-                            }
-                            else
-                            {
-                                TransicaoRetaLatex(fileLatex, item.Value, elemento.Key, nomeEventos, tamanhofonte);
-                            }
-                        }
-
+                        drawCurveTransitionLatex(file, item.Value, element.Key, eventsName, fontSize);
                     }
                     else
                     {
                         //calcula posiçao para inserir a auto transição
 
-                        List<double> angulos = new List<double>();
+                        List<double> angles = new List<double>();
 
-                        double abertura = Math.PI / 4;
-                        double anguloEstado;
+                        double gap = Math.PI / 4;
+                        double stateAngle;
 
-                        foreach (var objeto in item.Value.destinationStates)
+                        foreach (var destinationStatePair in item.Value.destinationStates)
                         {
-                            comprimento = objeto.Key.position - item.Value.position;
-                            anguloEstado = Math.Atan2(-comprimento.Y, comprimento.X);
+                            length = destinationStatePair.Key.position - item.Value.position;
+                            stateAngle = Math.Atan2(-length.Y, length.X);
 
-                            if (anguloEstado < 0)
-                            {
-                                anguloEstado += 2 * Math.PI;
-                            }
+                            if (stateAngle < 0) stateAngle += 2 * Math.PI;
 
-                            if (!angulos.Contains(anguloEstado) && !anguloEstado.Equals(0))
-                            {
-                                angulos.Add(anguloEstado);
-                            }
+                            if (!angles.Contains(stateAngle) && !stateAngle.Equals(0)) angles.Add(stateAngle);
                         }
-                        foreach (var objeto in item.Value.originStates)
+                        foreach (var originStatePair in item.Value.originStates)
                         {
-                            comprimento = objeto.Key.position - item.Value.position;
-                            anguloEstado = Math.Atan2(-comprimento.Y, comprimento.X);
+                            length = originStatePair.Key.position - item.Value.position;
+                            stateAngle = Math.Atan2(-length.Y, length.X);
 
-                            if (anguloEstado < 0)
-                            {
-                                anguloEstado += 2 * Math.PI;
-                            }
+                            if (stateAngle < 0) stateAngle += 2 * Math.PI;
 
-                            if (!angulos.Contains(anguloEstado) && !anguloEstado.Equals(0))
-                            {
-                                angulos.Add(anguloEstado);
-                            }
+                            if (!angles.Contains(stateAngle) && !stateAngle.Equals(0)) angles.Add(stateAngle);
                         }
 
-                        angulos.Sort();                     //organiza os Vector de angulos em ordem crescente
+                        angles.Sort();                     //organiza os Vector de angulos em ordem crescente
 
-                        if (item.Value.initialState)
-                        {
-                            abertura = 3 * Math.PI / 4;
-                        }
+                        if (item.Value.initialState) gap = 3 * Math.PI / 4;
                         else
                         {
-                            if (angulos.Count() > 1)
+                            if (angles.Count() > 1)
                             {
-                                int iterador = angulos.Count() - 1;
-                                if (angulos[iterador] - angulos[iterador - 1] > 2 * Math.PI - angulos[iterador] + angulos[0])
+                                int iterador = angles.Count() - 1;
+                                if (angles[iterador] - angles[iterador - 1] > 2 * Math.PI - angles[iterador] + angles[0])
                                 {
-                                    abertura = ((angulos[iterador] - angulos[iterador - 1]) / 2 + angulos[iterador - 1]) % (2 * Math.PI);
+                                    gap = ((angles[iterador] - angles[iterador - 1]) / 2 + angles[iterador - 1]) % (2 * Math.PI);
                                 }
                                 else
                                 {
-                                    abertura = ((2 * Math.PI - angulos[iterador] + angulos[0]) / 2 + angulos[iterador]) % (2 * Math.PI);
+                                    gap = ((2 * Math.PI - angles[iterador] + angles[0]) / 2 + angles[iterador]) % (2 * Math.PI);
                                 }
 
                             }
-                            else
-                            {
-                                abertura = angulos[0] + Math.PI;
-                            }
+                            else gap = angles[0] + Math.PI;
                         }
-
-                        AutoTransicaoLatex(fileLatex, item.Value.position, abertura, nomeEventos);
-
+                        drawAutoTransitionLatex(file, item.Value.position, gap, eventsName);
                     }
 
                     if (item.Value.initialState)
                     {
-                        origemSeta.X = item.Value.position.X - (Constants.STATE_RADIUS + Constants.DISTANCE + 50);
-                        origemSeta.Y = item.Value.position.Y;
+                        arrowOrigin.X = item.Value.position.X - (Constants.STATE_RADIUS + Constants.DISTANCE + 50);
+                        arrowOrigin.Y = item.Value.position.Y;
 
-                        destinoSeta.X = item.Value.position.X - (Constants.STATE_RADIUS + Constants.DISTANCE);
-                        destinoSeta.Y = item.Value.position.Y;
+                        arrowDestination.X = item.Value.position.X - (Constants.STATE_RADIUS + Constants.DISTANCE);
+                        arrowDestination.Y = item.Value.position.Y;
 
-                        Vector referencia = new Vector();
+                        Vector reference = new Vector();
 
-                        drawLatexLine(fileLatex, origemSeta, destinoSeta, 0, referencia);
-                        drawLatexArrow(fileLatex, destinoSeta, Math.PI, destinoSeta);
+                        drawLatexLine(file, arrowOrigin, arrowDestination, 0, reference);
+                        drawLatexArrow(file, arrowDestination, Math.PI, arrowDestination);
                     }
                 }
             }
