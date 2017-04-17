@@ -48,6 +48,7 @@
     <Compile Include="Drawing\Constants.cs" />
     <Compile Include="Drawing\FigureStream.cs" />
     <Compile Include="Drawing\Drawing.cs" />
+    <Compile Include="Drawing\GraphVizDraw.cs" />
     <Compile Include="Events\AbstractEvent.cs" />
     <Compile Include="Extensions\OptionExtensions.cs" />
     <Compile Include="Regular Expressions\Concatenation.cs" />
@@ -68,6 +69,11 @@
     <Compile Include="States\State.cs" />
     <Compile Include="States\StatesTuple.cs" />
     <Compile Include="Transitions\Transition.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Drawing\viz.js">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
