@@ -2712,6 +2712,11 @@ namespace UltraDES
             Drawing.drawLatexFigure(this, p_fileName);
         }
 
+        public void showAutomaton(string name = "Automaton")
+        {
+            GraphVizDraw.showAutomaton(this, name);
+        }
+
         public Dictionary<string, string> simplifyNames(string newName = null, bool simplifyStatesName = true)
         {
             simplify();
