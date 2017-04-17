@@ -1,0 +1,86 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{B254A1B1-A4C4-4489-963A-19F459509D3F}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>UltraDES</RootNamespace>
+    <AssemblyName>UltraDES</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Data Structures\AdjacencyMatrix.cs" />
+    <Compile Include="DeterministicFiniteAutomaton.cs" />
+    <Compile Include="Drawing\Constants.cs" />
+    <Compile Include="Drawing\FigureStream.cs" />
+    <Compile Include="Drawing\Drawing.cs" />
+    <Compile Include="Drawing\GraphVizDraw.cs" />
+    <Compile Include="Events\AbstractEvent.cs" />
+    <Compile Include="Extensions\OptionExtensions.cs" />
+    <Compile Include="Regular Expressions\Concatenation.cs" />
+    <Compile Include="Regular Expressions\KleeneStar.cs" />
+    <Compile Include="Regular Expressions\RegularExpression.cs" />
+    <Compile Include="Regular Expressions\Symbol.cs" />
+    <Compile Include="Regular Expressions\Union.cs" />
+    <Compile Include="Comparators.cs" />
+    <Compile Include="States\AbstractCompoundState.cs" />
+    <Compile Include="States\AbstractState.cs" />
+    <Compile Include="States\CompoundState.cs" />
+    <Compile Include="Events\Empty.cs" />
+    <Compile Include="Events\Epsilon.cs" />
+    <Compile Include="Events\Event.cs" />
+    <Compile Include="Data Structures\Option.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="States\DrawingState.cs" />
+    <Compile Include="States\State.cs" />
+    <Compile Include="States\StatesTuple.cs" />
+    <Compile Include="Transitions\Transition.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Drawing\viz.js">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
