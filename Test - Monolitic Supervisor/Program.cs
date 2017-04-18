@@ -454,7 +454,7 @@ namespace Monolithic
             Console.WriteLine("\tTransitions: {0}", proj.Transitions.Count());
             Console.WriteLine("\tComputation Time: {0}", timer.ElapsedMilliseconds / 1000.0);
 
-            proj.simplifyNames("MinProj");
+            proj.simplifyName("MinProj");
 
             Console.ReadLine();
         }
