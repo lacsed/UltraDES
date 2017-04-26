@@ -15,7 +15,7 @@ namespace UltraDES
     ////////////////////////////////////////////////////////////////////////////////////////////////////
 
     [Serializable]
-    public class Epsilon : AbstractEvent
+    public sealed class Epsilon : AbstractEvent
     {
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>
@@ -30,13 +30,21 @@ namespace UltraDES
             Controllability = Controllability.Controllable;
         }
 
+        private static readonly Epsilon instance = new Epsilon();
+
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>   Gets the epsilon event. </summary>
         ///
         /// <value> The epsilon event. </value>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        public static Epsilon EpsilonEvent { get; } = new Epsilon();
+        public static Epsilon EpsilonEvent
+        {
+            get
+            {
+                return instance;
+            }
+        }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>   Determines whether the specified object is equal to the current object. </summary>

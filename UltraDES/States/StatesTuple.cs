@@ -5,18 +5,15 @@ namespace UltraDES
     [Serializable]
     public struct StatesTuple
     {
-        public uint[] m_data
-        {
-            get;
-        }
+        public uint[] m_data { get; private set; }
 
-        public StatesTuple(int[] states, int[] bits, int size)
+        public StatesTuple(int[] states, int[] bits, int size) : this()
         {
             m_data = new uint[size];
             Set(states, bits);
         }
 
-        public StatesTuple(int k)
+        public StatesTuple(int k) : this()
         {
             m_data = new uint[k];
         }

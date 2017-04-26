@@ -111,7 +111,7 @@ namespace UltraDES
         }
 
         //gera arquivo de desenho do autômato
-        public static void drawSVG(DeterministicFiniteAutomaton G, string fileName, bool openAfterFinish = false)
+        public static void drawSVG(DeterministicFiniteAutomaton G, string fileName, bool openAfterFinish = true)
         {
             Dictionary<string, DrawingState> statesList = prepare(G);
             Vector max, min;
@@ -150,7 +150,7 @@ namespace UltraDES
         }
 
         //gera arquivo de desenho do autômato
-        public static void drawLatexFigure(DeterministicFiniteAutomaton G, string fileName)
+        public static void drawLatexFigure(DeterministicFiniteAutomaton G, string fileName, bool openAfterFinish = true)
         {
             string fontSize = "normalsize";
             Dictionary<string, DrawingState> statesList = prepare(G);
@@ -184,10 +184,11 @@ namespace UltraDES
 
             FigureStream.drawFigureLatex(writer, statesList, fontSize);
 
-
             //termina arquivo
             FigureStream.WriteLatexEnd(writer);
             writer.Close();
+
+            if (openAfterFinish) System.Diagnostics.Process.Start(fileName);
         }
 
         //Simula a dinamica de força do sistema

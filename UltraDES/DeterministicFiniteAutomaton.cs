@@ -86,6 +86,21 @@ namespace UltraDES
             return clone(m_statesList.Count());
         }
 
+        static DeterministicFiniteAutomaton()
+        {
+            string currentPath = Directory.GetCurrentDirectory();
+            string newPath = currentPath + "\\..\\..\\..\\USER";
+            if(!Directory.Exists(newPath))
+            {
+                newPath = currentPath + "\\USER";
+                if (!Directory.Exists(newPath))
+                {
+                    Directory.CreateDirectory(newPath);
+                }
+            }
+            Directory.SetCurrentDirectory(newPath);
+        }
+
         public DeterministicFiniteAutomaton(IEnumerable<Transition> transitions, AbstractState initial, string name)
             : this(1)
         {
@@ -1326,7 +1341,7 @@ namespace UltraDES
 
         public DFA ParallelCompositionWith(params DFA[] others)
         {
-            return this.ParallelCompositionWith(others);
+            return this.ParallelCompositionWith(others, true);
         }
 
         public static DFA ParallelComposition(IEnumerable<DFA> list, bool removeNoAccessibleStates = true)
@@ -1336,7 +1351,7 @@ namespace UltraDES
 
         public static DFA ParallelComposition(DFA A, params DFA[] others)
         {
-            return A.ParallelCompositionWith(others);
+            return A.ParallelCompositionWith(others, true);
         }
 
         private void BuildProduct()
@@ -1385,7 +1400,7 @@ namespace UltraDES
 
         public DFA ProductWith(params DFA[] Gs)
         {
-            return this.ProductWith(Gs);
+            return this.ProductWith((IEnumerable<DFA>)Gs);
         }
 
         public DFA ProductWith(IEnumerable<DFA> list)
@@ -1444,8 +1459,7 @@ namespace UltraDES
             {
                 Indent = true,
                 IndentChars = "\t",
-                NewLineChars = "\r\n",
-                Async = true
+                NewLineChars = "\r\n"
             };
 
             int n = m_statesList.Count();
@@ -2009,8 +2023,7 @@ namespace UltraDES
             {
                 Indent = true,
                 IndentChars = "\t",
-                NewLineChars = "\r\n",
-                Async = true
+                NewLineChars = "\r\n"
             };
 
             using (var writer = XmlWriter.Create(p_filename, settings))
@@ -2346,6 +2359,11 @@ namespace UltraDES
             return invProj;
         }
 
+        public DFA InverseProjection(params AbstractEvent[] events)
+        {
+            return InverseProjection((IEnumerable<AbstractEvent>)events);
+        }
+
         private HashSet<int> getExtendedState(int state, IEnumerable<int> toRemove)
         {
             var exp = new HashSet<int>();
@@ -2538,6 +2556,11 @@ namespace UltraDES
             return proj;
         }
 
+        public DFA Projection(params AbstractEvent[] removeEvents)
+        {
+            return this.Projection((IEnumerable<AbstractEvent>)removeEvents);
+        }
+
         public void ToAdsFile(string filepath, int odd = 1, int even = 2)
         {
             ToAdsFile(new[] { this }, new[] { filepath }, odd, even);
@@ -2681,22 +2704,18 @@ namespace UltraDES
             return false;
         }
 
-        public void drawSVGFigure(string p_fileName = null, bool p_openAfterFinish = false)
+        public void drawSVGFigure(string fileName = null, bool openAfterFinish = true)
         {
-            if(p_fileName == null)
-            {
-                p_fileName = Name.Replace('|', '_');
-            }
-            Drawing.drawSVG(this, p_fileName, p_openAfterFinish);
+            if (fileName == null) fileName = Name;
+            fileName = fileName.Replace('|', '_');
+            Drawing.drawSVG(this, fileName, openAfterFinish);
         }
 
-        public void drawLatexFigure(string p_fileName = "")
+        public void drawLatexFigure(string fileName = null, bool openAfterFinish = true)
         {
-            if (p_fileName == "")
-            {
-                p_fileName = Name.Replace('|', '_');
-            }
-            Drawing.drawLatexFigure(this, p_fileName);
+            if (fileName == null) fileName = Name;
+            fileName = fileName.Replace('|', '_');
+            Drawing.drawLatexFigure(this, fileName, openAfterFinish);
         }
 
         public void showAutomaton(string name = "Automaton")
@@ -2725,6 +2744,148 @@ namespace UltraDES
             }
 
             return namesMap;
+        }
+
+        public void ToFsmFile(string fileName = null)
+        {
+            int n = m_statesList.Count;
+            var pos = new int[n];
+            if (fileName == null) fileName = Name;
+            fileName = fileName.Replace('|', '_');
+
+            if (!fileName.EndsWith(".fsm")) fileName += ".fsm";
+
+            var writer = new StreamWriter(fileName);
+
+            writer.Write("{0}\n\n", Size);
+
+            var writeState = new Action<AbstractState, Transition[]>((s, transtions) => {
+                writer.Write("{0}\t{1}\t{2}\n", s.ToString(), s.IsMarked ? 1 : 0, transtions.Length);
+                foreach (var t in transtions)
+                {
+                    writer.Write("{0}\t{1}\t{2}\to\n", t.Trigger.ToString(), t.Destination.ToString(), 
+                                                       t.Trigger.IsControllable ? "c" : "uc");
+                }
+                writer.Write("\n");
+            });
+
+            if (!IsEmpty())
+            {
+                if (m_validStates != null)
+                {
+                    writeState(composeState(pos), getTransitionsFromState(pos).ToArray());
+                    foreach (var sT in m_validStates)
+                    {
+                        sT.Key.Get(pos, m_bits, m_maxSize);
+                        // imprimimos somente se não for o estado inicial, já que o estado inicial já
+                        // foi impresso
+                        for(var i = 0; i < n; ++i)
+                        {
+                            if(pos[i] != 0)
+                            {
+                                writeState(composeState(pos), getTransitionsFromState(pos).ToArray());
+                                break;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    do
+                    {
+                        writeState(composeState(pos), getTransitionsFromState(pos).ToArray());
+                    } while (incrementPosition(pos));
+                }
+            }
+            writer.Close();
+        }
+
+        public static DFA FromFsmFile(string fileName)
+        {
+            if(fileName == null)
+            {
+                throw new Exception("Filename can not be null.");
+            }
+
+            if (!File.Exists(fileName))
+            {
+                throw new Exception("File not found.");
+            }
+
+            var automatonName = fileName.Split('/').Last().Split('.').First();
+            var statesList = new Dictionary<string, AbstractState>();
+            var eventsList = new Dictionary<string, AbstractEvent>();
+            var transitionsList = new List<Transition>();
+            AbstractState initialState = null;
+
+            var reader = new StreamReader(fileName);
+
+            string numberOfStates = reader.ReadLine();
+            if(numberOfStates == null || numberOfStates == "")
+            {
+                throw new Exception("Invalid Format.");
+            }
+            int numStates = int.Parse(numberOfStates);
+
+            // reads all states first
+            for (var i = 0; i < numStates; ++i)
+            {
+                string stateLine;
+                do { stateLine = reader.ReadLine(); } while (stateLine == "");
+                if(stateLine == null)
+                {
+                    throw new Exception("Invalid Format.");
+                }
+                var stateInfo = stateLine.Split('\t');
+                if(stateInfo.Length != 3)
+                {
+                    throw new Exception("Invalid Format.");
+                }
+                if (statesList.ContainsKey(stateInfo[0]))
+                {
+                    throw new Exception("Invalid Format: Duplicated state.");
+                }
+                var state = new State(stateInfo[0], stateInfo[1] == "1" ? Marking.Marked : Marking.Unmarked);
+                statesList.Add(stateInfo[0], state);
+
+                if (initialState == null) initialState = state;
+
+                var numTransitions = int.Parse(stateInfo[2]);
+                for (var t = 0; t < numTransitions; ++t) reader.ReadLine();
+            }
+
+            reader.DiscardBufferedData();
+            reader.BaseStream.Seek(0, SeekOrigin.Begin);
+            reader.ReadLine();
+
+            for (var i = 0; i < numStates; ++i)
+            {
+                string stateLine;
+                do { stateLine = reader.ReadLine(); } while (stateLine == "");
+                var stateInfo = stateLine.Split('\t');
+                var numTransitions = int.Parse(stateInfo[2]);
+                for (var t = 0; t < numTransitions; ++t)
+                {
+                    var transition = reader.ReadLine().Split('\t');
+                    if (transition.Length != 4)
+                    {
+                        throw new Exception("Invalid Format.");
+                    }
+                    if (!eventsList.ContainsKey(transition[0]))
+                    {
+                        eventsList.Add(transition[0], new Event(transition[0], transition[2] == "c" ? 
+                                        Controllability.Controllable : Controllability.Uncontrollable));
+                    }
+                    if (!statesList.ContainsKey(transition[1]))
+                    {
+                        throw new Exception("Invalid transition. Destination state not found.");
+                    }
+                    transitionsList.Add(new Transition(statesList[stateInfo[0]], 
+                                        eventsList[transition[0]], statesList[transition[1]]));
+                }
+            }
+
+            return new DFA(transitionsList, initialState, automatonName);
         }
     }
     

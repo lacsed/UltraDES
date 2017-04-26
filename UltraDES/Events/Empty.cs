@@ -15,7 +15,7 @@ namespace UltraDES
     ////////////////////////////////////////////////////////////////////////////////////////////////////
 
     [Serializable]
-    public class Empty : AbstractEvent
+    public sealed class Empty : AbstractEvent
     {
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>
@@ -30,13 +30,20 @@ namespace UltraDES
             Controllability = Controllability.Controllable;
         }
 
+        private static readonly Empty instance = new Empty();
+
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>   Gets the empty event. </summary>
         ///
         /// <value> The empty event. </value>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-
-        public static Empty EmptyEvent { get; } = new Empty();
+        public static Empty EmptyEvent
+        {
+            get
+            {
+                return instance;
+            }
+        }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>   Determines whether the specified object is equal to the current object. </summary>

@@ -34,7 +34,11 @@ namespace UltraDES
         /// <value> The epsilon. </value>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        public static Symbol Epsilon { get; } = UltraDES.Epsilon.EpsilonEvent;
+        public static Symbol Epsilon { 
+            get{
+                return UltraDES.Epsilon.EpsilonEvent;
+            }
+        }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>   Gets the empty. </summary>
@@ -42,7 +46,13 @@ namespace UltraDES
         /// <value> The empty. </value>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        public static Symbol Empty { get; } = UltraDES.Empty.EmptyEvent;
+        public static Symbol Empty
+        {
+            get
+            {
+                return UltraDES.Empty.EmptyEvent;
+            }
+        }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>   Returns a string that represents the current object. </summary>
