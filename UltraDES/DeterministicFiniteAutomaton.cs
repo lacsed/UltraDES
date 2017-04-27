@@ -553,10 +553,14 @@ namespace UltraDES
 
             if (checkForBadStates)
             {
+                var removedStates = new List<StatesTuple>();
                 foreach (var p in m_validStates)
                 {
-                    if (!p.Value)
-                        v_newBadStates |= removeBadStates(p.Key, uncontrolEventsCount, true);
+                    if (!p.Value) removedStates.Add(p.Key);
+                }
+                foreach(var p in removedStates)
+                {
+                    v_newBadStates |= removeBadStates(p, uncontrolEventsCount, true);
                 }
             }
 
@@ -857,7 +861,7 @@ namespace UltraDES
 
         public RegularExpression ToRegularExpression {
             get {
-                if (IsEmpty()) return null;
+                if (IsEmpty()) return Symbol.Empty;
                 simplify();
 
                 var t = Enumerable.Range(0, (int)Size).ToArray();
