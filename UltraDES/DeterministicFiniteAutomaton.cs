@@ -855,10 +855,55 @@ namespace UltraDES
             }
         }
 
-        public int ToRegularExpression {
+        public RegularExpression ToRegularExpression {
             get {
-                Console.WriteLine("Sorry. This is still in TO-DO List");
-                return 0;
+                if (IsEmpty()) return null;
+                simplify();
+
+                var t = Enumerable.Range(0, (int)Size).ToArray();
+
+                int len = m_statesList.Count;
+                var size = (int)Size;
+                var b = new RegularExpression[size];
+                var a = new RegularExpression[size, size];
+
+                for (var i = 0; i < size; i++)
+                {
+                    for (var j = 0; j < size; j++)
+                    {
+                        a[i, j] = Symbol.Empty;
+                    }
+
+                    for (var e = 0; e < m_eventsUnion.Length; e++)
+                    {
+                        if(m_adjacencyList[0].hasEvent(i, e))
+                        {
+                            a[i, m_adjacencyList[0][i, e]] += m_eventsUnion[e];
+                        }
+                    }
+                }
+
+                for (var i = 0; i < size; ++i)
+                    b[i] = m_statesList[0][i].IsMarked ? Event.Epsilon : Event.Empty;
+
+                for (var n = size - 1; n >= 0; n--)
+                {
+                    b[n] = new KleeneStar(a[n, n]) * b[n];
+                    for (var j = 0; j <= n; j++)
+                    {
+                        a[n, j] = new KleeneStar(a[n, n]) * a[n, j];
+                    }
+                    for (var i = 0; i <= n; i++)
+                    {
+                        b[i] += a[i, n] * b[n];
+                        for (var j = 0; j <= n; j++)
+                        {
+                            a[i, j] += a[i, n] * a[n, j];
+                        }
+                    }
+                }
+
+                return b[0].Simplify;
             }
         }
 
