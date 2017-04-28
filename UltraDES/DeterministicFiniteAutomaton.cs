@@ -108,8 +108,10 @@ namespace UltraDES
 
             var transitionsLocal = transitions as Transition[] ?? transitions.ToArray();
 
-            m_statesList.Add(transitionsLocal.SelectMany(t => new[] { t.Origin, t.Destination }).Distinct().ToArray());
-            m_eventsUnion = transitionsLocal.Select(t => t.Trigger).Distinct().OrderBy(i => i.Controllability).ToArray();
+            m_statesList.Add(transitionsLocal.SelectMany(t => new[] { t.Origin, t.Destination }).
+                                                            Union(new[] { initial }).Distinct().ToArray());
+            m_eventsUnion = transitionsLocal.Select(t => t.Trigger).Distinct().
+                                                            OrderBy(i => i.Controllability).ToArray();
             m_adjacencyList.Add(new AdjacencyMatrix(m_statesList[0].Length, m_eventsUnion.Length));
             int initialIdx = Array.IndexOf(m_statesList[0], initial);
             if(initialIdx != 0)
@@ -1641,8 +1643,8 @@ namespace UltraDES
                     e =>
                         new Event(e.Attribute("Name").Value,
                             e.Attribute("Controllability").Value == "Controllable"
-                                ? Controllability.Controllable
-                                : Controllability.Uncontrollable));
+                                ? UltraDES.Controllability.Controllable
+                                : UltraDES.Controllability.Uncontrollable));
 
             var v_initial = v_xdoc.Descendants("InitialState").Select(i => v_states[i.Attribute("Id").Value]).Single();
 
@@ -2210,7 +2212,7 @@ namespace UltraDES
                     eventsReader.MoveToAttribute("Name");
                     var v_name = eventsReader.Value;
                     var ev = new Event(v_name, v_kind == "CONTROLLABLE" ?
-                        Controllability.Controllable : Controllability.Uncontrollable);
+                        UltraDES.Controllability.Controllable : UltraDES.Controllability.Uncontrollable);
 
                     v_events.Add(ev);
                     v_eventsMap.Add(v_name, ev);
@@ -2358,7 +2360,8 @@ namespace UltraDES
                 if (!evs.ContainsKey(trans[1]))
                 {
                     var e = new Event(trans[1].ToString(),
-                        trans[1] % 2 == 0 ? Controllability.Uncontrollable : Controllability.Controllable);
+                        trans[1] % 2 == 0 ? UltraDES.Controllability.Uncontrollable : 
+                                            UltraDES.Controllability.Controllable);
                     evs.Add(trans[1], e);
                 }
 
@@ -2417,14 +2420,26 @@ namespace UltraDES
         {
             var exp = new HashSet<int>();
             exp.Add(state);
-            foreach (var e in toRemove)
+
+            /*
+            var frontier = new Stack<int>();
+            frontier.Push(state);
+            while (frontier.Count > 0)
             {
-                if (m_adjacencyList[0].hasEvent(state, e))
+                state = frontier.Pop();*/
+                foreach (var e in toRemove)
                 {
-                    int next = m_adjacencyList[0][state, e];
-                    if (!exp.Contains(next)) exp.Add(next);
+                    if (m_adjacencyList[0].hasEvent(state, e))
+                    {
+                        int next = m_adjacencyList[0][state, e];
+                        if (!exp.Contains(next))
+                        {
+                            exp.Add(next);
+                            //frontier.Push(next);
+                        }
+                    }
                 }
-            }
+            // }
             return exp;
         }
 
@@ -2922,8 +2937,8 @@ namespace UltraDES
                     }
                     if (!eventsList.ContainsKey(transition[0]))
                     {
-                        eventsList.Add(transition[0], new Event(transition[0], transition[2] == "c" ? 
-                                        Controllability.Controllable : Controllability.Uncontrollable));
+                        eventsList.Add(transition[0], new Event(transition[0], transition[2] == "c" ?
+                                        UltraDES.Controllability.Controllable : UltraDES.Controllability.Uncontrollable));
                     }
                     if (!statesList.ContainsKey(transition[1]))
                     {
@@ -2936,6 +2951,208 @@ namespace UltraDES
 
             return new DFA(transitionsList, initialState, automatonName);
         }
+
+        public bool IsControllable(params DFA[] plants)
+        {
+            return IsControllable((IEnumerable<DFA>)plants);
+        }
+
+        public bool IsControllable(IEnumerable<DFA> plants)
+        {
+            return Controllability(plants) == UltraDES.Controllability.Controllable;
+        }
+
+        public Controllability Controllability(params DFA[] plants)
+        {
+            return Controllability((IEnumerable<DFA>)plants);
+        }
+
+        public Controllability Controllability(IEnumerable<DFA> plants)
+        {
+            return ControllabilityAndDisabledEvents(plants, false).Item1;
+        }
+
+        public Tuple<Controllability, Dictionary<AbstractState, List<AbstractEvent>>> 
+                ControllabilityAndDisabledEvents(params DFA[] plants)
+        {
+            return ControllabilityAndDisabledEvents(plants, true);
+        }
+
+        public Tuple<Controllability, Dictionary<AbstractState, List<AbstractEvent>>> 
+                ControllabilityAndDisabledEvents(IEnumerable<DFA> plants, bool getDisabledEvents = true)
+        {
+            var G = ParallelComposition(plants, false);
+            int nG = G.m_statesList.Count;
+            int nS = m_statesList.Count;
+            int[] pos1, pos2 = new int[nS];
+            var evs = m_eventsUnion.Union(G.m_eventsUnion).OrderBy(i => i.Controllability).ToArray();
+            var numUncontEvs = 0;
+            var stackG = new Stack<int[]>();
+            var stackS = new Stack<int[]>();
+            bool filteredStates = m_validStates != null;
+            bool GfilteredStates = G.m_validStates != null;
+            int[] evsMapG = new int[evs.Length];
+            int[] evsMapS = new int[evs.Length];
+            var GTuple = new StatesTuple(G.m_tupleSize);
+            var STuple = new StatesTuple(m_tupleSize);
+            bool GHasNext, SHasNext;
+            Controllability controllabity = UltraDES.Controllability.Controllable;
+            var disabled = new Dictionary<AbstractState, List<AbstractEvent>>();
+            AbstractState currentState = null;
+
+            if (!filteredStates) m_validStates = new Dictionary<StatesTuple, bool>(StatesTupleComparator.getInstance());
+
+            for (var e = 0; e < evs.Length; ++e)
+            {
+                if (!evs[e].IsControllable) ++numUncontEvs;
+                evsMapG[e] = Array.IndexOf(G.m_eventsUnion, evs[e]);
+                evsMapS[e] = Array.IndexOf(m_eventsUnion, evs[e]);
+            }
+
+            stackG.Push(new int[nG]);
+            STuple.Set(pos2, m_bits);
+            if (!filteredStates || m_validStates.ContainsKey(STuple))
+            {
+                stackS.Push(pos2);
+                if (filteredStates) m_validStates[STuple] = true;
+                else m_validStates.Add(new StatesTuple(pos2, m_bits, m_tupleSize), true);
+            }
+
+            while (stackS.Count > 0)
+            {
+                pos1 = stackG.Pop();
+                pos2 = stackS.Pop();
+
+                if (getDisabledEvents)
+                {
+                    currentState = composeState(pos2);
+                    disabled.Add(currentState, new List<AbstractEvent>());
+                }
+
+                for (var e = 0; e < evs.Length; ++e)
+                {
+                    var t = CheckState(G, nG, nS, pos1, pos2, evsMapG[e], evsMapS[e]);
+                    GHasNext = t.Item1;
+                    SHasNext = t.Item2;
+
+                    if (GHasNext && GfilteredStates)
+                    {
+                        GTuple.Set(t.Item3, G.m_bits);
+                        GHasNext = G.m_validStates.ContainsKey(GTuple);
+                    }
+                    if(SHasNext && filteredStates)
+                    {
+                        STuple.Set(t.Item4, m_bits);
+                        SHasNext = m_validStates.ContainsKey(STuple);
+                    }
+
+                    if (!GHasNext && SHasNext) throw new Exception("Plant is invalid.");
+                    else if (GHasNext && !SHasNext)
+                    {
+                        if (e < numUncontEvs)
+                        {
+                            controllabity = UltraDES.Controllability.Uncontrollable;
+                            if (!getDisabledEvents) goto stopSearch;
+                        }
+                        if (getDisabledEvents)
+                        {
+                            disabled[currentState].Add(evs[e]);
+                        }
+                    }
+                    else if(GHasNext && SHasNext)
+                    {
+                        if (filteredStates)
+                        {
+                            if (!m_validStates[STuple])
+                            {
+                                m_validStates[STuple] = true;
+                                stackG.Push(t.Item3);
+                                stackS.Push(t.Item4);
+                            }
+                        }
+                        else
+                        {
+                            STuple.Set(t.Item4, m_bits);
+                            if (!m_validStates.ContainsKey(STuple))
+                            {
+                                m_validStates.Add(new StatesTuple(t.Item4, m_bits, m_tupleSize), true);
+                                stackG.Push(t.Item3);
+                                stackS.Push(t.Item4);
+                            }
+                        }
+                    }
+                }
+            }
+
+            stopSearch:
+            if (filteredStates)
+            {
+                foreach(var t in m_validStates.Reverse())
+                {
+                    m_validStates[t.Key] = false;
+                }
+            }
+            else m_validStates = null;
+
+            return new Tuple<Controllability, Dictionary<AbstractState, List<AbstractEvent>>>(controllabity, disabled);
+        }
+
+        private Tuple<bool, bool, int[], int[]> CheckState(DFA G, int nG, int nS, int[] posG, int[] posS, int eG, int eS)
+        {
+            int[] nextG = new int[nG];
+            int[] nextS = new int[nS];
+            bool hasNextG = true, hasNextS = true;
+            if (eG == -1)
+            {
+                for (var i = 0; i < nG; ++i) nextG[i] = posG[i];
+            }
+            else
+            {
+                for (var i = 0; i < nG; ++i)
+                {
+                    if (!G.m_eventsList[i][eG]) nextG[i] = posG[i];
+                    else
+                    {
+                        if (!G.m_adjacencyList[i].hasEvent(posG[i], eG))
+                        {
+                            hasNextG = false;
+                            break;
+                        }
+                        nextG[i] = G.m_adjacencyList[i][posG[i], eG];
+                    }
+                }
+            }
+            if (eS == -1)
+            {
+                for (var i = 0; i < nS; ++i) nextS[i] = posS[i];
+            }
+            else
+            {
+                for (var i = 0; i < nS; ++i)
+                {
+                    if (!m_eventsList[i][eS]) nextS[i] = posS[i];
+                    else
+                    {
+                        if (!m_adjacencyList[i].hasEvent(posS[i], eS))
+                        {
+                            hasNextS = false;
+                            break;
+                        }
+                        nextS[i] = m_adjacencyList[i][posS[i], eS];
+                    }
+                }
+            }
+            return new Tuple<bool, bool, int[], int[]>(hasNextG, hasNextS, nextG, nextS);
+        }
+
+        public Dictionary<AbstractState, List<AbstractEvent>> DisabledEvents(params DFA[] plants)
+        {
+            return DisabledEvents((IEnumerable<DFA>)plants);
+        }
+
+        public Dictionary<AbstractState, List<AbstractEvent>> DisabledEvents(IEnumerable<DFA> plants)
+        {
+            return ControllabilityAndDisabledEvents(plants, true).Item2;
+        }
     }
-    
 }
