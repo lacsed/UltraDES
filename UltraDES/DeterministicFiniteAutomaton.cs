@@ -2997,10 +2997,11 @@ namespace UltraDES
             var STuple = new StatesTuple(m_tupleSize);
             bool GHasNext, SHasNext;
             Controllability controllabity = UltraDES.Controllability.Controllable;
-            var disabled = new Dictionary<AbstractState, List<AbstractEvent>>();
+            var disabled = new Dictionary<AbstractState, List<AbstractEvent>>((int)Size);
             AbstractState currentState = null;
 
-            if (!filteredStates) m_validStates = new Dictionary<StatesTuple, bool>(StatesTupleComparator.getInstance());
+            if (!filteredStates) m_validStates = new Dictionary<StatesTuple, bool>((int)Size, 
+                                                        StatesTupleComparator.getInstance());
 
             for (var e = 0; e < evs.Length; ++e)
             {

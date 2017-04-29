@@ -55,7 +55,7 @@ namespace UltraDES
             for (var i = 0; i < S.Length; ++i)
             {
                 var hash = S[i].GetHashCode();
-                _hashcode = (_hashcode ^ hash) + (hash << 1);
+                _hashcode = 7 * (_hashcode ^ hash) + 3 * hash;
             }
             Marking = marking;
         }

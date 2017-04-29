@@ -28,10 +28,12 @@ namespace UltraDES
 
         public int GetHashCode(StatesTuple obj)
         {
-            int p = 0;
-            for (int i = obj.m_data.Length - 1; i >= 0; --i)
-                p = (p << 1) + (int)obj.m_data[i];
-            return p;
+            uint p = obj.m_data[0];
+            for (int i = obj.m_data.Length - 1; i > 0; --i)
+            {
+                p = (p << 3) + ~p + (obj.m_data[i] << 2) + ~obj.m_data[i];
+            }
+            return (int)p;
         }
     }
 
