@@ -1,5 +1,5 @@
 ﻿/*****************************************************************************************
- *   UltraDES is an open source library for modeling, analisys and control of Discrete 
+ *   UltraDES 2.1 is an open source library for modeling, analisys and control of Discrete 
  *   Event Systems,it has been developed at LACSED|UFMG (http://www.lacsed.eng.ufmg.br)
  *   More informations and download at https://github.com/lacsed/UltraDES
  *****************************************************************************************/
