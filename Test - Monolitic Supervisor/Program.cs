@@ -448,8 +448,8 @@ namespace Monolithic
 
             timer.Restart();
             var proj = sup.Projection(sup.UncontrollableEvents);
-            proj = proj.Minimal;
             timer.Stop();
+
             Console.WriteLine("\tStates: {0}", proj.States.Count()); // proj.States.Count() == proj.Size
             Console.WriteLine("\tTransitions: {0}", proj.Transitions.Count());
             Console.WriteLine("\tComputation Time: {0}", timer.ElapsedMilliseconds / 1000.0);

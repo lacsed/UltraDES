@@ -63,10 +63,10 @@ namespace UltraDES
 
         public int GetHashCode(List<int> obj)
         {
-            int p = 0;
+            int p = obj.Count;
             for(var i = 0; i < obj.Count; ++i)
             {
-                p = (p<<1) + obj[i].GetHashCode();
+                p = (p << 3) + ~p + obj[i].GetHashCode();
             }
             return p;
         }
@@ -99,10 +99,10 @@ public class IntArrayComparator : IEqualityComparer<int[]>
 
     public int GetHashCode(int[] obj)
     {
-        int p = 0;
+        int p = obj.Length;
         for (var i = 0; i < obj.Length; ++i)
         {
-            p = (p << 1) + obj[i].GetHashCode();
+            p = (p << 3) + ~p + obj[i].GetHashCode();
         }
         return p;
     }

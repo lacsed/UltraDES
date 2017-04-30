@@ -2416,94 +2416,127 @@ namespace UltraDES
             return InverseProjection((IEnumerable<AbstractEvent>)events);
         }
 
-        private HashSet<int> getExtendedState(int state, IEnumerable<int> toRemove)
-        {
-            var exp = new HashSet<int>();
-            exp.Add(state);
+        private void projectionStates(int[] evs, out int[] statesMap, out List<int>[] newStatesList) {
+            int size = (int)Size;
+            var newStates = new List<List<int>>();
+            statesMap = new int[size];
+            int numInvalid = 0;
 
-            /*
-            var frontier = new Stack<int>();
-            frontier.Push(state);
-            while (frontier.Count > 0)
+            for (var i = 0; i < size; ++i) statesMap[i] = -1;
+
+            for(var i = 0; i < size; ++i)
             {
-                state = frontier.Pop();*/
-                foreach (var e in toRemove)
+                var currentPosition = statesMap[i];
+                if (currentPosition == -1)
                 {
-                    if (m_adjacencyList[0].hasEvent(state, e))
+                    var newGroup = new List<int>();
+                    newGroup.Add(i);
+                    newStates.Add(newGroup);
+                    currentPosition = newStates.Count - 1;
+                    statesMap[i] = currentPosition;
+                }
+                for(var e = 0; e < evs.Length; ++e)
+                {
+                    if(m_adjacencyList[0].hasEvent(i, evs[e]))
                     {
-                        int next = m_adjacencyList[0][state, e];
-                        if (!exp.Contains(next))
+                        var next = m_adjacencyList[0][i, evs[e]];
+                        var newNext = statesMap[next];
+                        if (newNext == -1)
                         {
-                            exp.Add(next);
-                            //frontier.Push(next);
+                            newStates[currentPosition].Add(next);
+                            statesMap[next] = currentPosition;
+                        }
+                        else if(newNext != currentPosition)
+                        {
+                            if(newStates[currentPosition].Count < newStates[newNext].Count)
+                            {
+                                var aux = newNext;
+                                newNext = currentPosition;
+                                currentPosition = aux;
+                            }
+                            foreach(var st in newStates[newNext])
+                            {
+                                newStates[currentPosition].Add(st);
+                                statesMap[st] = currentPosition;
+                            }
+                            newStates[newNext] = null;
+                            ++numInvalid;
                         }
                     }
                 }
-            // }
-            return exp;
-        }
+            }
 
-        private int getNewPosition(List<int> states, Dictionary<List<int>, int> statesHash, List<AbstractState> statesList)
-        {
-            int newPos;
+            newStatesList = new List<int>[newStates.Count - numInvalid];
 
-            lock (m_lockObject3)
+            var k = -1;
+            var initialPos = statesMap[0];
+            if (initialPos != 0)
             {
-                if (!statesHash.TryGetValue(states, out newPos))
+                newStatesList[++k] = newStates[initialPos];
+                foreach (var st in newStatesList[k])
                 {
-                    newPos = statesHash.Count;
-                    statesHash.Add(states, newPos);
-                    statesList.Add(mergeStates(states, 0));
+                    statesMap[st] = k;
+                }
+                newStates[initialPos] = null;
+            }
+            for(var i = 0; i < newStates.Count; ++i)
+            {
+                if (newStates[i] == null) continue;
+                newStatesList[++k] = newStates[i];
+                foreach(var st in newStatesList[k])
+                {
+                    statesMap[st] = k;
                 }
             }
-            return newPos;
         }
 
-        public DFA Projection(IEnumerable<AbstractEvent> removeEvents)
-        {
+        public DFA Projection(IEnumerable<AbstractEvent> removeEvents) {
             if (IsEmpty()) return this.Clone();
 
             var evLength = m_eventsUnion.Length;
+
             simplify();
+            var evs = removeEvents.Select(e => Array.IndexOf(m_eventsUnion, e)).Where(i => i >= 0).ToArray();
+            var removeEvsArray = removeEvents.ToArray();
+            var auxEvs = new List<int>();
 
-            var proj = new DFA(1);
+            var y = 0;
+            for(var e = 0; e < m_eventsUnion.Length; ++e)
+            {
+                if(y < evs.Length && e == evs[y])
+                {
+                    ++y;
+                    continue;
+                }
+                auxEvs.Add(e);
+            }
+            var rEvs = auxEvs.ToArray();
 
-            var transitions = new HashSet<int[]>(IntArrayComparator.getInstance());
-            var statesList = new List<AbstractState>();
-            var statesHash = new Dictionary<List<int>, int>(IntListComparator.getInstance());
-
-            var evs = removeEvents.Select(e => Array.IndexOf(m_eventsUnion, e)).Where(i => i >= 0);
             var removeEventsHash = new bool[evLength];
             foreach (var e in evs) removeEventsHash[e] = true;
 
-            if (evs.Count() == 0)
-            {
-                return this.Clone();
-            }
+            if (evs.Count() == 0) return this.Clone();
 
-            var visitedStates = new Dictionary<int, bool>((int)this.Size);
+            int[] statesMap;
+            List<int>[] newStatesList;
 
-            var initial = getExtendedState(0, evs);
-            var frontier = new Stack<Tuple<HashSet<int>, int>>();
+            projectionStates(evs, out statesMap, out newStatesList);
 
-            proj.m_tupleSize = 1;
-            proj.m_bits[0] = 0;
-            proj.m_maxSize[0] = m_maxSize[0];
+            // Determinizing...
 
-            var newPosition = getNewPosition(initial.OrderBy(i => i).ToList(), statesHash, statesList);
-            visitedStates.Add(newPosition, true);
+            var transitions = new Dictionary<int, int[]>();
+            var frontier = new Stack<Tuple<int, HashSet<int>>>();
+            var visited = new Dictionary<int[], int>(IntArrayComparator.getInstance());
+            visited.Add(new[] { 0 }, 0);
 
-            frontier.Push(new Tuple<HashSet<int>, int>(initial, newPosition));
+            var initial = new HashSet<int>();
+            for (var i = 0; i < newStatesList[0].Count; ++i) initial.Add(newStatesList[0][i]);
+            frontier.Push(new Tuple<int, HashSet<int>>(0, initial));
 
             var threadsRunning = 0;
-
-            proj.Size = 0;
-
-            var projectionAction = new Action(() => {
-                ulong statesCount = 0;
-                int p = 0, position, nextPos;
-
-                while (true)
+            var projectionAction = new Action(() =>
+            {
+                while(true)
                 {
                     lock (m_lockObject2)
                     {
@@ -2511,72 +2544,91 @@ namespace UltraDES
                     }
                     while (true)
                     {
-                        HashSet<int> states;
+                        int newStatePos;
+                        HashSet<int> oldStates;
                         lock (m_lockObject2)
                         {
                             if (frontier.Count == 0) break;
-
-                            var tuple = frontier.Pop();
-                            states = tuple.Item1;
-                            position = tuple.Item2;
+                            var states = frontier.Pop();
+                            newStatePos = states.Item1;
+                            oldStates = states.Item2;
                         }
-                        ++statesCount;
 
-                        p = 0;
-                        for (var e = 0; e < evLength; ++e)
+                        bool firstTransition = true;
+
+                        for (var e = 0; e < rEvs.Length; ++e)
                         {
-                            if (removeEventsHash[e]) continue;
-
-                            var nextStateHash = new HashSet<int>();
-
-                            foreach (var st in states)
+                            var nextNewStates = new HashSet<int>();
+                            int k;
+                            foreach (var state in oldStates)
                             {
-                                if (!m_eventsList[0][e])
-                                    nextPos = st;
-                                else if (m_adjacencyList[0].hasEvent(st, e))
-                                    nextPos = m_adjacencyList[0][st, e];
-                                else
-                                    continue;
-
-                                foreach (var ePos in getExtendedState(nextPos, evs))
+                                if (!m_adjacencyList[0].hasEvent(state, rEvs[e])) continue;
+                                k = m_adjacencyList[0][state, rEvs[e]];
+                                if (!nextNewStates.Contains(statesMap[k]))
                                 {
-                                    if (!nextStateHash.Contains(ePos)) nextStateHash.Add(ePos);
+                                    nextNewStates.Add(statesMap[k]);
                                 }
                             }
-                            if (nextStateHash.Count > 0)
+                            if (nextNewStates.Count > 0)
                             {
-                                var nextPosition = getNewPosition(nextStateHash.OrderBy(i => i).ToList(), statesHash, statesList);
-                                if (m_eventsList[0][e])
+                                var sortedStates = nextNewStates.OrderBy(i => i).ToArray();
+                                int nextPosition;
+                                bool alreadyVisited;
+                                lock (m_lockObject3)
                                 {
-                                    var transitionTuple = new int[] { position, p, nextPosition };
+                                    alreadyVisited = visited.TryGetValue(sortedStates, out nextPosition);
+                                    if (!alreadyVisited)
+                                    {
+                                        nextPosition = visited.Count;
+                                        visited.Add(sortedStates, nextPosition);
+                                    }
+                                }
+                                if(!alreadyVisited)
+                                { 
+                                    var nextOldStates = new HashSet<int>();
+
+                                    for (var i = 0; i < sortedStates.Length; ++i)
+                                    {
+                                        var t = newStatesList[sortedStates[i]];
+                                        for (var j = 0; j < t.Count; ++j)
+                                        {
+                                            if (!nextOldStates.Contains(t[j])) nextOldStates.Add(t[j]);
+                                        }
+                                    }
+
+                                    lock (m_lockObject2)
+                                    {
+                                        frontier.Push(new Tuple<int, HashSet<int>>(nextPosition, nextOldStates));
+                                    }
+                                }
+                                if (firstTransition)
+                                {
+                                    var transition = new int[rEvs.Length];
+                                    for (var x = 0; x < transition.Length; ++x) transition[x] = -1;
+                                    transition[e] = nextPosition;
+                                    firstTransition = false;
                                     lock (m_lockObject)
                                     {
-                                        if (!transitions.Contains(transitionTuple))
-                                            transitions.Add(transitionTuple);
+                                        transitions.Add(newStatePos, transition);
                                     }
                                 }
-                                lock (m_lockObject2)
+                                else
                                 {
-                                    if (!visitedStates.ContainsKey(nextPosition))
+                                    lock (m_lockObject)
                                     {
-                                        visitedStates.Add(nextPosition, true);
-                                        frontier.Push(new Tuple<HashSet<int>, int>(nextStateHash, nextPosition));
+                                        transitions[newStatePos][e] = nextPosition;
                                     }
                                 }
                             }
-                            ++p;
                         }
                     }
+
                     lock (m_lockObject2)
                     {
                         --threadsRunning;
                         if (threadsRunning == 0) break;
                     }
                     Thread.Sleep(5);
-                }
-                lock (m_lockObject2)
-                {
-                    proj.Size += statesCount;
                 }
             });
 
@@ -2595,31 +2647,54 @@ namespace UltraDES
                 threads[i].Join();
             }
 
-            var newEvCount = evLength - evs.Count();
-            proj.m_eventsUnion = new Event[newEvCount];
-
-            proj.m_statesList.Add(statesList.ToArray());
-            proj.m_eventsList.Add(new bool[newEvCount]);
-            proj.m_adjacencyList.Add(new AdjacencyMatrix(proj.m_statesList[0].Length, newEvCount));
-            var k = 0;
-            for (var e = 0; e < evLength; ++e)
+            var statesList = new AbstractState[visited.Count];
+            foreach(var t in visited)
             {
-                if (removeEventsHash[e]) continue;
-                proj.m_eventsUnion[k] = m_eventsUnion[e];
-                proj.m_eventsList[0][k] = m_eventsList[0][e];
-                ++k;
+                var oldPositions = new List<int>();
+                var newPositions = t.Key;
+                for(var i = 0; i < newPositions.Length; ++i)
+                {
+                    var olds = newStatesList[newPositions[i]];
+                    for (var j = 0; j < olds.Count; ++j)
+                    {
+                        if (!oldPositions.Contains(olds[j])) oldPositions.Add(olds[j]);
+                    }
+                }
+                statesList[t.Value] = mergeStates(oldPositions, 0);
+            }
+
+            var proj = new DFA(1);
+            proj.m_eventsUnion = new Event[rEvs.Length];
+            proj.m_statesList.Add(statesList);
+            proj.m_eventsList.Add(new bool[rEvs.Length]);
+            proj.m_adjacencyList.Add(new AdjacencyMatrix(statesList.Length, rEvs.Length));
+            proj.Size = (ulong)visited.Count;
+
+            for (var e = 0; e < rEvs.Length; ++e)
+            {
+                proj.m_eventsUnion[e] = m_eventsUnion[rEvs[e]];
+                proj.m_eventsList[0][e] = m_eventsList[0][rEvs[e]];
             }
             foreach (var j in transitions)
             {
-                proj.m_adjacencyList[0].Add(j[0], j[1], j[2]);
+                for(var e = 0; e < j.Value.Length; ++e)
+                {
+                    if(j.Value[e] != -1)
+                    {
+                        proj.m_adjacencyList[0].Add(j.Key, e, j.Value[e]);
+                    }
+                }
             }
             proj.m_adjacencyList[0].TrimExcess();
 
             proj.Name = string.Format("Projection({0})", Name);
 
+            proj.m_tupleSize = 1;
+            proj.m_bits[0] = 0;
+            proj.m_maxSize[0] = m_maxSize[0];
             return proj;
         }
-
+        
         public DFA Projection(params AbstractEvent[] removeEvents)
         {
             return this.Projection((IEnumerable<AbstractEvent>)removeEvents);
@@ -2760,11 +2835,6 @@ namespace UltraDES
                 p_pos[k] = 0;
                 --k;
             }
-            return false;
-        }
-
-        public bool IsControllable()
-        {
             return false;
         }
 

@@ -36,7 +36,7 @@ namespace UltraDES
                 if(allMarked) marked &= S[i].IsMarked;
                 else marked |= S[i].IsMarked;
                 var hash = S[i].GetHashCode();
-                _hashcode = (_hashcode ^ hash) + (hash << 1);
+                _hashcode = 7 * (_hashcode ^ hash) + 3 * hash;
             }
             Marking = marked ? Marking.Marked : Marking.Unmarked;
         }

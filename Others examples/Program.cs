@@ -299,6 +299,24 @@ namespace Examples
             Console.WriteLine("\tPrefix Closure: {0} states", G.PrefixClosure.Size);
         }
 
+        private static void ShowDisablement(DeterministicFiniteAutomaton S, DeterministicFiniteAutomaton G, int limit)
+        {
+            var statesAndEventsList = S.DisabledEvents(G);
+            int i = 0;
+            foreach(var pairStateEventList in statesAndEventsList)
+            {
+                Console.WriteLine("\tState: {0}", pairStateEventList.Key.ToString());
+
+                foreach(var _event in pairStateEventList.Value)
+                {
+                    Console.WriteLine("\t\tEvent: {0}", _event.ToString());
+                }
+                Console.Write("\n");
+
+                if (++i >= limit) break;
+            }
+        }
+
         private static void Methods()
         {
             List<DeterministicFiniteAutomaton> plants, specs;
@@ -313,6 +331,16 @@ namespace Examples
             Console.WriteLine("\tPlant: {0} states", Plant.Size);
             Console.WriteLine("\tSpecification: {0} states", Specification.Size);
             Console.WriteLine("\tK: {0} states", K.Size);
+
+            // Controllability
+            if (K.IsControllable(Plant))
+            {
+                Console.WriteLine("\tK is controllable");
+            }
+            else
+            {
+                Console.WriteLine("\tK is not controllable");
+            }
 
             // Computes the supervisor using the global plant and specification
             var S = DeterministicFiniteAutomaton.MonolithicSupervisor(
@@ -329,6 +357,10 @@ namespace Examples
 
             var proj = S.Projection(S.UncontrollableEvents);
             Console.WriteLine("\tProjection: {0} states", proj.Size);
+
+            S.simplifyName("S");
+            Console.WriteLine("\tDisabled Events (first 5):");
+            ShowDisablement(S, Plant, 5);
 
             Console.WriteLine("------------------------------------------------------");
 
@@ -391,7 +423,7 @@ namespace Examples
             Plant = DeterministicFiniteAutomaton.DeserializeAutomaton("Plant.bin");
 
             // If you wish view some automaton you can use:
-            plants.ForEach(g => g.drawSVGFigure());
+            plants.ForEach(g => g.drawSVGFigure(null, false));
         }
 
         static void Main(string[] args)
