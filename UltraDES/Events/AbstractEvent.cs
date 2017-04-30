@@ -83,11 +83,8 @@ namespace UltraDES
 
         public static bool operator ==(AbstractEvent a, AbstractEvent b)
         {
-            if (!ReferenceEquals(a, null) && !ReferenceEquals(a, null))
-            {
-                return a.Equals(b);
-            }
-            return ReferenceEquals(a, b);
+            if (ReferenceEquals(a, b)) return true;
+            return !ReferenceEquals(a, null) && a.Equals(b);
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////

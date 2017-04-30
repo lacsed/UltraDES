@@ -70,10 +70,11 @@ namespace UltraDES
         /// <summary>   Merge with. </summary>
         /// <remarks>   Lucas Alves, 05/01/2016. </remarks>
         /// <param name="s2">           The second AbstractState. </param>
+        /// <param name="count">        Number of. </param>
         /// <param name="allMarked">    true if all marked. </param>
         /// <returns>   A CompoundState. </returns>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        public abstract AbstractCompoundState MergeWith(AbstractState s2, bool allMarked = true);
+        public abstract AbstractCompoundState MergeWith(AbstractState s2, int count = 0, bool allMarked = true);
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>   Equality operator. </summary>

@@ -5,7 +5,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 using System;
-using System.Text;
 
 namespace UltraDES
 {
@@ -26,19 +25,12 @@ namespace UltraDES
         /// <param name="s2">       The second AbstractState. </param>
         /// <param name="count">    Number of. </param>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        public CompoundState(AbstractState[] s, bool allMarked = true)
+        public CompoundState(AbstractState s1, AbstractState s2, int count)
         {
-            S = s;
-            _hashcode = 0;
-            bool marked = allMarked;
-            for (var i = 0; i < S.Length; ++i)
-            {
-                if(allMarked) marked &= S[i].IsMarked;
-                else marked |= S[i].IsMarked;
-                var hash = S[i].GetHashCode();
-                _hashcode = 7 * (_hashcode ^ hash) + 3 * hash;
-            }
-            Marking = marked ? Marking.Marked : Marking.Unmarked;
+            S1 = s1;
+            S2 = s2;
+            Marking = s1.Marking == s2.Marking ? s1.Marking : Marking.Unmarked;
+            _hashcode = s1.GetHashCode()*count + s2.GetHashCode();
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -48,23 +40,25 @@ namespace UltraDES
         /// <param name="s2">       The second AbstractState. </param>
         /// <param name="marking">  The marking. </param>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        public CompoundState(AbstractState[] s, Marking marking)
+        public CompoundState(AbstractState s1, AbstractState s2, Marking marking)
         {
-            S = s;
-            _hashcode = 0;
-            for (var i = 0; i < S.Length; ++i)
-            {
-                var hash = S[i].GetHashCode();
-                _hashcode = 7 * (_hashcode ^ hash) + 3 * hash;
-            }
+            S1 = s1;
+            S2 = s2;
             Marking = marking;
+            _hashcode = s1.GetHashCode() ^ s2.GetHashCode();
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>   Gets or sets the s 1. </summary>
         /// <value> The s 1. </value>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        public override AbstractState[] S { get; protected set; }
+        public override AbstractState S1 { get; protected set; }
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        /// <summary>   Gets or sets the s 2. </summary>
+        /// <value> The s 2. </value>
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        public override AbstractState S2 { get; protected set; }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>   Gets to marked. </summary>
@@ -72,7 +66,7 @@ namespace UltraDES
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         public override AbstractState ToMarked
         {
-            get { return IsMarked ? this : new CompoundState(S, Marking.Marked); }
+            get { return IsMarked ? this : new CompoundState(S1, S2, Marking.Marked); }
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -81,7 +75,7 @@ namespace UltraDES
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         public override AbstractState ToUnmarked
         {
-            get { return !IsMarked ? this : new CompoundState(S, Marking.Unmarked); }
+            get { return !IsMarked ? this : new CompoundState(S1, S2, Marking.Unmarked); }
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -100,27 +94,25 @@ namespace UltraDES
             var p = obj as CompoundState;
             if ((object) p == null) return false;
 
-            if (_hashcode != p._hashcode || S.Length != p.S.Length) return false;
+            if (_hashcode != p._hashcode) return false;
 
-            for (var i = 0; i < S.Length; ++i)
-            {
-                if (S[i] != p.S[i]) return false;
-            }
-
-            return Marking == p.Marking;
+            // Return true if the fields match:
+            return S1 == p.S1 && S2 == p.S2 && Marking == p.Marking;
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>   Merge with. </summary>
         /// <remarks>   Lucas Alves, 05/01/2016. </remarks>
         /// <param name="s2">           The second AbstractState. </param>
+        /// <param name="count">        Number of. </param>
         /// <param name="allMarked">    true if all marked. </param>
         /// <returns>   A CompoundState. </returns>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        public override AbstractCompoundState MergeWith(AbstractState s2, bool allMarked = true)
+        public override AbstractCompoundState MergeWith(AbstractState s2, int count = 0, bool allMarked = true)
         {
-            var marked = allMarked ? IsMarked && s2.IsMarked : IsMarked || s2.IsMarked;
-            return new CompoundState(new[] { this, s2 }, marked ? Marking.Marked : Marking.Unmarked);
+            return (IsMarked || s2.IsMarked) && !allMarked
+                ? (AbstractCompoundState) new CompoundState(this, s2, count).ToMarked
+                : new CompoundState(this, s2, count);
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -133,7 +125,6 @@ namespace UltraDES
             return _hashcode;
         }
 
-
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>   Returns a string that represents the current object. </summary>
         /// <remarks>   Lucas Alves, 05/01/2016. </remarks>
@@ -141,13 +132,7 @@ namespace UltraDES
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         public override string ToString()
         {
-            var sb = new StringBuilder(S[0].ToString());
-            for (var i = 1; i < S.Length; ++i)
-            {
-                sb.Append("|");
-                sb.Append(S[i].ToString());
-            }
-            return sb.ToString();
+            return string.Format("{0}|{1}", S1, S2);
         }
     }
 }

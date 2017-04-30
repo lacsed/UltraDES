@@ -5,7 +5,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -22,9 +21,7 @@ namespace UltraDES
     public class AdjacencyMatrix
     {
         /// <summary>   The internal. </summary>
-        private readonly SortedList<int, int>[] m_internal;
-        private readonly BitArray[] m_events;
-        private readonly int m_numerOfEvents;
+        private readonly SortedList<int, int>[] _internal;
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>   Constructor. </summary>
@@ -34,20 +31,9 @@ namespace UltraDES
         /// <param name="states">   The states. </param>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        public AdjacencyMatrix(int states, int numEvents, bool preAllocate = false)
+        public AdjacencyMatrix(int states)
         {
-            m_internal = new SortedList<int, int>[states];
-            m_events = new BitArray[states];
-
-            if (preAllocate)
-            {
-                for(var i = 0; i < states; ++i)
-                {
-                    m_internal[i] = new SortedList<int, int>();
-                    m_events[i] = new BitArray(numEvents, false);
-                }
-            }
-            m_numerOfEvents = numEvents;
+            _internal = new SortedList<int, int>[states];
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -63,21 +49,22 @@ namespace UltraDES
         {
             get
             {
-                return m_events[s][e] ? m_internal[s][e] : -1;
+                if (s >= _internal.Length || s < 0 || _internal[s] == null) return -1;
+                return _internal[s].ContainsKey(e) ? _internal[s][e] : -1;
             }
         }
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        /// <summary>   Indexer to get items within this collection using array index syntax. </summary>
+        ///
+        /// <param name="s">    The int to process. </param>
+        ///
+        /// <returns>   The indexed item. </returns>
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
 
         public SortedList<int, int> this[int s]
         {
-            get
-            {
-                return m_internal[s] ?? (m_internal[s] = new SortedList<int, int>());
-            }
-        }
-
-        public bool hasEvent(int s, int e)
-        {
-            return m_events[s] != null ? m_events[s][e] : false;
+            get { return _internal[s] ?? (_internal[s] = new SortedList<int, int>()); }
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -88,7 +75,7 @@ namespace UltraDES
 
         public int Length
         {
-            get { return m_internal.Length; }
+            get { return _internal.Length; }
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -102,65 +89,9 @@ namespace UltraDES
 
         public void Add(int origin, Tuple<int, int>[] values)
         {
-            m_internal[origin] = new SortedList<int, int>(values.Length);
-            m_events[origin] = new BitArray(m_numerOfEvents, false);
-
+            _internal[origin] = new SortedList<int, int>(values.Length);
             foreach (var value in values)
-            {
-                if (!m_events[origin][value.Item1])
-                {
-                    m_internal[origin].Add(value.Item1, value.Item2);
-                    m_events[origin][value.Item1] = true;
-                }
-                else if(m_internal[origin][value.Item1] != value.Item2)
-                {
-                    throw new Exception("Automaton is not deterministic.");
-                }
-            }
-        }
-
-        public void Add(int origin, int e, int dest)
-        {
-            if (m_internal[origin] == null)
-            {
-                m_internal[origin] = new SortedList<int, int>();
-                m_events[origin] = new BitArray(m_numerOfEvents, false);
-            }
-            if (!m_events[origin][e])
-            {
-                m_internal[origin].Add(e, dest);
-                m_events[origin][e] = true;
-            }
-            else if(m_internal[origin][e] != dest)
-            {
-                throw new Exception("Automaton is not deterministic.");
-            }
-        }
-
-        public void Remove(int origin, int e)
-        {
-            m_events[origin][e] = false;
-            m_internal[origin].Remove(e);
-        }
-
-        public AdjacencyMatrix Clone()
-        {
-            var clone = new AdjacencyMatrix(m_internal.Length, m_numerOfEvents);
-
-            for (int i = 0; i < m_internal.Length; i++)
-            {
-                if (m_events[i] != null)
-                    clone.m_events[i] = (BitArray)m_events[i].Clone();
-
-                if (m_internal[i] != null)
-                {
-                    clone.m_internal[i] = new SortedList<int, int>();
-                    foreach (var c in m_internal[i])
-                        clone.m_internal[i].Add(c.Key, c.Value);
-
-                }
-            }
-            return clone;
+                _internal[origin].Add(value.Item1, value.Item2);
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -171,7 +102,7 @@ namespace UltraDES
 
         public void TrimExcess()
         {
-            Parallel.ForEach(m_internal.Where(i => i != null), i => i.TrimExcess());
+            Parallel.ForEach(_internal.Where(i => i != null), i => i.TrimExcess());
         }
     }
 }

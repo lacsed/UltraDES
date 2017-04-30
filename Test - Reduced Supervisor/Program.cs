@@ -10,7 +10,7 @@ using System.Diagnostics;
 using System.Linq;
 using UltraDES;
 
-namespace Test
+namespace Reduced
 {
     internal class Program
     {
@@ -215,28 +215,26 @@ namespace Test
                 s[0], "E4");
 
             // Computing the confict solving supervisor 
-            var e78 = e7.ParallelCompositionWith(e8);
+            var s78 = DeterministicFiniteAutomaton.MonoliticSupervisor(new[] {c3, mp, mm, robot}, new[] {e7, e8}, true);
 
             // Computing the local modular supervisors
             var timer = new Stopwatch();
             timer.Start();
-            List<DeterministicFiniteAutomaton> plants;
-            var sups = DeterministicFiniteAutomaton.LocalModularSupervisor(
+            var sups = DeterministicFiniteAutomaton.LocalModularReducedSupervisor(
                 new[] {c1, c2, milling, lathe, robot, mm, c3, mp}, // Plants
-                new[] {e1, e2, e3, e4, e5, e6, e78}, // Specifications
-                out plants).ToArray(); // Modular Plant
+                new[] {e1, e2, e3, e4, e5, e6, e7, e8}, // Specifications
+                new[] // Confict Solver
+                {
+                    Tuple.Create(
+                        new[] {c3, mp, mm, robot} as IEnumerable<DeterministicFiniteAutomaton>,
+                        new[] {e7, e8} as IEnumerable<DeterministicFiniteAutomaton>)
+                }).ToArray();
             timer.Stop();
 
             Console.WriteLine("Computation Time: {0}", timer.ElapsedMilliseconds/1000.0);
 
             // Exporting to TCT
-            sups[0].ToAdsFile("S1.ADS", e, 1, 0);
-            plants[0].ToAdsFile("P1.ADS", e, 1, 0);
-
-            // At TCT
-            // 1) Convert ADS files to DES using FD command
-            // 2) Generate the disabling structure with command 7 (DAT1 = Condat(P1, S1))
-            // 3) Generate the reduced supervisor using the command 8 (Sr1 = Supreduce(P1, S1, DAT1))
+            sups[0].Item1.ToAdsFile("S1.ADS", e, 1, 0);
 
             Console.ReadLine();
         }

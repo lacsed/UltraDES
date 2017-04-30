@@ -9,9 +9,8 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>UltraDES</RootNamespace>
     <AssemblyName>UltraDES</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -30,7 +29,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <PlatformTarget>x64</PlatformTarget>
     <UseVSHostingProcess>false</UseVSHostingProcess>
   </PropertyGroup>
   <ItemGroup>
@@ -41,15 +40,10 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Data Structures\AdjacencyMatrix.cs" />
     <Compile Include="DeterministicFiniteAutomaton.cs" />
-    <Compile Include="Drawing\Constants.cs" />
-    <Compile Include="Drawing\FigureStream.cs" />
-    <Compile Include="Drawing\Drawing.cs" />
-    <Compile Include="Drawing\GraphVizDraw.cs" />
     <Compile Include="Events\AbstractEvent.cs" />
     <Compile Include="Extensions\OptionExtensions.cs" />
     <Compile Include="Regular Expressions\Concatenation.cs" />
@@ -57,7 +51,6 @@
     <Compile Include="Regular Expressions\RegularExpression.cs" />
     <Compile Include="Regular Expressions\Symbol.cs" />
     <Compile Include="Regular Expressions\Union.cs" />
-    <Compile Include="Comparators.cs" />
     <Compile Include="States\AbstractCompoundState.cs" />
     <Compile Include="States\AbstractState.cs" />
     <Compile Include="States\CompoundState.cs" />
@@ -66,15 +59,8 @@
     <Compile Include="Events\Event.cs" />
     <Compile Include="Data Structures\Option.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="States\DrawingState.cs" />
     <Compile Include="States\State.cs" />
-    <Compile Include="States\StatesTuple.cs" />
     <Compile Include="Transitions\Transition.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Drawing\viz.js">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
