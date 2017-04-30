@@ -9,8 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test - Modular Supervisor",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test - Monolithic Supervisor", "Test - Monolitic Supervisor\Test - Monolithic Supervisor.csproj", "{ABD95122-6D3F-49FC-9F9C-D6C384053B0D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Others examples", "Others examples\Others examples.csproj", "{FCF9E321-FA65-4336-A47A-CFFA90CFB3FE}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,10 +27,6 @@ Global
 		{ABD95122-6D3F-49FC-9F9C-D6C384053B0D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ABD95122-6D3F-49FC-9F9C-D6C384053B0D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ABD95122-6D3F-49FC-9F9C-D6C384053B0D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FCF9E321-FA65-4336-A47A-CFFA90CFB3FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FCF9E321-FA65-4336-A47A-CFFA90CFB3FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FCF9E321-FA65-4336-A47A-CFFA90CFB3FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FCF9E321-FA65-4336-A47A-CFFA90CFB3FE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
