@@ -3,13 +3,14 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UltraDES", "UltraDES\UltraDES.csproj", "{B254A1B1-A4C4-4489-963A-19F459509D3F}"
+
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test - Monolithic Supervisor", "Test - Monolitic Supervisor\Test - Monolithic Supervisor.csproj", "{ABD95122-6D3F-49FC-9F9C-D6C384053B0D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test - Modular Supervisor", "Test - Modular Supervisor\Test - Modular Supervisor.csproj", "{0EC8E343-61E5-4A87-ADAB-2AAD277F5FFC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test - Monolithic Supervisor", "Test - Monolitic Supervisor\Test - Monolithic Supervisor.csproj", "{ABD95122-6D3F-49FC-9F9C-D6C384053B0D}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Others examples", "Others examples\Others examples.csproj", "{FCF9E321-FA65-4336-A47A-CFFA90CFB3FE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UltraDES", "UltraDES\UltraDES.csproj", "{B254A1B1-A4C4-4489-963A-19F459509D3F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
