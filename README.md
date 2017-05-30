@@ -8,7 +8,7 @@ UltraDES is a library for modeling, analysis and control of Discrete Event Syste
 Requirements: 
 - Supported OS: Windows, or virtual machine on Linux.
 - Your computer must have a installed version of Microsoft Visual Studio (2014 or later version).
-- Download the latest version of UltraDES (https://github.com/lacsed/UltraDES/releases), by clicking on the *Source code (zip)* or *Source code (tar.gz)* under Downloads.
+- Download the latest version of UltraDES (https://github.com/lacsed/UltraDES.git), by clicking on *Clone or Download* and then *Download Zip*.
 
 ## First steps
 
