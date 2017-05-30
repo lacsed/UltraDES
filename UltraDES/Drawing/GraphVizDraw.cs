@@ -25,7 +25,7 @@ namespace UltraDES
             source.AppendLine("\t\t<script type=\"text/vnd.graphviz\" id=\"cluster\">");
             source.AppendLine(G.ToDotCode);
             source.AppendLine("\t\t</script>");
-            source.AppendLine(@"<script src=""Drawing/viz.js""></script>
+            source.AppendLine(@"<script src=""viz.js""></script>
         <script>
                function inspect(s) {
             return ""<pre>"" + s.replace(/</g, ""&lt;"").replace(/>/g, ""&gt;"").replace(/\""/g, ""&quot;"") + ""</pre>""
