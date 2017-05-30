@@ -89,6 +89,7 @@ namespace UltraDES
         static DeterministicFiniteAutomaton()
         {
             string currentPath = Directory.GetCurrentDirectory();
+	    string origem = currentPath;
             string newPath = currentPath + "\\..\\..\\..\\USER";
             if(!Directory.Exists(newPath))
             {
