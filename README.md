@@ -37,7 +37,7 @@ To read the codes, click on the file *.cs* inside each project.
 
 - On the menu File, select New>Project.
 - On the New Project window:
-  - Select a Console App (.NET Framework).
+  - Select Visual C#>Console App (.NET Framework).
   - Give your project a name.
   - The location of your project should be the same as the other UltraDES projects.
   - In the Solution field, choose *Add to Solution*.
