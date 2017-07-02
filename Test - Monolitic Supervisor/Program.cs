@@ -18,6 +18,8 @@ namespace Monolithic
 {
     internal class Program
     {
+        // Creates the plants and specifications of ITL problem. 
+        // The automata are saved in 'plants' and 'specs'
         private static void ITL(out List<DeterministicFiniteAutomaton> plants, out List<DeterministicFiniteAutomaton> specs)
         {
             var s =
@@ -129,6 +131,9 @@ namespace Monolithic
             specs = new[] { e1, e2, e3, e4 }.ToList();
         }
 
+        // Creates the plants and specifications of Cluster Tools problem. 
+        // You can choose how many clusters to use.
+        // The automata are saved in 'plants' and 'specs'
         private static void ClusterTool(int clusters, out List<DeterministicFiniteAutomaton> plants, out List<DeterministicFiniteAutomaton> specs)
         {
             var s = Enumerable.Range(0, 4).Select(
@@ -223,6 +228,8 @@ namespace Monolithic
             }
         }
 
+        // Creates the plants and specifications of ITL problem. 
+        // The automata are saved in 'plants' and 'specs'
         private static void FSM(out List<DeterministicFiniteAutomaton> plants, out List<DeterministicFiniteAutomaton> specs)
         {
             var s =
@@ -432,30 +439,26 @@ namespace Monolithic
             List<DeterministicFiniteAutomaton> plants;
             List<DeterministicFiniteAutomaton> specs;
 
+            // Choose one option below
             ITL(out plants, out specs);
+            //FSM(out plants, out specs);
+            //ClusterTool(3, out plants, out specs);
+            //ClusterTool(4, out plants, out specs);
+            //ClusterTool(5, out plants, out specs);
 
             Console.WriteLine("Supervisor:");
-            var timer = new Stopwatch();
+            var timer = new Stopwatch(); // to measure time
             timer.Start();
+            // computes the monolithic supervisor and stores the resulting automaton in 'sup'
             var sup = DeterministicFiniteAutomaton.MonolithicSupervisor(plants, specs, true);
             timer.Stop();
 
+            // shows informations about supervisor and the elapsed time
             Console.WriteLine("\tStates: {0}", sup.Size);
             Console.WriteLine("\tTransitions: {0}", sup.Transitions.Count());
             Console.WriteLine("\tComputation Time: {0}", timer.ElapsedMilliseconds / 1000.0);
 
-            Console.WriteLine("\nSupervisor Projection:");
-
-            timer.Restart();
-            var proj = sup.Projection(sup.UncontrollableEvents);
-            timer.Stop();
-
-            Console.WriteLine("\tStates: {0}", proj.States.Count()); // proj.States.Count() == proj.Size
-            Console.WriteLine("\tTransitions: {0}", proj.Transitions.Count());
-            Console.WriteLine("\tComputation Time: {0}", timer.ElapsedMilliseconds / 1000.0);
-
-            proj.simplifyName("MinProj");
-
+            // this is used to prevent the program from closing immediately
             Console.ReadLine();
         }
     }

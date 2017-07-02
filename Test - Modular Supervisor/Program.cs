@@ -221,23 +221,20 @@ namespace Test
             timer.Start();
 
             List<DeterministicFiniteAutomaton> plants;
+            // computes the local modular supervisors
             var sups = DeterministicFiniteAutomaton.LocalModularSupervisor(
-                new[] {c1, c2, milling, lathe, robot, mm, c3, mp}, // Plants
-                new[] {e1, e2, e3, e4, e5, e6, e78}, // Specifications
-                out plants).ToArray(); // Modular Plant
+                    new[] { c1, c2, milling, lathe, robot, mm, c3, mp }, // Plants
+                    new[] { e1, e2, e3, e4, e5, e6, e78 }, // Specifications
+                    out plants // Modular Plants (optional)
+                ).ToArray();
+
             timer.Stop();
 
+            // Shows elapsed time
             Console.WriteLine("Computation Time: {0}", timer.ElapsedMilliseconds/1000.0);
 
-            // Exporting to TCT
-            //sups[0].ToAdsFile("S1.ADS", e, 1, 0);
-            //plants[0].ToAdsFile("P1.ADS", e, 1, 0);*/
 
-            // At TCT
-            // 1) Convert ADS files to DES using FD command
-            // 2) Generate the disabling structure with command 7 (DAT1 = Condat(P1, S1))
-            // 3) Generate the reduced supervisor using the command 8 (Sr1 = Supreduce(P1, S1, DAT1))
-
+            // this is used to prevent the program from closing immediately
             Console.ReadLine();
         }
     }

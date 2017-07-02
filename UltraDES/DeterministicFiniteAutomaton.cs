@@ -2027,10 +2027,10 @@ namespace UltraDES
         {
             if (conflictResolvingSupervisor == null) conflictResolvingSupervisor = new DFA[0];
             ;
-            IEnumerable<DFA> supervisors = specifications.AsParallel().Select(
+            IEnumerable<DFA> supervisors = specifications.Select(
                     e =>
                     {
-                        return MonolithicSupervisor(plants.Where(p => p.m_eventsUnion.Intersect(e.m_eventsUnion).Any()), new[] { e });
+                        return MonolithicSupervisor(plants.Where(p => p.m_eventsUnion.Intersect(e.m_eventsUnion).Any()), new[] { e }, true);
                     });
 
             var complete = supervisors.Union(conflictResolvingSupervisor).ToList();
@@ -2039,7 +2039,6 @@ namespace UltraDES
             {
                 throw new Exception("conflicting supervisors");
             }
-            GC.Collect();
             GC.Collect();
             return complete;
         }
@@ -2071,7 +2070,6 @@ namespace UltraDES
             }
 
             compoundPlants = dic.Keys.ToList();
-            GC.Collect();
             GC.Collect();
             return complete;
         }
