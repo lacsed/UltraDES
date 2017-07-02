@@ -100,13 +100,6 @@ namespace UltraDES
                 }
             }
             Directory.SetCurrentDirectory(newPath);
-		
-	    string sourcedir = origem + "\\..\\..\\..\\Ultrades\\Drawing";
-
-            if (!File.Exists(Path.Combine(newPath, "viz.js")))
-            {
-                File.Copy(Path.Combine(sourcedir, "viz.js"), Path.Combine(newPath, "viz.js"));
-            }
         }
 
         public DeterministicFiniteAutomaton(IEnumerable<Transition> transitions, AbstractState initial, string name)

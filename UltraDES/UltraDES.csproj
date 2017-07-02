@@ -72,9 +72,10 @@
     <Compile Include="Transitions\Transition.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Drawing\viz.js">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <Content Include="Drawing\aut.js" />
+    <Content Include="Drawing\drawAutomaton.html" />
+    <Content Include="Drawing\jquery.min.js" />
+    <Content Include="Drawing\viz.js" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

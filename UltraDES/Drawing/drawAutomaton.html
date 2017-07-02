@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	<title>Automaton Designer</title>
+  <meta charset="utf-8">
+	<style>
+
+body {
+	text-align: center;
+	background: #DFDFDF;
+	margin: 0 30px 100px 30px;
+	font: 14px/18px 'Lucida Grande', 'Segoe UI', sans-serif;
+}
+
+h1 {
+	font: bold italic 26px Georgia, serif;
+}
+
+canvas {
+	display: block;
+	max-width: 800px;
+	background: white;
+	border-radius: 20px;
+	-moz-border-radius: 20px;
+	float: right;
+}
+
+#infos{
+	float: left;
+	min-width: 400px;
+}
+#infos table{
+	width: 100%;
+	border-collapse: collapse;
+}
+
+#infos table td{
+	border: 1px solid #000;
+}
+
+#infos table tr:nth-child(odd) td{
+	background: #ccc;
+	padding: 5px;
+}
+
+#infos table tr:nth-child(1){
+	font-weight: 800;
+}
+
+#infos table tr:nth-child(1) td{
+	background: #777;
+	color: #eee;
+}
+
+#eventos tr{
+	cursor: pointer;
+}
+
+a {
+	color: black;
+}
+
+#help {
+	display: none;
+	margin: 30px auto;
+	text-align: left;
+	max-width: 800px;
+	position: absolute;
+}
+
+#errors {
+	color: red;
+	margin-bottom: 20px;
+}
+
+p {
+	margin: 30px 0;
+	line-height: 20px;
+}
+
+.center {
+	text-align: center;
+}
+
+#output {
+	display: none;
+	width: 75%;
+	position: absolute;
+	top:720px;
+	height: 400px;
+	left: 12.5%;
+	font-size: 30px;
+}
+
+textarea{
+	width: 100%;
+	height: 100%;
+	padding: 5px;
+}
+
+#generate{
+	padding: 10px 15px;
+	background: #333;
+	border-radius: 5px;
+	border: none;
+	color: #eee;
+	cursor: pointer;
+}
+#generate:hover{
+	background: #111;
+	color:#fff;
+}
+</style>
+<script type="text/javascript" src="aut.js"></script>
+<script type="text/javascript" src="jquery.min.js"></script>
+<script type="text/javascript">
+	lastPosition = null;
+
+	function addState(event){
+		$("#canvas")[0].ondblclick(lastPosition);
+	}
+	function ctx(event){
+		event = event || window.event;
+		lastPosition = crossBrowserRelativeMousePos(event);
+	}
+
+	$(document).ready(function(){
+
+$("#generate").click(function(){
+	if($("#errors").html() != ""){
+		alert('Please remove the errors first.');
+		return;
+	}
+	var name = prompt('Type automaton name: ');
+	if(!name) return;
+
+	var formatedName = name.toLowerCase().replace(/^\d*|\s+/g, "");
+	
+	var code = "";
+	var sMap = [];
+	var eMap = [];
+	var initial = "";
+	var tabs = $("#estados tr");
+
+	for(var i = 1; i < tabs.length; i++){
+		var s_name = formatedName + "_" + tabs[i].children[0].innerHTML.toLowerCase().replace(/^\d*|\s+/g, "");
+		if(tabs[i].children[1].innerHTML == "True"){
+			initial = s_name;
+		}
+		var s_marked = tabs[i].children[2].innerHTML == "True";
+		code += "var " + s_name + ' = new State("' + tabs[i].children[0].innerHTML + 
+			'", Marking.' + (s_marked ? 'Marked' : 'Unmarked') + ');\n';
+
+		sMap[tabs[i].children[0].innerHTML] = s_name;
+	}
+
+	code += "\n";
+
+	var tabs = $("#eventos tr");
+	for(var i = 1; i < tabs.length; i++){
+		var e_name = formatedName + "_" + tabs[i].children[0].innerHTML.toLowerCase().replace(/^\d*|\s+/g, "");
+		var e_controllable = tabs[i].children[1].innerHTML == "True";
+		code += "var " + e_name + ' = new Event("' + tabs[i].children[0].innerHTML + 
+			'", Controllability.' + (e_controllable ? 'Controllable' : 'Uncontrollable') + ');\n';
+
+		eMap[tabs[i].children[0].innerHTML] = e_name;
+	}
+
+	var transitions = "";
+	for(var i = 0; i < links.length; i++){
+		if(links[i] instanceof SelfLink){
+			transitions += "\n\t\tnew Transition(" + sMap[links[i].node.text] + ", " + eMap[links[i].text] + ", " + sMap[links[i].node.text] + "),";
+		}
+		else if(links[i] instanceof Link){
+			transitions += "\n\t\tnew Transition(" + sMap[links[i].nodeA.text] + ", " + eMap[links[i].text] + ", " + sMap[links[i].nodeB.text] + "),";
+		}
+	}
+	transitions = transitions.substr(0, transitions.length - 1);
+
+	code += "\n";
+	code += "var " + formatedName + ' = new DeterministicFiniteAutomaton(\n\tnew[]{';
+	code += transitions + '\n\t}, ' + initial + ', "' + name + '");\n\n';
+
+	$("#output textarea").val(code);
+	$("#output").show();
+	window.scrollBy(0,700);
+	console.log(code);
+	
+});
+
+	});
+</script>
+</head><body>
+	<h1>Automaton Designer</h1>
+	<canvas id="canvas" width="800" height="600" contextmenu="menuGeral" oncontextmenu="ctx(event)">
+		<span class="error">Your browser does not support<br>the HTML5 &lt;canvas&gt; element</span>
+	</canvas>
+	<menu type="context" id="menuGeral">
+		<menuitem label="Add state" onclick="addState(event)"></menuitem>
+	</menu>
+	<menu type="context" id="menuEstado">
+		<menuitem label="Marcar estado" onclick="addState()"></menuitem>
+		<menuitem label="Desmarcar estado" onclick="addState()"></menuitem>
+		<menuitem label="Adicionar autoloop" onclick="autoLoop()"></menuitem>
+	</menu>
+
+	<div id="infos">
+	<table id="estados">
+		<tr>
+			<td>State</td>
+			<td>Initial</td>
+			<td>Marked</td>
+		</tr>
+	</table>
+	<br/><br/>
+	<table id="eventos">
+		<tr>
+			<td>Event</td>
+			<td>Controllable</td>
+		</tr>
+	</table>
+
+	<br/><br/>
+	<div id="errors"></div>
+	<input type="button" id="generate" value="Generate UltraDES Code" />
+	</div>
+	<div id="help">
+		<p class="center">Export as: <a href="javascript:saveAsPNG()">PNG</a> | <a href="javascript:saveAsSVG()">SVG</a> | <a href="javascript:saveAsLaTeX()">LaTeX</a></p>
+		<p>The big white box above is the Automaton designer.&nbsp; Here's how to use it:</p>
+		<ul>
+			<li><b>Add a state:</b> double-click on the canvas</li>
+			<li><b>Add an arrow:</b> shift-drag on the canvas</li>
+			<li><b>Move something:</b> drag it around</li>
+			<li><b>Delete something:</b> click it and press the delete key (not the backspace key)</li>
+		</ul><ul>
+			<li><b>Make accept state:</b> double-click on an existing state</li>
+			<li><b>Type numeric subscript:</b> put an underscore before the number (like "S_0")</li>
+			<li><b>Type greek letter:</b> put a backslash before it (like "\beta")</li>
+		</ul>
+		<p>This was made in HTML5 and JavaScript using the canvas element.</p>
+	</div>
+	<div id="output">
+		UltraDES Code:<br/><br/>
+		<textarea></textarea>
+	</div>
+</body></html>
