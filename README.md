@@ -89,7 +89,7 @@ var G = new DeterministicFiniteAutomaton(new[]
 
 ```cs
 
-var G_{parallel} = G.ParallelCompositionWith(G); 
+var Gp = G.ParallelCompositionWith(G); 
 
 ```
 
