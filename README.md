@@ -85,6 +85,14 @@ var G = new DeterministicFiniteAutomaton(new[]
     new Transition(s2, e2, s1)
   }, s1, "G");
 ```
+## Making a Parallel composition
+
+```cs
+
+var G_{parallel} = G.ParallelCompositionWith(G); 
+
+```
+
 
 ### Showing the Automaton
 
