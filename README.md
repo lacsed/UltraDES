@@ -85,6 +85,9 @@ var G = new DeterministicFiniteAutomaton(new[]
     new Transition(s2, e2, s1)
   }, s1, "G");
 ```
+
+## Operations with Automata
+
 ### Making a Parallel composition
 
 ```cs
