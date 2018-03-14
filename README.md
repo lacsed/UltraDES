@@ -68,6 +68,9 @@ State s2 = new State("s2", Marking.Unmarked);
 ```cs
 Event e1 = new Event("e1", Controllability.Controllable);
 Event e2 = new Event("e2", Controllability.Uncontrollable);
+
+Event e3 = new Event("e3", Controllability.Controllable);
+Event e4 = new Event("e4", Controllability.Uncontrollable);
 ```
 
 ### Creating Transitions
@@ -79,10 +82,16 @@ var t = new Transition(s1, e1, s2);
 ### Creating an Automaton
 
 ```cs
-var G = new DeterministicFiniteAutomaton(new[]
+var G1 = new DeterministicFiniteAutomaton(new[]
   {
     new Transition(s1, e1, s2), 
     new Transition(s2, e2, s1)
+  }, s1, "G");
+  
+  var G2 = new DeterministicFiniteAutomaton(new[]
+  {
+    new Transition(s1, e3, s2), 
+    new Transition(s2, e4, s1)
   }, s1, "G");
 ```
 
@@ -92,11 +101,9 @@ var G = new DeterministicFiniteAutomaton(new[]
 
 ```cs
 
-var Gp = G.ParallelCompositionWith(G); 
+var Gp = G1.ParallelCompositionWith(G2); 
 
 ```
-
-
 ### Showing the Automaton
 
 ```cs
