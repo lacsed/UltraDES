@@ -86,13 +86,13 @@ var G1 = new DeterministicFiniteAutomaton(new[]
   {
     new Transition(s1, e1, s2), 
     new Transition(s2, e2, s1)
-  }, s1, "G");
+  }, s1, "G1");
   
   var G2 = new DeterministicFiniteAutomaton(new[]
   {
     new Transition(s1, e3, s2), 
     new Transition(s2, e4, s1)
-  }, s1, "G");
+  }, s1, "G2");
 ```
 
 ## Operations with Automata
