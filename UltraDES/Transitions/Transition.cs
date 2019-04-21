@@ -53,10 +53,7 @@ namespace UltraDES
         /// </summary>
         /// <value> true if this object is controllable transition, false if not. </value>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        public bool IsControllableTransition
-        {
-            get { return Trigger.IsControllable; }
-        }
+        public bool IsControllableTransition => Trigger.IsControllable;
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>   Determines whether the specified object is equal to the current object. </summary>
@@ -68,8 +65,6 @@ namespace UltraDES
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         public override bool Equals(object obj)
         {
-            if (obj == null) return false;
-
             // If parameter cannot be cast to Point return false.
             var p = obj as Transition;
             if (p == null) return false;
@@ -97,7 +92,12 @@ namespace UltraDES
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         public override string ToString()
         {
-            return string.Format("({0} --{1}-> {2})", Origin, Trigger, Destination);
+            return $"({Origin} --{Trigger}-> {Destination})";
+        }
+
+        public static implicit operator Transition((AbstractState, AbstractEvent, AbstractState) t)
+        {
+            return new Transition(t.Item1, t.Item2, t.Item3);
         }
     }
 }

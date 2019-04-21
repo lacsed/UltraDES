@@ -1359,7 +1359,7 @@ namespace UltraDES
 
         public static DFA Product(IEnumerable<DFA> list)
         {
-            if (list.Count() == 0) return null;
+            if (!list.Any()) return null;
             var G1G2 = list.Aggregate((a, b) => ConcatDFA(a, b));
             G1G2.BuildProduct();
             return G1G2;
