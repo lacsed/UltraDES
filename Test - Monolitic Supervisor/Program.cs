@@ -436,11 +436,8 @@ namespace Monolithic
 
         private static void Main()
         {
-            List<DeterministicFiniteAutomaton> plants;
-            List<DeterministicFiniteAutomaton> specs;
-
             // Choose one option below
-            ITL(out plants, out specs);
+            ClusterTool(6, out var plants, out var specs);
             //FSM(out plants, out specs);
             //ClusterTool(3, out plants, out specs);
             //ClusterTool(4, out plants, out specs);

@@ -11,30 +11,25 @@ using UltraDES;
 
 namespace Examples
 {
-    class Program
+    internal class Program
     {
-        private static void FSM(out List<DeterministicFiniteAutomaton> plants, out List<DeterministicFiniteAutomaton> specs)
+        private static void FSM(out List<DeterministicFiniteAutomaton> plants,
+            out List<DeterministicFiniteAutomaton> specs)
         {
             var s = new List<State>(); // or State[] s = new State[6];
-            for (int i = 0; i < 6; i++)
-            {
-                if (i == 0) s.Add(new State(i.ToString(), Marking.Marked));
-                else        s.Add(new State(i.ToString(), Marking.Unmarked));
-            }
+            for (var i = 0; i < 6; i++)
+                if (i == 0)
+                    s.Add(new State(i.ToString(), Marking.Marked));
+                else
+                    s.Add(new State(i.ToString(), Marking.Unmarked));
 
             // Creating Events (0 to 100)
             var e = new List<Event>(); // or Event[] e = new Event[100];
             for (var i = 0; i < 100; ++i)
-            {
                 if (i % 2 != 0)
-                {
-                    e.Add(new Event(String.Format("e{0}", i), Controllability.Controllable));
-                }
+                    e.Add(new Event(string.Format("e{0}", i), Controllability.Controllable));
                 else
-                {
-                    e.Add(new Event(String.Format("e{0}", i), Controllability.Uncontrollable));
-                }
-            }
+                    e.Add(new Event(string.Format("e{0}", i), Controllability.Uncontrollable));
 
             //----------------------------
             // Plants
@@ -213,8 +208,8 @@ namespace Examples
                 },
                 s[0], "E4");
 
-            plants = new[] { c1, c2, milling, lathe, robot, mm, c3, mp }.ToList();
-            specs = new[] { e1, e2, e3, e4, e5, e6, e7, e8 }.ToList();
+            plants = new[] {c1, c2, milling, lathe, robot, mm, c3, mp}.ToList();
+            specs = new[] {e1, e2, e3, e4, e5, e6, e7, e8}.ToList();
         }
 
         private static void IteratingOverProperties()
@@ -222,49 +217,33 @@ namespace Examples
             List<DeterministicFiniteAutomaton> plants, specs;
             FSM(out plants, out specs);
 
-            var G = plants.Where(s => s.Name == "Robot").First();
+            var G = plants.First(s => s.Name == "Robot");
 
-            Console.WriteLine("\nAutomaton: {0}", G.ToString()); // or G.Name
+            Console.WriteLine("\nAutomaton: {0}", G); // or G.Name
 
             Console.WriteLine("\nStates: {0}", G.States.Count());
             // Or: Console.WriteLine("States: {0}", G.Size);
             foreach (var s in G.States) // iterates over all states
-            {
-                Console.WriteLine("\tState: {0}", s.ToString()); // prints state's name.
-            }
+                Console.WriteLine("\tState: {0}", s); // prints state's name.
 
             Console.WriteLine("\nEvents: {0}", G.Events.Count());
             foreach (var e in G.Events) // iterates over all event
-            {
                 if (e.IsControllable)
-                {
-                    Console.WriteLine("\tEvent: {0} (controllable)", e.ToString()); // prints event's name.
-                }
+                    Console.WriteLine("\tEvent: {0} (controllable)", e); // prints event's name.
                 else
-                {
-                    Console.WriteLine("\tEvent: {0} (uncontrollable)", e.ToString()); // prints event's name.
-                }
-            }
+                    Console.WriteLine("\tEvent: {0} (uncontrollable)", e); // prints event's name.
 
             Console.WriteLine("\nTransitions: {0}", G.Transitions.Count());
 
             foreach (var t in G.Transitions) // iterates over all transictions
-            {
                 // you can use t.Origin, t.Trigger and t.Destination to get information about the transiction
-                Console.WriteLine("\tTransition: {0}", t.ToString()); // prints '{Origin} --{event}-> {Destination}'
-            }
+                Console.WriteLine("\tTransition: {0}", t); // prints '{Origin} --{event}-> {Destination}'
 
             Console.WriteLine("\nUncontrollable Events: {0}", G.UncontrollableEvents.Count());
-            foreach (var e in G.UncontrollableEvents)
-            {
-                Console.WriteLine("\tUncontrollable event: {0}", e.ToString());
-            }
+            foreach (var e in G.UncontrollableEvents) Console.WriteLine("\tUncontrollable event: {0}", e);
 
             Console.WriteLine("\nMarked States: {0}", G.MarkedStates.Count());
-            foreach (var s in G.MarkedStates)
-            {
-                Console.WriteLine("\tMarked State: {0}", s.ToString());
-            }
+            foreach (var s in G.MarkedStates) Console.WriteLine("\tMarked State: {0}", s);
 
             // if you need access some random position you can not use '[]' (Ex: G.Events[i])
             // To do this, you need use 'ElementAt' (Ex: G.Events.ElementAt(i)).
@@ -277,7 +256,6 @@ namespace Examples
 
             // Notice: store a list or array will use more memory, 
             //         therefore do this only if 'foreach' does not meet your need.
-
         }
 
         private static void Properties()
@@ -285,11 +263,11 @@ namespace Examples
             List<DeterministicFiniteAutomaton> plants, specs;
             FSM(out plants, out specs);
 
-            var G = plants.Where(s => s.Name == "Robot").First();
+            var G = plants.First(s => s.Name == "Robot");
 
-            Console.WriteLine("Automaton: {0}", G.ToString()); // or G.Name
+            Console.WriteLine("Automaton: {0}", G); // or G.Name
 
-            Console.WriteLine("\tInitial state: {0}", G.InitialState.ToString());
+            Console.WriteLine("\tInitial state: {0}", G.InitialState);
 
             Console.WriteLine("\tAccessible Part: {0} states", G.AccessiblePart.Size);
             Console.WriteLine("\tCoaccessible Part: {0} states", G.CoaccessiblePart.Size);
@@ -302,15 +280,12 @@ namespace Examples
         private static void ShowDisablement(DeterministicFiniteAutomaton S, DeterministicFiniteAutomaton G, int limit)
         {
             var statesAndEventsList = S.DisabledEvents(G);
-            int i = 0;
-            foreach(var pairStateEventList in statesAndEventsList)
+            var i = 0;
+            foreach (var pairStateEventList in statesAndEventsList)
             {
-                Console.WriteLine("\tState: {0}", pairStateEventList.Key.ToString());
+                Console.WriteLine("\tState: {0}", pairStateEventList.Key);
 
-                foreach(var _event in pairStateEventList.Value)
-                {
-                    Console.WriteLine("\t\tEvent: {0}", _event.ToString());
-                }
+                foreach (var _event in pairStateEventList.Value) Console.WriteLine("\t\tEvent: {0}", _event);
                 Console.Write("\n");
 
                 if (++i >= limit) break;
@@ -319,8 +294,7 @@ namespace Examples
 
         private static void Methods()
         {
-            List<DeterministicFiniteAutomaton> plants, specs;
-            FSM(out plants, out specs);
+            FSM(out var plants, out var specs);
 
             Console.WriteLine("\nFSM\n");
 
@@ -334,20 +308,16 @@ namespace Examples
 
             // Controllability
             if (K.IsControllable(Plant))
-            {
                 Console.WriteLine("\tK is controllable");
-            }
             else
-            {
                 Console.WriteLine("\tK is not controllable");
-            }
 
             // Computes the supervisor using the global plant and specification
             var S = DeterministicFiniteAutomaton.MonolithicSupervisor(
-                        new[] { Plant }, // global plant
-                        new[] { Specification }, // global specification
-                        true
-                    );
+                new[] {Plant}, // global plant
+                new[] {Specification}, // global specification
+                true
+            );
 
             Console.WriteLine("\tSupervisor: {0} states", S.Size);
 
@@ -374,10 +344,9 @@ namespace Examples
 
         private static void HandlingFiles()
         {
-            List<DeterministicFiniteAutomaton> plants, specs;
-            FSM(out plants, out specs);
+            FSM(out var plants, out var specs);
 
-            var robot = plants.Where(s => s.Name == "Robot").First();
+            var robot = plants.First(s => s.Name == "Robot");
 
             var Plant = DeterministicFiniteAutomaton.ParallelComposition(plants);
             var Specification = DeterministicFiniteAutomaton.ParallelComposition(specs);
@@ -386,8 +355,8 @@ namespace Examples
             robot.ToAdsFile("ROBOT.ADS");
 
             DeterministicFiniteAutomaton.ToAdsFile(
-                    new[] { Plant, Specification },
-                    new[] { "G.ADS", "E.ADS" }
+                new[] {Plant, Specification},
+                new[] {"G.ADS", "E.ADS"}
             );
 
             // Notice: Export all automata calling the method 'ToAdsFile' just once.
@@ -426,7 +395,7 @@ namespace Examples
             plants.ForEach(g => g.drawSVGFigure(null, false));
         }
 
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             Properties();
             IteratingOverProperties();
