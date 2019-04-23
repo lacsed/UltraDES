@@ -13,7 +13,7 @@ namespace UltraDES
     {
         public static void showAutomaton(DeterministicFiniteAutomaton G, string name = "Automaton")
         {
-            string path = String.Format("{0}.html", name);
+            string path = $"{name}.html";
 
             var source = new StringBuilder();
             source.AppendLine("<!DOCTYPE HTML>");
@@ -24,9 +24,11 @@ namespace UltraDES
             source.AppendLine("\t<BODY>");
             source.AppendLine("\t\t<script type=\"text/vnd.graphviz\" id=\"cluster\">");
             source.AppendLine(G.ToDotCode);
-            source.AppendLine("\t\t</script>");
-            source.AppendLine(@"<script src=""Drawing/viz.js""></script>
-        <script>
+            source.AppendLine("\t\t</script>"); //
+            //source.AppendLine(@"<script src=""Drawing/viz.js""></script>");
+            source.AppendLine(@"<script src=""https://github.com/mdaines/viz.js/releases/download/v1.8.0/viz.js""></script>");
+            source.AppendLine(@"        
+            <script>
                function inspect(s) {
             return ""<pre>"" + s.replace(/</g, ""&lt;"").replace(/>/g, ""&gt;"").replace(/\""/g, ""&quot;"") + ""</pre>""
                }
@@ -55,7 +57,8 @@ namespace UltraDES
                 file.WriteLine(source.ToString());
             }
 
-            Process.Start(path);
+            //Process.Start(path);
+            Process.Start(@"cmd.exe ", $@"/c {path}");
             Thread.Sleep(1000);
         }
     }

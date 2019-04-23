@@ -1,9 +1,4 @@
-﻿////////////////////////////////////////////////////////////////////////////////////////////////////
-// file:	DeterministicFiniteAutomaton.cs
-//
-// summary:	Implements the deterministic finite automaton class
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
+﻿
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -53,21 +48,20 @@ namespace UltraDES
 
         private Dictionary<StatesTuple, bool> _validStates;
 
-        private Stack<bool> m_removeBadStates;
+        private Stack<bool> _removeBadStates;
 
-        static DeterministicFiniteAutomaton()
-        {
-            var currentPath = Directory.GetCurrentDirectory();
-            var origem = currentPath;
-            var newPath = currentPath + "\\..\\..\\..\\USER";
-            if (!Directory.Exists(newPath))
-            {
-                newPath = currentPath + "\\USER";
-                if (!Directory.Exists(newPath)) Directory.CreateDirectory(newPath);
-            }
+        //static DeterministicFiniteAutomaton()
+        //{
+        //    var currentPath = Directory.GetCurrentDirectory();
+        //    var newPath = currentPath + "\\..\\..\\..\\USER";
+        //    if (!Directory.Exists(newPath))
+        //    {
+        //        newPath = currentPath + "\\USER";
+        //        if (!Directory.Exists(newPath)) Directory.CreateDirectory(newPath);
+        //    }
 
-            Directory.SetCurrentDirectory(newPath);
-        }
+        //    Directory.SetCurrentDirectory(newPath);
+        //}
 
         public DeterministicFiniteAutomaton(IEnumerable<Transition> transitions, AbstractState initial, string name)
             : this(1)
@@ -168,27 +162,11 @@ namespace UltraDES
             }
         }
 
-        public AbstractState InitialState
-        {
-            get
-            {
-                if (IsEmpty()) return null;
-                return composeState(new int[_statesList.Count]);
-            }
-        }
+        public AbstractState InitialState => IsEmpty() ? null : composeState(new int[_statesList.Count]);
 
-        public IEnumerable<AbstractEvent> Events
-        {
-            get
-            {
-                foreach (var e in _eventsUnion) yield return e;
-            }
-        }
+        public IEnumerable<AbstractEvent> Events => _eventsUnion;
 
-        public IEnumerable<AbstractEvent> UncontrollableEvents
-        {
-            get { return _eventsUnion.Where(i => !i.IsControllable); }
-        }
+        public IEnumerable<AbstractEvent> UncontrollableEvents => _eventsUnion.Where(i => !i.IsControllable);
 
         public DFA AccessiblePart
         {
@@ -220,14 +198,7 @@ namespace UltraDES
             }
         }
 
-        public int KleeneClosure
-        {
-            get
-            {
-                Console.WriteLine("Sorry. This is still in TO-DO List");
-                return 0;
-            }
-        }
+        public int KleeneClosure => throw new NotImplementedException("Sorry. This is still in TO-DO List");
 
         public DFA Minimal
         {
@@ -248,9 +219,9 @@ namespace UltraDES
             {
                 var G = Clone();
 
-                for (var i = 0; i < G._statesList.Count; ++i)
-                for (var s = 0; s < G._statesList[i].Length; ++s)
-                    G._statesList[i][s] = G._statesList[i][s].ToMarked;
+                foreach (var states in G._statesList)
+                    for (var s = 0; s < states.Length; ++s)
+                        states[s] = states[s].ToMarked;
 
                 return G;
             }
@@ -346,7 +317,7 @@ namespace UltraDES
                     for (var j = 0; j < size; j++) a[i, j] = Symbol.Empty;
 
                     for (var e = 0; e < _eventsUnion.Length; e++)
-                        if (_adjacencyList[0].hasEvent(i, e))
+                        if (_adjacencyList[0].HasEvent(i, e))
                             a[i, _adjacencyList[0][i, e]] += _eventsUnion[e];
                 }
 
@@ -406,7 +377,7 @@ namespace UltraDES
                 for (var i = 0; i < _statesList[0].Length; i++)
                 for (var j = 0; j < _eventsUnion.Length; j++)
                 {
-                    var k = _adjacencyList[0].hasEvent(i, j) ? _adjacencyList[0][i, j] : -1;
+                    var k = _adjacencyList[0].HasEvent(i, j) ? _adjacencyList[0][i, j] : -1;
                     if (k == -1) continue;
 
                     var t = (XmlElement) transitions.AppendChild(doc.CreateElement("Transition"));
@@ -529,7 +500,7 @@ namespace UltraDES
         {
             _numberOfRunningThreads = 0;
             _statesStack = new Stack<StatesTuple>();
-            m_removeBadStates = new Stack<bool>();
+            _removeBadStates = new Stack<bool>();
 
             _validStates = new Dictionary<StatesTuple, bool>(StatesTupleComparator.getInstance());
 
@@ -537,7 +508,7 @@ namespace UltraDES
 
             var initialIndex = new StatesTuple(new int[_statesList.Count], _bits, _tupleSize);
             _statesStack.Push(initialIndex);
-            m_removeBadStates.Push(false);
+            _removeBadStates.Push(false);
 
             var vThreads = new Task[NumberOfThreads - 1];
 
@@ -585,7 +556,7 @@ namespace UltraDES
                     {
                         if (_statesStack.Count == 0) break;
                         tuple = _statesStack.Pop();
-                        vRemoveBadStates = m_removeBadStates.Pop();
+                        vRemoveBadStates = _removeBadStates.Pop();
                         if (_validStates.ContainsKey(tuple)) continue;
                         tuple.Get(pos, _bits, _maxSize);
                     }
@@ -601,7 +572,7 @@ namespace UltraDES
                             {
                                 nextPosition[i] = pos[i];
                             }
-                            else if (_adjacencyList[i].hasEvent(pos[i], e))
+                            else if (_adjacencyList[i].HasEvent(pos[i], e))
                             {
                                 nextPosition[i] = _adjacencyList[i][pos[i], e];
                                 plantHasEvent = true;
@@ -616,7 +587,7 @@ namespace UltraDES
                             {
                                 nextPosition[i] = pos[i];
                             }
-                            else if (_adjacencyList[i].hasEvent(pos[i], e))
+                            else if (_adjacencyList[i].HasEvent(pos[i], e))
                             {
                                 nextPosition[i] = _adjacencyList[i][pos[i], e];
                             }
@@ -645,7 +616,7 @@ namespace UltraDES
                             if (!_validStates.TryGetValue(nextStates[i], out var vValue))
                             {
                                 _statesStack.Push(nextStates[i]);
-                                m_removeBadStates.Push(true);
+                                _removeBadStates.Push(true);
                                 ++j;
                             }
                             else if (vValue)
@@ -653,7 +624,7 @@ namespace UltraDES
                                 while (--j >= 0)
                                 {
                                     _statesStack.Pop();
-                                    m_removeBadStates.Pop();
+                                    _removeBadStates.Pop();
                                 }
 
                                 _validStates.Add(tuple, true);
@@ -670,7 +641,7 @@ namespace UltraDES
                         for (int i = 0; i < n; ++i)
                             if (!_eventsList[i][e])
                                 nextPosition[i] = pos[i];
-                            else if (_adjacencyList[i].hasEvent(pos[i], e))
+                            else if (_adjacencyList[i].HasEvent(pos[i], e))
                                 nextPosition[i] = _adjacencyList[i][pos[i], e];
                             else
                                 goto nextEvent;
@@ -681,7 +652,7 @@ namespace UltraDES
                             if (!_validStates.ContainsKey(nextTuple))
                             {
                                 _statesStack.Push(nextTuple);
-                                m_removeBadStates.Push(false);
+                                _removeBadStates.Push(false);
                             }
                         }
 
@@ -829,14 +800,14 @@ namespace UltraDES
                 Array.Clear(bucket, 0, bucket.Length);
                 for (i = 0; i < n; ++i)
                 {
-                    k = _adjacencyList[0].hasEvent(positions[i], e) ? map[_adjacencyList[0][positions[i], e]] : n;
+                    k = _adjacencyList[0].HasEvent(positions[i], e) ? map[_adjacencyList[0][positions[i], e]] : n;
                     ++bucket[k];
                 }
 
                 for (i = 1; i <= n; ++i) bucket[i] += bucket[i - 1];
                 for (i = n - 1; i >= 0; --i)
                 {
-                    k = _adjacencyList[0].hasEvent(positions[i], e) ? map[_adjacencyList[0][positions[i], e]] : n;
+                    k = _adjacencyList[0].HasEvent(positions[i], e) ? map[_adjacencyList[0][positions[i], e]] : n;
                     b[--bucket[k]] = positions[i];
                 }
 
@@ -878,7 +849,7 @@ namespace UltraDES
                     ++numStates;
                     for (var e = 0; e < numEvents; ++e)
                     {
-                        hasEvents[e] = _adjacencyList[0].hasEvent(k, e);
+                        hasEvents[e] = _adjacencyList[0].HasEvent(k, e);
                         if (hasEvents[e]) transitions[e] = _adjacencyList[0][k, e];
                     }
 
@@ -889,7 +860,7 @@ namespace UltraDES
                         if (j >= numStatesOld) break;
                         l = positions[j];
                         for (var e = numEvents - 1; e >= 0; --e)
-                            if (hasEvents[e] != _adjacencyList[0].hasEvent(l, e) ||
+                            if (hasEvents[e] != _adjacencyList[0].HasEvent(l, e) ||
                                 hasEvents[e] && statesMap[transitions[e]] !=
                                 statesMap[_adjacencyList[0][l, e]])
                                 goto nextState;
@@ -946,7 +917,7 @@ namespace UltraDES
                 k = statesMap[i];
                 k = k == 0 ? initial : k == initial ? 0 : k;
                 for (var e = 0; e < numEvents; ++e)
-                    if (_adjacencyList[0].hasEvent(i, e))
+                    if (_adjacencyList[0].HasEvent(i, e))
                     {
                         l = statesMap[_adjacencyList[0][i, e]];
                         l = l == 0 ? initial : l == initial ? 0 : l;
@@ -1125,7 +1096,7 @@ namespace UltraDES
                         for (i = n - 1; i >= 0; --i)
                             if (!_eventsList[i][e])
                                 nextPosition[i] = pos[i];
-                            else if (_adjacencyList[i].hasEvent(pos[i], e))
+                            else if (_adjacencyList[i].HasEvent(pos[i], e))
                                 nextPosition[i] = _adjacencyList[i][pos[i], e];
                             else
                                 goto nextEvent;
@@ -1325,7 +1296,7 @@ namespace UltraDES
                 for (var e = 0; e < _eventsUnion.Length; ++e)
                 {
                     for (var i = 0; i < n; ++i)
-                        if (_adjacencyList[i].hasEvent(pos[i], e))
+                        if (_adjacencyList[i].HasEvent(pos[i], e))
                             nextPos[i] = _adjacencyList[i][pos[i], e];
                         else
                             goto nextEvent;
@@ -1479,7 +1450,7 @@ namespace UltraDES
                         for (var e = 0; e < n; ++e)
                             if (_eventsList[e][j])
                             {
-                                if (_adjacencyList[e].hasEvent(pos[e], j))
+                                if (_adjacencyList[e].HasEvent(pos[e], j))
                                     nextPos[e] = _adjacencyList[e][pos[e], j];
                                 else
                                     goto nextEvent;
@@ -1589,7 +1560,7 @@ namespace UltraDES
                     {
                         nextPosition[i] = pos[i];
                     }
-                    else if (_adjacencyList[i].hasEvent(pos[i], e))
+                    else if (_adjacencyList[i].HasEvent(pos[i], e))
                     {
                         nextPosition[i] = _adjacencyList[i][pos[i], e];
                         plantHasEvent = true;
@@ -1604,7 +1575,7 @@ namespace UltraDES
                     {
                         nextPosition[i] = pos[i];
                     }
-                    else if (_adjacencyList[i].hasEvent(pos[i], e))
+                    else if (_adjacencyList[i].HasEvent(pos[i], e))
                     {
                         nextPosition[i] = _adjacencyList[i][pos[i], e];
                     }
@@ -1637,7 +1608,7 @@ namespace UltraDES
                 for (i = 0; i < n; ++i)
                     if (!_eventsList[i][e])
                         nextPosition[i] = pos[i];
-                    else if (_adjacencyList[i].hasEvent(pos[i], e))
+                    else if (_adjacencyList[i].HasEvent(pos[i], e))
                         nextPosition[i] = _adjacencyList[i][pos[i], e];
                     else
                         goto nextEvent;
@@ -1731,7 +1702,7 @@ namespace UltraDES
                     for (var j = n - 1; j >= 0; --j)
                         if (_eventsList[j][e])
                         {
-                            if (_adjacencyList[j].hasEvent(pos[j], e))
+                            if (_adjacencyList[j].HasEvent(pos[j], e))
                                 nextPos[j] = _adjacencyList[j][pos[j], e];
                             else
                                 goto nextEvent;
@@ -1776,7 +1747,6 @@ namespace UltraDES
 
         private static void removeUnusedTransitions(DFA[] composition)
         {
-            int s1, s2;
             var stack1 = new Stack<int>();
             var stack2 = new Stack<int>();
             var n = composition.Count();
@@ -1804,8 +1774,8 @@ namespace UltraDES
 
                     while (stack1.Count > 0)
                     {
-                        s1 = stack1.Pop();
-                        s2 = stack2.Pop();
+                        var s1 = stack1.Pop();
+                        var s2 = stack2.Pop();
 
                         var p = s1 * (int) other.Size + s2;
 
@@ -1816,7 +1786,7 @@ namespace UltraDES
 
                         for (var e = 0; e < composition[i]._eventsUnion.Length; ++e)
                         {
-                            if (!composition[i]._adjacencyList[0].hasEvent(s1, e)) continue;
+                            if (!composition[i]._adjacencyList[0].HasEvent(s1, e)) continue;
 
                             if (otherEvents[e] < 0)
                             {
@@ -1824,7 +1794,7 @@ namespace UltraDES
                                 stack2.Push(s2);
                                 validEvents[s1][e] = true;
                             }
-                            else if (other._adjacencyList[0].hasEvent(s2, otherEvents[e]))
+                            else if (other._adjacencyList[0].HasEvent(s2, otherEvents[e]))
                             {
                                 stack1.Push(composition[i]._adjacencyList[0][s1, e]);
                                 stack2.Push(other._adjacencyList[0][s2, otherEvents[e]]);
@@ -1832,17 +1802,17 @@ namespace UltraDES
                             }
                         }
 
-                        for (var e = 0; e < extraEvents.Length; ++e)
-                            if (other._adjacencyList[0].hasEvent(s2, extraEvents[e]))
+                        foreach (var e in extraEvents)
+                            if (other._adjacencyList[0].HasEvent(s2, e))
                             {
                                 stack1.Push(s1);
-                                stack2.Push(other._adjacencyList[0][s2, extraEvents[e]]);
+                                stack2.Push(other._adjacencyList[0][s2, e]);
                             }
                     }
 
                     for (var k = 0; k < validEvents.Count(); ++k)
                     for (var e = 0; e < validEvents[k].Count; ++e)
-                        if (!validEvents[k][e] && composition[i]._adjacencyList[0].hasEvent(k, e))
+                        if (!validEvents[k][e] && composition[i]._adjacencyList[0].HasEvent(k, e))
                             composition[i]._adjacencyList[0].Remove(k, e);
                 }
             }
@@ -2216,7 +2186,7 @@ namespace UltraDES
                     for (var j = 0; j < _statesList[i].Length; ++j)
                     {
                         for (var e = 0; e < _eventsUnion.Length; ++e)
-                            if (_adjacencyList[i].hasEvent(j, e))
+                            if (_adjacencyList[i].HasEvent(j, e))
                                 invProj._adjacencyList[i].Add(j, evMap[e], _adjacencyList[i][j, e]);
                         for (var e = 0; e < evs.Count; ++e)
                             invProj._adjacencyList[i].Add(j, evMapNew[e], j);
@@ -2261,7 +2231,7 @@ namespace UltraDES
                 }
 
                 for (var e = 0; e < evs.Length; ++e)
-                    if (_adjacencyList[0].hasEvent(i, evs[e]))
+                    if (_adjacencyList[0].HasEvent(i, evs[e]))
                     {
                         var next = _adjacencyList[0][i, evs[e]];
                         var newNext = statesMap[next];
@@ -2386,7 +2356,7 @@ namespace UltraDES
                             int k;
                             foreach (var state in oldStates)
                             {
-                                if (!_adjacencyList[0].hasEvent(state, rEvs[e])) continue;
+                                if (!_adjacencyList[0].HasEvent(state, rEvs[e])) continue;
                                 k = _adjacencyList[0][state, rEvs[e]];
                                 if (!nextNewStates.Contains(statesMap[k])) nextNewStates.Add(statesMap[k]);
                             }
@@ -2960,7 +2930,7 @@ namespace UltraDES
                     }
                     else
                     {
-                        if (!G._adjacencyList[i].hasEvent(posG[i], eG))
+                        if (!G._adjacencyList[i].HasEvent(posG[i], eG))
                         {
                             hasNextG = false;
                             break;
@@ -2980,7 +2950,7 @@ namespace UltraDES
                     }
                     else
                     {
-                        if (!_adjacencyList[i].hasEvent(posS[i], eS))
+                        if (!_adjacencyList[i].HasEvent(posS[i], eS))
                         {
                             hasNextS = false;
                             break;

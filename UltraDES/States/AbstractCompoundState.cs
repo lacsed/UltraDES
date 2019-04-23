@@ -15,11 +15,6 @@ namespace UltraDES
     [Serializable]
     public abstract class AbstractCompoundState : AbstractState
     {
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Gets or sets the s 1. </summary>
-        /// <value> The s 1. </value>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        public abstract AbstractState[] S { get; protected set; }
 
         public AbstractState Join()
         {

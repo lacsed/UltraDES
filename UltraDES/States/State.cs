@@ -58,10 +58,10 @@ namespace UltraDES
         /// <value> to unmarked. </value>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        public override AbstractState ToUnmarked
-        {
-            get { return !IsMarked ? this : new State(Alias, Marking.Unmarked); }
-        }
+        public override AbstractState ToUnmarked => !IsMarked ? this : new State(Alias, Marking.Unmarked);
+
+        public override AbstractState[] S => new AbstractState[] {this};
+        public override AbstractState Flatten => this;
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>   Determines whether the specified object is equal to the current object. </summary>

@@ -5,6 +5,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 using System;
+using System.Linq;
 using System.Text;
 
 namespace UltraDES
@@ -52,9 +53,9 @@ namespace UltraDES
         {
             S = s;
             _hashcode = 0;
-            for (var i = 0; i < S.Length; ++i)
+            foreach (var t in S)
             {
-                var hash = S[i].GetHashCode();
+                var hash = t.GetHashCode();
                 _hashcode = 7 * (_hashcode ^ hash) + 3 * hash;
             }
             Marking = marking;
@@ -64,25 +65,21 @@ namespace UltraDES
         /// <summary>   Gets or sets the s 1. </summary>
         /// <value> The s 1. </value>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        public override AbstractState[] S { get; protected set; }
+        public override AbstractState[] S { get; }
+
+        public override AbstractState Flatten => new State(this.ToString(), this.Marking);
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>   Gets to marked. </summary>
         /// <value> to marked. </value>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        public override AbstractState ToMarked
-        {
-            get { return IsMarked ? this : new CompoundState(S, Marking.Marked); }
-        }
+        public override AbstractState ToMarked => IsMarked ? this : new CompoundState(S, Marking.Marked);
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>   Gets to unmarked. </summary>
         /// <value> to unmarked. </value>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        public override AbstractState ToUnmarked
-        {
-            get { return !IsMarked ? this : new CompoundState(S, Marking.Unmarked); }
-        }
+        public override AbstractState ToUnmarked => !IsMarked ? this : new CompoundState(S, Marking.Unmarked);
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>   Determines whether the specified object is equal to the current object. </summary>
@@ -102,9 +99,9 @@ namespace UltraDES
 
             if (_hashcode != p._hashcode || S.Length != p.S.Length) return false;
 
-            for (var i = 0; i < S.Length; ++i)
+            if (S.Where((t, i) => t != p.S[i]).Any())
             {
-                if (S[i] != p.S[i]) return false;
+                return false;
             }
 
             return Marking == p.Marking;
@@ -120,7 +117,9 @@ namespace UltraDES
         public override AbstractCompoundState MergeWith(AbstractState s2, bool allMarked = true)
         {
             var marked = allMarked ? IsMarked && s2.IsMarked : IsMarked || s2.IsMarked;
-            return new CompoundState(new[] { this, s2 }, marked ? Marking.Marked : Marking.Unmarked);
+
+
+            return new CompoundState(S.Concat(s2.S).ToArray(), marked ? Marking.Marked : Marking.Unmarked);
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -145,7 +144,7 @@ namespace UltraDES
             for (var i = 1; i < S.Length; ++i)
             {
                 sb.Append("|");
-                sb.Append(S[i].ToString());
+                sb.Append(S[i]);
             }
             return sb.ToString();
         }

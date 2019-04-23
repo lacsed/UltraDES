@@ -25,10 +25,7 @@ namespace UltraDES
         /// <summary>   Gets a value indicating whether this object is marked. </summary>
         /// <value> true if this object is marked, false if not. </value>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        public bool IsMarked
-        {
-            get { return Marking == Marking.Marked; }
-        }
+        public bool IsMarked => Marking == Marking.Marked;
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>   Gets to marked. </summary>
@@ -41,6 +38,10 @@ namespace UltraDES
         /// <value> to unmarked. </value>
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         public abstract AbstractState ToUnmarked { get; }
+
+        public abstract AbstractState[] S { get; }
+
+        public abstract AbstractState Flatten { get; }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         /// <summary>   Returns a string that represents the current object. </summary>
@@ -99,6 +100,8 @@ namespace UltraDES
         {
             return !(a == b);
         }
+
+        
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
