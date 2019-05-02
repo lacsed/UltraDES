@@ -50,18 +50,6 @@ namespace UltraDES
 
         private Stack<bool> _removeBadStates;
 
-        //static DeterministicFiniteAutomaton()
-        //{
-        //    var currentPath = Directory.GetCurrentDirectory();
-        //    var newPath = currentPath + "\\..\\..\\..\\USER";
-        //    if (!Directory.Exists(newPath))
-        //    {
-        //        newPath = currentPath + "\\USER";
-        //        if (!Directory.Exists(newPath)) Directory.CreateDirectory(newPath);
-        //    }
-
-        //    Directory.SetCurrentDirectory(newPath);
-        //}
 
         public DeterministicFiniteAutomaton(IEnumerable<Transition> transitions, AbstractState initial, string name)
             : this(1)
@@ -217,13 +205,10 @@ namespace UltraDES
         {
             get
             {
-                var G = Clone();
+                var marked = States.ToDictionary(s => s, s => s.ToMarked);
 
-                foreach (var states in G._statesList)
-                    for (var s = 0; s < states.Length; ++s)
-                        states[s] = states[s].ToMarked;
-
-                return G;
+                return new DFA(Transitions.Select(t => new Transition(marked[t.Origin], t.Trigger, marked[t.Destination])),
+                    marked[InitialState], $"Prefix({Name})");
             }
         }
 
@@ -1342,7 +1327,7 @@ namespace UltraDES
         }
 
         public static DFA MonolithicSupervisor(IEnumerable<DFA> plants,
-            IEnumerable<DFA> specifications, bool nonBlocking = false)
+            IEnumerable<DFA> specifications, bool nonBlocking = true)
         {
             var plant = plants.Aggregate((a, b) => a.ParallelCompositionWith(b, false));
             var specification = specifications.Aggregate((a, b) => a.ParallelCompositionWith(b, false));
@@ -2541,7 +2526,7 @@ namespace UltraDES
                         }
                         else
                         {
-                            vMarkedStates += " " + s;
+                            vMarkedStates += "\r\n" + s;
                         }
                     }
 
@@ -2553,7 +2538,7 @@ namespace UltraDES
 
                 for (var s = 0; s < g._statesList[0].Length; ++s)
                     foreach (var t in g._adjacencyList[0][s])
-                        file.WriteLine("{0} {1} {2}", s, vEventsMaps[t.Key], t.Value);
+                        file.WriteLine("{0,-5} {1,-3} {2,-5}", s, vEventsMaps[t.Key], t.Value);
 
                 file.Close();
             }
@@ -2621,8 +2606,10 @@ namespace UltraDES
             Drawing.drawLatexFigure(this, fileName, openAfterFinish);
         }
 
-        public void showAutomaton(string name = "Automaton")
+        public void showAutomaton(string name = "")
         {
+            if (name == "") name = Name;
+            name = Path.GetInvalidFileNameChars().Aggregate(name, (current, c) => current.Replace(c, '_'));
             GraphVizDraw.showAutomaton(this, name);
         }
 
@@ -2802,7 +2789,7 @@ namespace UltraDES
             var G = ParallelComposition(plants, false);
             var nG = G._statesList.Count;
             var nS = _statesList.Count;
-            int[] pos1, pos2 = new int[nS];
+            int[] pos2 = new int[nS];
             var evs = _eventsUnion.Union(G._eventsUnion).OrderBy(i => i.Controllability).ToArray();
             var numUncontEvs = 0;
             var stackG = new Stack<int[]>();
@@ -2813,7 +2800,6 @@ namespace UltraDES
             var evsMapS = new int[evs.Length];
             var GTuple = new StatesTuple(G._tupleSize);
             var STuple = new StatesTuple(_tupleSize);
-            bool GHasNext, SHasNext;
             var controllabity = UltraDES.Controllability.Controllable;
             var disabled = new Dictionary<AbstractState, List<AbstractEvent>>((int) Size);
             AbstractState currentState = null;
@@ -2840,7 +2826,7 @@ namespace UltraDES
 
             while (stackS.Count > 0)
             {
-                pos1 = stackG.Pop();
+                var pos1 = stackG.Pop();
                 pos2 = stackS.Pop();
 
                 if (getDisabledEvents)
@@ -2852,8 +2838,8 @@ namespace UltraDES
                 for (var e = 0; e < evs.Length; ++e)
                 {
                     var t = CheckState(G, nG, nS, pos1, pos2, evsMapG[e], evsMapS[e]);
-                    GHasNext = t.Item1;
-                    SHasNext = t.Item2;
+                    var GHasNext = t.Item1;
+                    var SHasNext = t.Item2;
 
                     if (GHasNext && GfilteredStates)
                     {
@@ -2960,6 +2946,107 @@ namespace UltraDES
                     }
 
             return new Tuple<bool, bool, int[], int[]>(hasNextG, hasNextS, nextG, nextS);
+        }
+
+        private static Dictionary<AbstractState, AbstractState> SupervisorPlantState(DeterministicFiniteAutomaton sup,
+            DeterministicFiniteAutomaton plant, HashSet<AbstractState> forbidden)
+        {
+            var transG = plant.Transitions.GroupBy(t => t.Origin)
+                .ToDictionary(g => g.Key, g => g.Select(t => (t.Trigger, t.Destination)).ToArray());
+            var transS = sup.Transitions.GroupBy(t => t.Origin)
+                .ToDictionary(g => g.Key, g => g.Select(t => (t.Trigger, t.Destination)).ToArray());
+
+            var map = new Dictionary<AbstractState, AbstractState>((int)sup.Size);
+
+            var frontier = new HashSet<(AbstractState, AbstractState)>() { (sup.InitialState, plant.InitialState) };
+
+            while (frontier.Any())
+            {
+
+                var newFrontier = new HashSet<(AbstractState, AbstractState)>();
+                foreach (var (qs, qp) in frontier) map.Add(qs, qp);
+
+                foreach (var (qs, qp) in frontier)
+                {
+                    foreach (var (e, dp) in transG[qp])
+                    {
+                        var ds = transS[qs].Where(t => t.Trigger == e).DefaultIfEmpty((null, null)).SingleOrDefault().Destination;
+
+                        if (ds == null)
+                        {
+                            if (!e.IsControllable) forbidden.Add(qs);
+                            continue;
+                        }
+
+                        if (!map.ContainsKey(ds)) newFrontier.Add((ds, dp));
+                    }
+                }
+
+                frontier = newFrontier;
+            }
+
+            return map;
+        }
+
+        [Obsolete("MonolithicSupervisorLegacy is deprecated, please use MonolithicSupervisor instead.")]
+        public static DFA MonolithicSupervisorLegacy(DFA plant, DFA spec)
+        {
+            var forbidden = new HashSet<AbstractState>();
+            var sup = plant.ParallelCompositionWith(spec);
+            SupervisorPlantState(sup, plant, forbidden);
+
+            bool controllable = false, nonblocking = false;
+
+            while (!controllable && !nonblocking)
+            {
+                controllable = VerifyControllability(sup, forbidden);
+                nonblocking = VerifyBlocking(sup, forbidden);
+            }
+
+            var trans = sup.Transitions.Where(t => !forbidden.Contains(t.Origin) && !forbidden.Contains(t.Destination))
+                .ToList();
+
+            return new DFA(trans, sup.InitialState, $"sup({sup.Name})");
+        }
+
+        private static bool VerifyControllability(DFA sup, HashSet<AbstractState> forbidden)
+        {
+            bool controllable = true;
+            var uncontrollableTrans = sup.Transitions.Where(t => !t.Trigger.IsControllable).ToList();
+            while (true)
+            {
+                var newForbidden = uncontrollableTrans.AsParallel()
+                    .Where(t => forbidden.Contains(t.Destination) && !forbidden.Contains(t.Origin))
+                    .Select(t => t.Origin).ToList();
+
+                if (!newForbidden.Any()) return controllable;
+                controllable = false;
+
+                forbidden.UnionWith(newForbidden);
+            }
+        }
+
+        private static bool VerifyBlocking(DFA sup, HashSet<AbstractState> forbidden)
+        {
+            bool nonblocking = true;
+            var reverseTrans = sup.Transitions
+                .Where(t => !forbidden.Contains(t.Origin) && !forbidden.Contains(t.Destination))
+                .GroupBy(t => t.Destination)
+                .ToDictionary(g => g.Key, g => g.Select(t => t.Origin));
+
+            var frontier = new HashSet<AbstractState>(sup.MarkedStates);
+            var visited = new HashSet<AbstractState>();
+
+            while (frontier.Any())
+            {
+                visited.UnionWith(frontier);
+                frontier = new HashSet<AbstractState>(frontier.SelectMany(d => reverseTrans[d].Where(o => !visited.Contains(o))));
+            }
+
+            var unvisited = sup.States.Except(forbidden).Except(visited).ToList();
+            forbidden.UnionWith(unvisited);
+
+            return unvisited.Any();
         }
 
         public Dictionary<AbstractState, List<AbstractEvent>> DisabledEvents(params DFA[] plants)

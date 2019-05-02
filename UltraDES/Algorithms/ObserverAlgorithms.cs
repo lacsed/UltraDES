@@ -6,7 +6,7 @@ namespace UltraDES
 {
     public static class ObserverAlgorithms
     {
-        public static bool ObserverPropertyVerify(this DeterministicFiniteAutomaton G, AbstractEvent[] relevantArray, out (IEnumerable<Transition> transitions, AbstractState initial) Vg, bool returnOnDead = true)
+        public static bool ObserverPropertyVerify(this DeterministicFiniteAutomaton G, AbstractEvent[] relevantArray, out NondeterministicFiniteAutomaton Vg, bool returnOnDead = true)
         {
             var tau = new Event("Tau", Controllability.Controllable);
             var dead = new State("DEAD", Marking.Marked);
@@ -23,7 +23,7 @@ namespace UltraDES
             var Qt = new HashSet<(AbstractState, AbstractState)>() {(M.initial, M.initial) };
             var VgTransitions = new HashSet<Transition>();
 
-            Vg = (VgTransitions, G.InitialState);
+            //Vg = (VgTransitions, G.InitialState);
 
             while (Qt.Except(Q).Any())
             {
@@ -116,13 +116,166 @@ namespace UltraDES
                 Qt.UnionWith(Qtemp);
                 if (Qtemp.Contains((dead, dead)))
                 {
-                    if (returnOnDead) return false;
+                    if (returnOnDead)
+                    {
+                        Vg = new NondeterministicFiniteAutomaton(VgTransitions, G.InitialState, $"OBS({G})");
+                        return false;
+                    }
                     else findDead = true;
                 }
             }
 
+            Vg = new NondeterministicFiniteAutomaton(VgTransitions, G.InitialState, $"OBS({G})");
             return !findDead;
         }
+
+        public static NondeterministicFiniteAutomaton ObserverPropertySearch(this DeterministicFiniteAutomaton G, AbstractEvent[] relevantArray)
+        {
+            var tau = new Event("Tau", Controllability.Controllable);
+            var dead = new State("DEAD", Marking.Marked);
+
+            var relevant = new HashSet<AbstractEvent>(relevantArray) { tau };
+            var nonrelevant = new HashSet<AbstractEvent>(G.Events.Except(relevant));
+            var transitionsAux = G.Transitions.Select(t => (Transition)(t.Origin.Flatten, t.Trigger, t.Destination.Flatten))
+                                              .Union(G.MarkedStates.Select(q => (Transition)(q, tau, q))).ToList();
+
+
+            int renameIdx = 1;
+
+            while (true)
+            {
+                var M = StronglyConnectedComponentsAutomaton((transitionsAux, G.InitialState), nonrelevant);
+                var hasDead = FindDead(M, relevant, nonrelevant, dead, out HashSet<((AbstractState q1, AbstractState q2) o, AbstractEvent t, (AbstractState q1, AbstractState q2) d)> VgTransitions);
+
+                if (!hasDead)
+                {
+                    return new NondeterministicFiniteAutomaton(VgTransitions.Where(t =>
+                        string.CompareOrdinal(t.o.q1.ToString(), t.o.q2.ToString()) >= 0 &&
+                        string.CompareOrdinal(t.d.q1.ToString(), t.d.q2.ToString()) >= 0).Select(
+                        t =>
+                        {
+                            var origin = t.o.q1 == t.o.q2 ? t.o.q1 : t.o.q1.MergeWith(t.o.q2);
+                            var destination = t.d.q1 == t.d.q2 ? t.d.q1 : t.d.q1.MergeWith(t.d.q2);
+                            return new Transition(origin, t.t, destination);
+                        }), M.initial, $"OBS({G})");
+                }
+
+                var initial = (dead, dead);
+                var frontier =new List<((AbstractState q1, AbstractState q2) o, AbstractEvent t, (AbstractState q1, AbstractState q2) d)>();
+
+                frontier.AddRange(VgTransitions.Where(t => t.d == initial));
+
+                while (!frontier.Any(t => t.o.q1 == t.o.q2))
+                {
+                    var newFrontier = new List<((AbstractState q1, AbstractState q2) o, AbstractEvent t, (AbstractState q1, AbstractState q2) d)>();
+                    foreach (var t2 in frontier)
+                        newFrontier.AddRange(VgTransitions.Where(t => t.d == t2.o && t.d != t.o));
+
+                    frontier = newFrontier;
+                }
+
+                var (o, _, _) = frontier.First(t => t.o.q1 == t.o.q2);
+
+                foreach (var q in o.q1.S)
+                {
+                    
+                    var trans = transitionsAux.Where(t => t.Origin == q && !relevant.Contains(t.Trigger));
+                    if(!trans.Any()) continue;
+                    var removeTrans = trans.First();
+                    var originalEvent = removeTrans.Trigger;
+                    var renamedEvent = new Event($"{originalEvent}'_{renameIdx++}", originalEvent.Controllability);
+                    relevant.Add(renamedEvent);
+
+                    transitionsAux.Remove(removeTrans);
+                    transitionsAux.Add(new Transition(removeTrans.Origin, renamedEvent, removeTrans.Destination));
+                    break;
+                }
+            }
+        }
+
+        private static bool FindDead((IEnumerable<Transition> transitions, AbstractState initial) M, HashSet<AbstractEvent> relevant, HashSet<AbstractEvent> nonrelevant, State dead, out HashSet<((AbstractState, AbstractState), AbstractEvent, (AbstractState, AbstractState))> VgTransitions)
+        {
+            var transitions = M.transitions.GroupBy(t => t.Origin).ToDictionary(g => g.Key, g => g.ToArray());
+            var Q = new HashSet<(AbstractState, AbstractState)>();
+            var Qt = new HashSet<(AbstractState, AbstractState)>() {(M.initial, M.initial)};
+            VgTransitions = new HashSet<((AbstractState, AbstractState), AbstractEvent, (AbstractState, AbstractState))>();
+
+
+            bool find = false;
+            while (Qt.Except(Q).Any())
+            {
+                var Qtemp = new HashSet<(AbstractState, AbstractState)>();
+                foreach (var q in Qt.Except(Q))
+                {
+                    Q.Add(q);
+
+                    var (q1, q2) = q;
+
+                    var Enq1 = new HashSet<AbstractEvent>(transitions.ContainsKey(q1)
+                        ? transitions[q1].Select(t => t.Trigger)
+                        : new AbstractEvent[0]).Distinct();
+                    var Enq2 = new HashSet<AbstractEvent>(transitions.ContainsKey(q2)
+                        ? transitions[q2].Select(t => t.Trigger)
+                        : new AbstractEvent[0]).Distinct();
+
+                    foreach (var sigma in Enq1.Union(Enq2))
+                    {
+                        if (relevant.Contains(sigma))
+                        {
+                            if (Enq1.Contains(sigma) && Enq2.Contains(sigma))
+                            {
+                                var d1s = transitions[q1].Where(t => t.Trigger == sigma).Select(t => t.Destination);
+                                var d2s = transitions[q2].Where(t => t.Trigger == sigma).Select(t => t.Destination);
+
+
+                                foreach (var d2 in d2s)
+                                {
+                                    foreach (var d1 in d1s)
+                                    {
+                                        Qtemp.Add((d1, d2));
+                                        VgTransitions.Add(((q1, q2), sigma, (d1, d2)));
+                                    }
+                                }
+                            }
+                            else if ((Enq1.Contains(sigma) && !Enq2.Intersect(nonrelevant).Any()) ||
+                                     (Enq2.Contains(sigma) && !Enq1.Intersect(nonrelevant).Any()))
+                            {
+                                Qtemp.Add((dead, dead));
+                                VgTransitions.Add(((q1, q2), sigma, (dead, dead)));
+                            }
+                        }
+                        else
+                        {
+                            if (Enq1.Contains(sigma))
+                            {
+                                var d1s = transitions[q1].Where(t => t.Trigger == sigma).Select(t => t.Destination);
+                                foreach (var d1 in d1s)
+                                {
+                                    Qtemp.Add((d1, q2));
+                                    VgTransitions.Add(((q1, q2), sigma, (d1, q2)));
+                                }
+                            }
+
+                            if (Enq2.Contains(sigma))
+                            {
+                                var d2s = transitions[q2].Where(t => t.Trigger == sigma).Select(t => t.Destination);
+                                foreach (var d2 in d2s)
+                                {
+                                    Qtemp.Add((q1, d2));
+                                    VgTransitions.Add(((q1, q2), sigma, (q1, d2)));
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Qt.UnionWith(Qtemp);
+                if (Qtemp.Contains((dead, dead))) find = true;
+            }
+
+            return find;
+        }
+
 
         public static (IEnumerable<Transition> transitions, AbstractState initial) StronglyConnectedComponentsAutomaton((List<Transition> transitions, AbstractState initial) G, HashSet<AbstractEvent> nonrelevant)
         {
