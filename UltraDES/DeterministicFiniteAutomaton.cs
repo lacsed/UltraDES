@@ -79,7 +79,7 @@ namespace UltraDES
             Size = (ulong) _statesList[0].Length;
 
             _bits[0] = 0;
-            _maxSize[0] = (1 << (int) Math.Ceiling(Math.Log(Size, 2))) - 1;
+            _maxSize[0] = (1 << (int) Math.Max(Math.Ceiling(Math.Log(Size, 2)), 1)) - 1;
             _tupleSize = 1;
 
             for (var i = 0; i < _statesList[0].Length; ++i)
@@ -912,7 +912,7 @@ namespace UltraDES
 
             _statesList[0] = newStates;
             _adjacencyList[0] = newTransitions;
-            _maxSize[0] = (1 << (int) Math.Ceiling(Math.Log(newStates.Length, 2))) - 1;
+            _maxSize[0] = (1 << (int) Math.Max(Math.Ceiling(Math.Log(newStates.Length, 2)), 1)) - 1;
             Size = (ulong) newStates.Length;
             Name = "Min(" + Name + ")";
         }
@@ -1184,7 +1184,7 @@ namespace UltraDES
             for (var i = 0; i < n; ++i)
             {
                 G1G2._bits[i] = k;
-                var p = (int) Math.Ceiling(Math.Log(G1G2._statesList[i].Length, 2));
+                var p = (int)Math.Max(Math.Ceiling(Math.Log(G1G2._statesList[i].Length, 2)), 1);
                 G1G2._maxSize[i] = (1 << p) - 1;
                 k += p;
                 if (k > sizeof(int) * 8)
@@ -1725,7 +1725,7 @@ namespace UltraDES
             _tupleSize = 1;
             _numberOfPlants = 1;
             _maxSize = new int[1];
-            _maxSize[0] = (1 << (int) Math.Ceiling(Math.Log(Size, 2))) - 1;
+            _maxSize[0] = (1 << (int) Math.Max(Math.Ceiling(Math.Log(Size, 2)), 1)) - 1;
 
             GC.Collect();
         }
