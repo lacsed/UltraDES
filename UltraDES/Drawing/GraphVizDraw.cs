@@ -14,6 +14,8 @@ namespace UltraDES
         public static void showAutomaton(DeterministicFiniteAutomaton G, string name = "Automaton")
         {
             string path = $"{name}.html";
+            path = path.Replace("||", "-");
+
 
             var source = new StringBuilder();
             source.AppendLine("<!DOCTYPE HTML>");
@@ -57,8 +59,22 @@ namespace UltraDES
                 file.WriteLine(source.ToString());
             }
 
-            //Process.Start(path);
-            Process.Start(@"cmd.exe ", $@"/c {path}");
+            OperatingSystem os_info = System.Environment.OSVersion;
+
+            if (os_info.ToString().Contains("Unix"))
+            {
+                Process proc = new System.Diagnostics.Process();
+                proc.StartInfo.FileName = "/bin/bash";
+                proc.StartInfo.Arguments = "-c \" " + "xdg-open " + path + " \"";
+                proc.StartInfo.UseShellExecute = false;
+                proc.StartInfo.RedirectStandardOutput = true;
+                proc.Start();
+            }
+            else
+            {
+                Process.Start(@"cmd.exe ", $@"/c {path}");
+            }
+
             Thread.Sleep(1000);
         }
     }
