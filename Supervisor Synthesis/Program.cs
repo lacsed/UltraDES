@@ -436,7 +436,7 @@ namespace Supervisor_Synthesis
         private static void ComputingMonolithicSupervisor()
         {
             // Choose one option below
-            ClusterTool(8, out var plants, out var specs);
+            ClusterTool(6, out var plants, out var specs);
 
             Console.WriteLine("Monolithic Supervisor:");
             var timer = new Stopwatch(); // to measure time

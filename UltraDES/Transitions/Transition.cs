@@ -99,5 +99,10 @@ namespace UltraDES
         {
             return new Transition(t.Item1, t.Item2, t.Item3);
         }
+
+        public static implicit operator (AbstractState, AbstractEvent, AbstractState)(Transition t)
+        {
+            return (t.Origin, t.Trigger, t.Destination);
+        }
     }
 }

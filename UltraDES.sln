@@ -3,15 +3,17 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.28803.156
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UltraDES", "UltraDES\UltraDES.csproj", "{DD26652C-1FDD-485C-B22F-E91A96E7606D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UltraDES", "UltraDES\UltraDES.csproj", "{DD26652C-1FDD-485C-B22F-E91A96E7606D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{70C16CFE-3E42-4306-8A4D-C4C0EE63F39A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Algorithms", "Algorithms\Algorithms.csproj", "{CD82AD7E-A38B-4E2B-B590-D92D7DEE9C87}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Algorithms", "Algorithms\Algorithms.csproj", "{CD82AD7E-A38B-4E2B-B590-D92D7DEE9C87}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Supervisor Synthesis", "Supervisor Synthesis\Supervisor Synthesis.csproj", "{9D34F225-B855-48A5-A163-220FBB9FBAA0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Supervisor Synthesis", "Supervisor Synthesis\Supervisor Synthesis.csproj", "{9D34F225-B855-48A5-A163-220FBB9FBAA0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DFA Functions and Properties", "DFA Functions and Properties\DFA Functions and Properties.csproj", "{51B30B71-081B-4104-ACC6-7C98828166A0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DFA Functions and Properties", "DFA Functions and Properties\DFA Functions and Properties.csproj", "{51B30B71-081B-4104-ACC6-7C98828166A0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Petri Nets", "Petri Nets\Petri Nets.csproj", "{B82F8120-D143-43A7-998D-22D730B20718}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,6 +37,10 @@ Global
 		{51B30B71-081B-4104-ACC6-7C98828166A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{51B30B71-081B-4104-ACC6-7C98828166A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{51B30B71-081B-4104-ACC6-7C98828166A0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B82F8120-D143-43A7-998D-22D730B20718}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B82F8120-D143-43A7-998D-22D730B20718}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B82F8120-D143-43A7-998D-22D730B20718}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B82F8120-D143-43A7-998D-22D730B20718}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -43,6 +49,7 @@ Global
 		{CD82AD7E-A38B-4E2B-B590-D92D7DEE9C87} = {70C16CFE-3E42-4306-8A4D-C4C0EE63F39A}
 		{9D34F225-B855-48A5-A163-220FBB9FBAA0} = {70C16CFE-3E42-4306-8A4D-C4C0EE63F39A}
 		{51B30B71-081B-4104-ACC6-7C98828166A0} = {70C16CFE-3E42-4306-8A4D-C4C0EE63F39A}
+		{B82F8120-D143-43A7-998D-22D730B20718} = {70C16CFE-3E42-4306-8A4D-C4C0EE63F39A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {CC9CF77B-E285-4B4C-86A2-A640952C15DF}

@@ -12,16 +12,16 @@ namespace UltraDES
             var dead = new State("DEAD", Marking.Marked);
             bool findDead = false;
             var relevant = new HashSet<AbstractEvent>(relevantArray) {tau};
-            var nonrelevant = new HashSet<AbstractEvent>(G.Events.Except(relevant));
+            var irrelevant = new HashSet<AbstractEvent>(G.Events.Except(relevant));
             var transitionsAux = G.Transitions.Union(G.MarkedStates.Select(q => (Transition) (q, tau, q))).ToList();
 
-            var M = StronglyConnectedComponentsAutomaton((transitionsAux, G.InitialState), nonrelevant);
+            var M = StronglyConnectedComponentsAutomaton((transitionsAux, G.InitialState), irrelevant);
 
             var transitions = M.transitions.GroupBy(t => t.Origin).ToDictionary(g => g.Key, g => g.ToArray());
 
             var Q = new HashSet<(AbstractState, AbstractState)>();
             var Qt = new HashSet<(AbstractState, AbstractState)>() {(M.initial, M.initial) };
-            var VgTransitions = new HashSet<Transition>();
+            var vgTransitions = new HashSet<Transition>();
 
             //Vg = (VgTransitions, G.InitialState);
 
@@ -66,15 +66,15 @@ namespace UltraDES
                                             : (new[] { d1, d2 }).OrderBy(qq => qq.ToString())
                                             .Aggregate((a, b) => a.MergeWith(b));
                                         Qtemp.Add((d1, d2));
-                                        VgTransitions.Add((origin, sigma, destination));
+                                        vgTransitions.Add((origin, sigma, destination));
                                     }
                                 }
                             }
-                            else if ((Enq1.Contains(sigma) && !Enq2.Intersect(nonrelevant).Any()) ||
-                                     (Enq2.Contains(sigma) && !Enq1.Intersect(nonrelevant).Any()))
+                            else if ((Enq1.Contains(sigma) && !Enq2.Intersect(irrelevant).Any()) ||
+                                     (Enq2.Contains(sigma) && !Enq1.Intersect(irrelevant).Any()))
                             {
                                 Qtemp.Add((dead, dead));
-                                VgTransitions.Add((origin, sigma, dead));
+                                vgTransitions.Add((origin, sigma, dead));
                             }
                         }
                         else
@@ -90,7 +90,7 @@ namespace UltraDES
                                         .Aggregate((a, b) => a.MergeWith(b));
 
                                     Qtemp.Add((d1, q2));
-                                    VgTransitions.Add((origin, sigma, destination));
+                                    vgTransitions.Add((origin, sigma, destination));
                                 }
                                 
                             }
@@ -106,7 +106,7 @@ namespace UltraDES
                                         .Aggregate((a, b) => a.MergeWith(b));
 
                                     Qtemp.Add((q1, d2));
-                                    VgTransitions.Add((origin, sigma, destination));
+                                    vgTransitions.Add((origin, sigma, destination));
                                 }
                             }
                         }
@@ -118,14 +118,14 @@ namespace UltraDES
                 {
                     if (returnOnDead)
                     {
-                        Vg = new NondeterministicFiniteAutomaton(VgTransitions, G.InitialState, $"OBS({G})");
+                        Vg = new NondeterministicFiniteAutomaton(vgTransitions, G.InitialState, $"OBS({G})");
                         return false;
                     }
                     else findDead = true;
                 }
             }
 
-            Vg = new NondeterministicFiniteAutomaton(VgTransitions, G.InitialState, $"OBS({G})");
+            Vg = new NondeterministicFiniteAutomaton(vgTransitions, G.InitialState, $"OBS({G})");
             return !findDead;
         }
 
@@ -135,7 +135,7 @@ namespace UltraDES
             var dead = new State("DEAD", Marking.Marked);
 
             var relevant = new HashSet<AbstractEvent>(relevantArray) { tau };
-            var nonrelevant = new HashSet<AbstractEvent>(G.Events.Except(relevant));
+            var irrelevant = new HashSet<AbstractEvent>(G.Events.Except(relevant));
             var transitionsAux = G.Transitions.Select(t => (Transition)(t.Origin.Flatten, t.Trigger, t.Destination.Flatten))
                                               .Union(G.MarkedStates.Select(q => (Transition)(q, tau, q))).ToList();
 
@@ -144,8 +144,8 @@ namespace UltraDES
 
             while (true)
             {
-                var M = StronglyConnectedComponentsAutomaton((transitionsAux, G.InitialState), nonrelevant);
-                var hasDead = FindDead(M, relevant, nonrelevant, dead, out HashSet<((AbstractState q1, AbstractState q2) o, AbstractEvent t, (AbstractState q1, AbstractState q2) d)> VgTransitions);
+                var M = StronglyConnectedComponentsAutomaton((transitionsAux, G.InitialState), irrelevant);
+                var hasDead = FindDead(M, relevant, irrelevant, dead, out HashSet<((AbstractState q1, AbstractState q2) o, AbstractEvent t, (AbstractState q1, AbstractState q2) d)> VgTransitions);
 
                 if (!hasDead)
                 {
@@ -165,7 +165,7 @@ namespace UltraDES
 
                 frontier.AddRange(VgTransitions.Where(t => t.d == initial));
 
-                while (!frontier.Any(t => t.o.q1 == t.o.q2))
+                while (frontier.All(t => t.o.q1 != t.o.q2))
                 {
                     var newFrontier = new List<((AbstractState q1, AbstractState q2) o, AbstractEvent t, (AbstractState q1, AbstractState q2) d)>();
                     foreach (var t2 in frontier)

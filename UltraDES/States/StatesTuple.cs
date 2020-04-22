@@ -5,17 +5,17 @@ namespace UltraDES
     [Serializable]
     public struct StatesTuple
     {
-        public uint[] m_data { get; private set; }
+        public uint[] MData { get; private set; }
 
         public StatesTuple(int[] states, int[] bits, int size) : this()
         {
-            m_data = new uint[size];
+            MData = new uint[size];
             Set(states, bits);
         }
 
         public StatesTuple(int k) : this()
         {
-            m_data = new uint[k];
+            MData = new uint[k];
         }
 
         public void Set(int[] states, int[] bits)
@@ -26,9 +26,9 @@ namespace UltraDES
                 if (bits[i] == 0)
                 {
                     ++j;
-                    m_data[j] = 0;
+                    MData[j] = 0;
                 }
-                m_data[j] += ((uint)states[i] << bits[i]);
+                MData[j] += ((uint)states[i] << bits[i]);
             }
         }
 
@@ -39,16 +39,16 @@ namespace UltraDES
             {
                 if (bits[i] == 0)
                     j++;
-                states[i] = (int)(m_data[j] >> bits[i]) & maxSize[i];
+                states[i] = (int)(MData[j] >> bits[i]) & maxSize[i];
             }
         }
 
         public StatesTuple Clone()
         {
-            var c = new StatesTuple(m_data.Length);
-            for (var i = 0; i < m_data.Length; ++i)
+            var c = new StatesTuple(MData.Length);
+            for (var i = 0; i < MData.Length; ++i)
             {
-                c.m_data[i] = m_data[i];
+                c.MData[i] = MData[i];
             }
             return c;
         }

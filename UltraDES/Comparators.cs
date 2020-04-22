@@ -1,26 +1,26 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace UltraDES
 {
     [Serializable]
     public class StatesTupleComparator : IEqualityComparer<StatesTuple>
     {
-        private static StatesTupleComparator m_instance = null;
+        private static StatesTupleComparator _mInstance = null;
 
         private StatesTupleComparator() { }
 
-        public static StatesTupleComparator getInstance()
+        public static StatesTupleComparator GetInstance()
         {
-            if (m_instance == null) m_instance = new StatesTupleComparator();
-            return m_instance;
+            return _mInstance ?? (_mInstance = new StatesTupleComparator());
         }
 
         public bool Equals(StatesTuple a, StatesTuple b)
         {
-            for (int i = a.m_data.Length - 1; i >= 0; --i)
+            for (int i = a.MData.Length - 1; i >= 0; --i)
             {
-                if (a.m_data[i] != b.m_data[i])
+                if (a.MData[i] != b.MData[i])
                     return false;
             }
             return true;
@@ -28,10 +28,10 @@ namespace UltraDES
 
         public int GetHashCode(StatesTuple obj)
         {
-            uint p = obj.m_data[0];
-            for (int i = obj.m_data.Length - 1; i > 0; --i)
+            uint p = obj.MData[0];
+            for (int i = obj.MData.Length - 1; i > 0; --i)
             {
-                p = (p << 3) + ~p + (obj.m_data[i] << 2) + ~obj.m_data[i];
+                p = (p << 3) + ~p + (obj.MData[i] << 2) + ~obj.MData[i];
             }
             return (int)p;
         }
@@ -40,14 +40,14 @@ namespace UltraDES
     [Serializable]
     public class IntListComparator : IEqualityComparer<List<int>>
     {
-        private static IntListComparator m_instance = null;
+        private static IntListComparator _mInstance = null;
 
         private IntListComparator() { }
 
         public static IntListComparator getInstance()
         {
-            if (m_instance == null) m_instance = new IntListComparator();
-            return m_instance;
+            if (_mInstance == null) _mInstance = new IntListComparator();
+            return _mInstance;
         }
 
         public bool Equals(List<int> a, List<int> b)
@@ -63,12 +63,7 @@ namespace UltraDES
 
         public int GetHashCode(List<int> obj)
         {
-            int p = obj.Count;
-            for(var i = 0; i < obj.Count; ++i)
-            {
-                p = (p << 3) + ~p + obj[i].GetHashCode();
-            }
-            return p;
+            return obj.Aggregate(obj.Count, (current, t) => (current << 3) + ~current + t.GetHashCode());
         }
     }
 }
@@ -76,14 +71,14 @@ namespace UltraDES
 [Serializable]
 public class IntArrayComparator : IEqualityComparer<int[]>
 {
-    private static IntArrayComparator m_instance = null;
+    private static IntArrayComparator _mInstance = null;
 
     private IntArrayComparator() { }
 
-    public static IntArrayComparator getInstance()
+    public static IntArrayComparator GetInstance()
     {
-        if (m_instance == null) m_instance = new IntArrayComparator();
-        return m_instance;
+        if (_mInstance == null) _mInstance = new IntArrayComparator();
+        return _mInstance;
     }
 
     public bool Equals(int[] a, int[] b)
@@ -99,11 +94,6 @@ public class IntArrayComparator : IEqualityComparer<int[]>
 
     public int GetHashCode(int[] obj)
     {
-        int p = obj.Length;
-        for (var i = 0; i < obj.Length; ++i)
-        {
-            p = (p << 3) + ~p + obj[i].GetHashCode();
-        }
-        return p;
+        return obj.Aggregate(obj.Length, (current, t) => (current << 3) + ~current + t.GetHashCode());
     }
 }
