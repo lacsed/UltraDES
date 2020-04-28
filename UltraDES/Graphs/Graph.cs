@@ -8,6 +8,7 @@ namespace UltraDES
 {
     public static class Graph
     {
+        public static IEnumerable<(TNode o, TNode d)> ToUnlabeledEdges<TNode, TLabel>(this IEnumerable<(TNode o, TLabel l, TNode d)> edges) => edges.Select(e => (e.o, e.d));
         public static IEnumerable<(T o, T d)> ReverseEdges<T>(this IEnumerable<(T o, T d)> edges) => edges.Select(e => (e.d, e.o)).ToList();
         public static IEnumerable<T> BreadthFirstSearch<T>(this IEnumerable<(T o, T d)> edges, T v0) => edges.BreadthFirstSearch(v0, (i, j) => i.Equals(j));
         public static IEnumerable<T> BreadthFirstSearch<T>(this IEnumerable<(T o, T d)> edges, T v0, Func<T,T,bool> equals)
@@ -66,7 +67,8 @@ splines = FALSE;
             dot += "}";
             return dot;
         }
-
+        public static List<List<TNode>> StronglyConnectedComponents<TNode, TLabel>(this IEnumerable<(TNode o, TLabel l, TNode d)> edges, Func<TNode, TNode, bool> equals) =>
+            edges.ToUnlabeledEdges().StronglyConnectedComponents(equals);
         public static List<List<TNode>> StronglyConnectedComponents<TNode>(this IEnumerable<(TNode Origin, TNode Destination)> edges, Func<TNode, TNode, bool> equals)
         {
             //Tarjan Algorithm

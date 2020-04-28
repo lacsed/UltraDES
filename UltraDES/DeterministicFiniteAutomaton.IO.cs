@@ -145,6 +145,8 @@ namespace UltraDES
             return new DFA(transitions, v_stateSet[0], v_name);
         }
 
+
+
         public static DFA FromFsmFile(string fileName)
         {
             if (fileName == null) throw new Exception("Filename can not be null.");
@@ -373,6 +375,19 @@ namespace UltraDES
             ToAdsFile(new[] {this}, new[] {filepath}, odd, even);
         }
 
+        public void ToFM(string filepath)
+        {
+            var G = this;
+            filepath = filepath.EndsWith(".fm") ? filepath : filepath + ".fm";
+
+            using (var writer = new StreamWriter(filepath, false))
+            {
+                writer.WriteLine($"(START) |- {G.InitialState}");
+                foreach (var t in G.Transitions) writer.WriteLine($"{t.Origin} {t.Trigger} {t.Destination}");
+                foreach (var m in G.MarkedStates) writer.WriteLine($"{m} -| (FINAL)");
+            }
+        }
+
         public static void ToAdsFile(IEnumerable<DFA> automata, IEnumerable<string> filepaths, int odd = 1,
             int even = 2)
         {
@@ -436,10 +451,8 @@ namespace UltraDES
                 file.WriteLine("Transitions:");
 
                 for (var s = 0; s < g._statesList[0].Length; ++s)
-                {
                     foreach (var t in g._adjacencyList[0][s])
                         file.WriteLine("{0,-5} {1,-3} {2,-5}", s, vEventsMaps[t.Key], t.Value);
-                }
 
                 file.Close();
             }
@@ -456,13 +469,13 @@ namespace UltraDES
 
             var writer = new StreamWriter(fileName);
 
-            writer.Write("{0}\n\n", Size);
+            writer.Write($"{Size}\n\n");
 
-            var writeState = new Action<AbstractState, Transition[]>((s, transtions) =>
+            var writeState = new Action<AbstractState, Transition[]>((s, transitions) =>
             {
-                writer.Write("{0}\t{1}\t{2}\n", s, s.IsMarked ? 1 : 0, transtions.Length);
-                foreach (var t in transtions)
-                    writer.Write("{0}\t{1}\t{2}\to\n", t.Trigger, t.Destination, t.Trigger.IsControllable ? "c" : "uc");
+                writer.Write($"{s}\t{(s.IsMarked ? 1 : 0)}\t{transitions.Length}\n");
+                foreach (var t in transitions)
+                    writer.Write($"{t.Trigger}\t{t.Destination}\t{(t.Trigger.IsControllable ? "c" : "uc")}\to\n");
                 writer.Write("\n");
             });
 
@@ -477,20 +490,16 @@ namespace UltraDES
 
                         for (var i = 0; i < n; ++i)
                         {
-                            if (pos[i] != 0)
-                            {
-                                writeState(composeState(pos), getTransitionsFromState(pos).ToArray());
-                                break;
-                            }
+                            if (pos[i] == 0) continue;
+                            writeState(composeState(pos), getTransitionsFromState(pos).ToArray());
+                            break;
                         }
                     }
                 }
                 else
                 {
-                    do
-                    {
-                        writeState(composeState(pos), getTransitionsFromState(pos).ToArray());
-                    } while (IncrementPosition(pos));
+                    do writeState(composeState(pos), getTransitionsFromState(pos).ToArray());
+                    while (IncrementPosition(pos));
                 }
             }
 

@@ -19,32 +19,52 @@ namespace UltraDES
 <HTML>
 <HEAD>
     <TITLE>{name}</TITLE>
+    <script src=""https://github.com/mdaines/viz.js/releases/download/v1.8.0/viz.js""></script>
 </HEAD>
 <BODY>
     <script type=""text/vnd.graphviz"" id=""cluster"">
 {dot}
     </script>
-    <script src=""https://github.com/mdaines/viz.js/releases/download/v1.8.0/viz.js""></script>
+        <div style=""height: 50px; width: 100 %; "">
+            <button type = ""button"" onclick = ""downloadSVG('{name}.svg')"" > Save as SVG</button>
+            <button type = ""button"" onclick = ""downloadPNG('{name}.png')"" > Save as PNG</button>
+        </div>
+         
     <script>
-        function inspect(s) {{
-            return ""<pre>"" + s.replace(/</g, ""&lt;"").replace(/>/g, ""&gt;"").replace(/\""/g, ""&quot;"") + ""</pre>""
-        }}
-        function src(id) {{
-            return document.getElementById(id).innerHTML;
-        }}
         function example(id, format, engine) {{
-            var result;
+                var result;
             try {{
-                result = Viz(src(id), format, engine);
-                if (format === ""svg"")
+                let src = document.getElementById(id).innerHTML;
+                result = Viz(src, 'svg', engine);               
+                
                 return result;
-                else
-                return inspect(result);
             }} 
             catch(e) {{
-                return inspect(e.toString());
+                console.log(e);
             }}
-        }}
+            }}
+
+        function downloadSVG(fileName) {{
+            var content = example('cluster', 'svg');
+            var a = document.createElement('a');
+            var file = new Blob([content], {{type: 'text/plain'}});
+            a.href = URL.createObjectURL(file);
+            a.download = fileName;
+            a.click();
+                }}
+        function downloadPNG(fileName) {{
+            Viz.svgXmlToPngImageElement(example('cluster', 'svg'), undefined, (err, img) => {{
+                    const source = img.src;
+                    const a = document.createElement('a');
+                    document.body.appendChild(a);
+
+                    a.href = source;
+                    a.target = '_self';
+                    a.download = fileName;
+                    a.click();
+                }}); 
+                }}
+
         document.body.innerHTML += example(""cluster"", ""svg"");
     </script>
 </BODY>

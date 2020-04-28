@@ -568,5 +568,47 @@ namespace UltraDES
                 foreach (var st in newStatesList[k]) statesMap[st] = k;
             }
         }
+
+        public static bool Isomorphism(DFA G1, DFA G2)
+        {
+            var tran1 = G1.Transitions.GroupBy(t => t.Origin)
+                .ToDictionary(g => g.Key, g => g.ToDictionary(t => t.Trigger, t => t.Destination));
+            var tran2 = G2.Transitions.GroupBy(t => t.Origin)
+                .ToDictionary(g => g.Key, g => g.ToDictionary(t => t.Trigger, t => t.Destination));
+
+            if (!new HashSet<AbstractEvent>(G1.Events).SetEquals(new HashSet<AbstractEvent>(G2.Events))) return false;
+
+            var events = G1.Events;
+
+
+            var ini = (G1.InitialState, G2.InitialState);
+            var visited = new HashSet<(AbstractState q1,AbstractState q2)>();
+            var frontier = new HashSet<(AbstractState q1, AbstractState q2)> {ini};
+
+            while (frontier.Any())
+            {
+                visited.UnionWith(frontier);
+                var newFrontier = new HashSet<(AbstractState, AbstractState)>();
+
+                foreach (var (q1,q2) in frontier)
+                {
+                    if(!tran1.ContainsKey(q1) && !tran2.ContainsKey(q2)) continue;
+                    if (!tran1.ContainsKey(q1) || !tran2.ContainsKey(q2)) return false;
+
+                    foreach (var e in events)
+                    {
+                        if(!tran1[q1].ContainsKey(e) && !tran2[q2].ContainsKey(e)) continue;
+                        if (!tran1[q1].ContainsKey(e) || !tran2[q2].ContainsKey(e)) return false;
+
+                        if (!visited.Contains((tran1[q1][e], tran2[q2][e]))) newFrontier.Add((tran1[q1][e], tran2[q2][e]));
+                    }
+
+                }
+
+                frontier = newFrontier;
+            }
+
+            return visited.All(q => q.q1.Marking == q.q2.Marking);
+        }
     }
 }
