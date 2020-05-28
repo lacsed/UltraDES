@@ -6,9 +6,9 @@ UltraDES is a library for modeling, analysis and control of Discrete Event Syste
 ## Before using UltraDES
 
 Requirements: 
-- Supported OS: Windows,or Linux ( Mono IDE).
-- Your computer must have a installed version of Microsoft Visual Studio (2014 or later version).
-- Download the latest version of UltraDES (https://github.com/lacsed/UltraDES.git), by clicking on *Clone or Download* and then *Download Zip*.
+- Supported OS: Windows, MAC OS or Linux (Mono or .Net Core).
+- Your computer must have a C# capable IDE (Visual Studio, VSCode, LinqPad, etc.).
+- Download the latest version of UltraDES (https://github.com/lacsed/UltraDES.git), by clicking on *Clone or Download* and then *Download Zip* ou use the UltraDES Nuget package.
 
 ## First steps
 
@@ -33,11 +33,11 @@ To read the codes, click on the file *.cs* inside each project.
     - On the menu Project, select Set as Startup Project - Project>Set as Startup Project.
 - To run the code, click on Debug menu - Debug>Start Debugging.
 
-## Creating a new project
+## Creating a new project on Visual Studio
 
-- On the menu File, select New>Project.
+- On the menu File, select New > Project.
 - On the New Project window:
-  - Select Visual C#>Console App (.NET Framework).
+  - Select Visual C# > Console App (.NET Framework).
   - Give your project a name.
   - The location of your project should be the same as the other UltraDES projects.
   - In the Solution field, choose *Add to Solution*.
@@ -45,7 +45,7 @@ To read the codes, click on the file *.cs* inside each project.
 - Remember to set your project as Startup Project (see How to run the projects). 
 - Congratulations, you just created your project!
 
-## Inside your project
+### Inside your project
 
 - In the Solution Explorer, double click on your project.
 - Inside your project, right click on the item References>Add Reference...
@@ -107,7 +107,7 @@ var Gp = G1.ParallelCompositionWith(G2);
 ### Showing the Automaton
 
 ```cs
- G.drawSVGFigure("G", true);
+ G.ShowAutomaton("G");
  ```
 
 ## Other examples
