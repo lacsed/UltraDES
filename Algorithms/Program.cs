@@ -5,36 +5,30 @@ namespace Algorithms
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
             ObserverPropertyVerifyExample();
             ObserverPropertySearchExample();
         }
 
-       
         private static void ObserverPropertySearchExample()
         {
 
-            var states = Enumerable.Range(0, 7).Select(n => new State($"{n}", n == 4 ? Marking.Marked : Marking.Unmarked))
-                .ToArray();
-            var events =
-                (new[] {"gamma", "beta", "lambda", "omega", "y"}).ToDictionary(n => n,
-                    n => new Event(n, Controllability.Controllable));
+            var states = Enumerable.Range(0, 7).Select(n => new State($"{n}", n == 4 ? Marking.Marked : Marking.Unmarked)).ToArray();
+            var events = (new[] {"gamma", "beta", "lambda", "omega", "y"}).ToDictionary(n => n, n => new Event(n, Controllability.Controllable));
 
-            var G = new DeterministicFiniteAutomaton(new Transition[]
-            {
-                (states[0], events["lambda"], states[1]),
-                (states[1], events["lambda"], states[1]),
-                (states[1], events["beta"], states[2]),
-                (states[2], events["gamma"], states[3]),
-                (states[3], events["gamma"], states[1]),
-                (states[3], events["lambda"], states[4])
-            }, states[0], "G");
+            var G = new DeterministicFiniteAutomaton(
+                new Transition[]
+                {
+                    (states[0], events["lambda"], states[1]), (states[1], events["lambda"], states[1]),
+                    (states[1], events["beta"], states[2]), (states[2], events["gamma"], states[3]),
+                    (states[3], events["gamma"], states[1]), (states[3], events["lambda"], states[4])
+                }, states[0], "G");
 
-            G.showAutomaton("G");
+            G.ShowAutomaton("G");
 
             var Vg = G.ObserverPropertySearch(new[] {events["lambda"]});
-            Vg.showAutomaton();
+            Vg.ShowAutomaton();
         }
 
         private static void ObserverPropertyVerifyExample()
@@ -55,10 +49,10 @@ namespace Algorithms
             }, states[0], "G");
 
 
-            G.showAutomaton("G");
+            G.ShowAutomaton("G");
 
             G.ObserverPropertyVerify(new[] {events["a"]}, out var Vg, false);
-            Vg.showAutomaton();
+            Vg.ShowAutomaton();
 
         }
 

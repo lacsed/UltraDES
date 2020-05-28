@@ -1,98 +1,74 @@
-﻿////////////////////////////////////////////////////////////////////////////////////////////////////
-// file:	Events\Empty.cs
+﻿// ***********************************************************************
+// Assembly         : UltraDES
+// Author           : Lucas Alves
+// Created          : 04-20-2020
 //
-// summary:	Implements the empty class
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
+// Last Modified By : Lucas Alves
+// Last Modified On : 04-20-2020
 using System;
 
 namespace UltraDES
 {
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// <summary>   (Serializable)a empty. </summary>
-    ///
-    /// <remarks>   Lucas Alves, 11/01/2016. </remarks>
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-
+    
+    /// <summary>
+    /// (Serializable)a empty.
+    /// </summary>
+    /// <remarks>Lucas Alves, 11/01/2016.</remarks>
     [Serializable]
     public sealed class Empty : AbstractEvent
     {
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        
         /// <summary>
-        ///     Constructor that prevents a default instance of this class from being created.
+        /// Constructor that prevents a default instance of this class from being created.
         /// </summary>
-        ///
-        /// <remarks>   Lucas Alves, 11/01/2016. </remarks>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        /// <remarks>Lucas Alves, 11/01/2016.</remarks>
+        private Empty() => Controllability = Controllability.Controllable;
 
-        private Empty()
-        {
-            Controllability = Controllability.Controllable;
-        }
+        /// <summary>
+        /// The instance
+        /// </summary>
+        private static readonly Empty Instance = new Empty();
 
-        private static readonly Empty instance = new Empty();
+        
+        /// <summary>
+        /// Gets the empty event.
+        /// </summary>
+        /// <value>The empty event.</value>
+        public static Empty EmptyEvent => Instance;
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Gets the empty event. </summary>
-        ///
-        /// <value> The empty event. </value>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        public static Empty EmptyEvent
-        {
-            get
-            {
-                return instance;
-            }
-        }
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Determines whether the specified object is equal to the current object. </summary>
-        ///
-        /// <remarks>   Lucas Alves, 11/01/2016. </remarks>
-        ///
-        /// <param name="obj">  The object to compare with the current object. </param>
-        ///
-        /// <returns>
-        ///     true if the specified object  is equal to the current object; otherwise, false.
-        /// </returns>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-
+        /// <summary>
+        /// Determines whether the specified object is equal to the current object.
+        /// </summary>
+        /// <param name="obj">The object to compare with the current object.</param>
+        /// <returns>true if the specified object  is equal to the current object; otherwise, false.</returns>
+        /// <remarks>Lucas Alves, 15/01/2016.</remarks>
         public override bool Equals(object obj)
         {
             if (ReferenceEquals(this, obj)) return true;
-
-            // If parameter cannot be cast to Point return false.
             var p = obj as Empty;
-            if ((object) p == null) return false;
+            return (object) p != null;
 
-            // Return true if the fields match:
-            return true;
         }
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Serves as the default hash function. </summary>
-        ///
-        /// <remarks>   Lucas Alves, 11/01/2016. </remarks>
-        ///
-        /// <returns>   A hash code for the current object. </returns>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        /// <summary>
+        /// Serves as the default hash function.
+        /// </summary>
+        /// <returns>A hash code for the current object.</returns>
+        /// <remarks>Lucas Alves, 15/01/2016.</remarks>
+        
 
-        public override int GetHashCode()
-        {
-            return "empty".GetHashCode();
-        }
+        public override int GetHashCode() => "empty".GetHashCode();
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Returns a string that represents the current object. </summary>
-        ///
-        /// <remarks>   Lucas Alves, 11/01/2016. </remarks>
-        ///
-        /// <returns>   A string that represents the current object. </returns>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        public override string ToString()
-        {
-            return "\u2205";
-        }
+        /// <summary>
+        /// Returns a string that represents the current object.
+        /// </summary>
+        /// <returns>A string that represents the current object.</returns>
+        /// <remarks>Lucas Alves, 11/01/2016.</remarks>
+        
+
+        public override string ToString() => "\u2205";
     }
 }

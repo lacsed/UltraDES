@@ -3,8 +3,6 @@
   <Namespace>UltraDES</Namespace>
 </Query>
 
-// Setting the current directory
-Directory.SetCurrentDirectory(Path.GetDirectoryName(Util.CurrentQueryPath));
 
 var s = Enumerable.Range(0, 6).Select(i => new State($"s{i}", i == 0 ? Marking.Marked : Marking.Unmarked)).ToArray();
 var e = Enumerable.Range(0, 100).Select(i => new Event($"e{i}", i % 2 != 0 ? Controllability.Controllable : Controllability.Uncontrollable)).ToArray();
@@ -201,4 +199,4 @@ timer.Stop();
 
 Console.WriteLine("Computation Time: {0}", timer.ElapsedMilliseconds / 1000.0);
 
-sups[0].showAutomaton();
+sups[0].ShowAutomaton();

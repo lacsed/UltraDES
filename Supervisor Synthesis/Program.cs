@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using UltraDES;
 
-namespace Supervisor_Synthesis
+namespace SupervisorSynthesis
 {
     class Program
     {
@@ -136,7 +136,7 @@ namespace Supervisor_Synthesis
             plants = new List<DeterministicFiniteAutomaton>();
             specs = new List<DeterministicFiniteAutomaton>();
 
-            int max = clusters;
+            var max = clusters;
 
             var evs = Enumerable.Range(1, max).SelectMany(i => Enumerable.Range(0, 9).Select(
                 k => new Event($"{i}|{k}",
@@ -144,7 +144,7 @@ namespace Supervisor_Synthesis
                         ? Controllability.Uncontrollable
                         : Controllability.Controllable))).ToList();
 
-            for (int i = 1; i <= max; i++)
+            for (var i = 1; i <= max; i++)
             {
                 var e = Enumerable.Range(0, 9).Select(
                     k => new Event($"{i}|{k}",
@@ -194,7 +194,7 @@ namespace Supervisor_Synthesis
                 specs.Add(Ei);
             }
 
-            for (int i = 1; i < max; i++)
+            for (var i = 1; i < max; i++)
             {
                 var e61 = new Event($"{i}|6",
                     Controllability.Uncontrollable);
@@ -446,9 +446,9 @@ namespace Supervisor_Synthesis
             timer.Stop();
 
             // shows information about supervisor and the elapsed time
-            Console.WriteLine("\tStates: {0}", sup.Size);
-            Console.WriteLine("\tTransitions: {0}", sup.Transitions.Count());
-            Console.WriteLine("\tComputation Time: {0}", timer.ElapsedMilliseconds / 1000.0);
+            Console.WriteLine($"\tStates: {sup.Size}");
+            Console.WriteLine($"\tTransitions: {sup.Transitions.Count()}");
+            Console.WriteLine($"\tComputation Time: {timer.ElapsedMilliseconds / 1000.0}");
         }
 
         private static void ComputingModularSupervisor()
@@ -465,11 +465,11 @@ namespace Supervisor_Synthesis
 
             foreach (var s in sups)
             {
-                Console.WriteLine("\tSupervisor: {0}", s);
-                Console.WriteLine("\t-States: {0}", s.Size);
-                Console.WriteLine("\t-Transitions: {0}", s.Transitions.Count());
+                Console.WriteLine($"\tSupervisor: {s}");
+                Console.WriteLine($"\t-States: {s.Size}");
+                Console.WriteLine($"\t-Transitions: {s.Transitions.Count()}");
             }
-            Console.WriteLine("\tComputation Time: {0}", timer.ElapsedMilliseconds / 1000.0);
+            Console.WriteLine($"\tComputation Time: {timer.ElapsedMilliseconds / 1000.0}");
 
         }
     }

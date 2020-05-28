@@ -1,10 +1,9 @@
-﻿using System;
-using UltraDES;
+﻿using UltraDES;
 using UltraDES.PetriNets;
 using Marking = UltraDES.PetriNets.Marking;
 using Transition = UltraDES.PetriNets.Transition;
 
-namespace Petri_Nets
+namespace PetriNets
 {
     class Program
     {

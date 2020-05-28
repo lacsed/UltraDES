@@ -1,11 +1,30 @@
-﻿using System;
+﻿// ***********************************************************************
+// Assembly         : UltraDES
+// Author           : Lucas Alves
+// Created          : 04-20-2020
+//
+// Last Modified By : Lucas Alves
+// Last Modified On : 04-20-2020
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace UltraDES
 {
+    /// <summary>
+    /// Class ObserverAlgorithms.
+    /// </summary>
     public static class ObserverAlgorithms
     {
+        /// <summary>
+        /// Observers the property verify.
+        /// </summary>
+        /// <param name="G">The g.</param>
+        /// <param name="relevantArray">The relevant array.</param>
+        /// <param name="Vg">The vg.</param>
+        /// <param name="returnOnDead">if set to <c>true</c> [return on dead].</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool ObserverPropertyVerify(this DeterministicFiniteAutomaton G, AbstractEvent[] relevantArray, out NondeterministicFiniteAutomaton Vg, bool returnOnDead = true)
         {
             var tau = new Event("Tau", Controllability.Controllable);
@@ -129,6 +148,12 @@ namespace UltraDES
             return !findDead;
         }
 
+        /// <summary>
+        /// Observers the property search.
+        /// </summary>
+        /// <param name="G">The g.</param>
+        /// <param name="relevantArray">The relevant array.</param>
+        /// <returns>NondeterministicFiniteAutomaton.</returns>
         public static NondeterministicFiniteAutomaton ObserverPropertySearch(this DeterministicFiniteAutomaton G, AbstractEvent[] relevantArray)
         {
             var tau = new Event("Tau", Controllability.Controllable);
@@ -193,6 +218,15 @@ namespace UltraDES
             }
         }
 
+        /// <summary>
+        /// Finds the dead.
+        /// </summary>
+        /// <param name="M">The m.</param>
+        /// <param name="relevant">The relevant.</param>
+        /// <param name="nonrelevant">The nonrelevant.</param>
+        /// <param name="dead">The dead.</param>
+        /// <param name="VgTransitions">The vg transitions.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private static bool FindDead((IEnumerable<Transition> transitions, AbstractState initial) M, HashSet<AbstractEvent> relevant, HashSet<AbstractEvent> nonrelevant, State dead, out HashSet<((AbstractState, AbstractState), AbstractEvent, (AbstractState, AbstractState))> VgTransitions)
         {
             var transitions = M.transitions.GroupBy(t => t.Origin).ToDictionary(g => g.Key, g => g.ToArray());
@@ -277,6 +311,12 @@ namespace UltraDES
         }
 
 
+        /// <summary>
+        /// Stronglies the connected components automaton.
+        /// </summary>
+        /// <param name="G">The g.</param>
+        /// <param name="nonrelevant">The nonrelevant.</param>
+        /// <returns>System.ValueTuple&lt;IEnumerable&lt;Transition&gt;, AbstractState&gt;.</returns>
         public static (IEnumerable<Transition> transitions, AbstractState initial) StronglyConnectedComponentsAutomaton((List<Transition> transitions, AbstractState initial) G, HashSet<AbstractEvent> nonrelevant)
         {
             var trans = G.transitions.Select(t => (Transition) (t.Origin.Flatten, t.Trigger, t.Destination.Flatten)).ToList();
@@ -301,6 +341,11 @@ namespace UltraDES
             return (transitions, initial);
         }
 
+        /// <summary>
+        /// Tarjans the SCC.
+        /// </summary>
+        /// <param name="transitions">The transitions.</param>
+        /// <returns>List&lt;List&lt;AbstractState&gt;&gt;.</returns>
         public static List<List<AbstractState>> TarjanSCC(IEnumerable<Transition> transitions)
         {
             var components = new List<List<AbstractState>>();

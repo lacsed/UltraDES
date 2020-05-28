@@ -3,9 +3,6 @@
   <Namespace>UltraDES</Namespace>
 </Query>
 
-// Setting the current directory
-Directory.SetCurrentDirectory (Path.GetDirectoryName (Util.CurrentQueryPath));
-
 // Creating States
 
 State s1 = new State("s1", Marking.Marked);
@@ -39,4 +36,4 @@ var K = G1.ParallelCompositionWith(G2);
   
 // Showing the Automaton
    
-K.showAutomaton();
+K.ShowAutomaton();

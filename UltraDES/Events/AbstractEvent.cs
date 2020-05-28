@@ -1,85 +1,85 @@
-﻿////////////////////////////////////////////////////////////////////////////////////////////////////
-// file:	Events\AbstractEvent.cs
+﻿// ***********************************************************************
+// Assembly         : UltraDES
+// Author           : Lucas Alves
+// Created          : 04-20-2020
 //
-// summary:	Implements the abstract event class
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
+// Last Modified By : Lucas Alves
+// Last Modified On : 04-22-2020
 using System;
 
 namespace UltraDES
 {
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// <summary>   (Serializable)a abstract event. </summary>
-    ///
-    /// <remarks>   Lucas Alves, 11/01/2016. </remarks>
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    /// <summary>
+    /// (Serializable)a abstract event.
+    /// </summary>
+    /// <remarks>Lucas Alves, 11/01/2016.</remarks>
+    
 
     [Serializable]
     public abstract class AbstractEvent : Symbol
     {
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Gets or sets the controllability. </summary>
-        ///
-        /// <value> The controllability. </value>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        /// <summary>
+        /// Gets or sets the controllability.
+        /// </summary>
+        /// <value>The controllability.</value>
+        
 
         public Controllability Controllability { get; protected set; }
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Gets a value indicating whether this object is controllable. </summary>
-        ///
-        /// <value> true if this object is controllable, false if not. </value>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        /// <summary>
+        /// Gets a value indicating whether this object is controllable.
+        /// </summary>
+        /// <value>true if this object is controllable, false if not.</value>
+        
 
         public bool IsControllable
         {
             get { return Controllability == Controllability.Controllable; }
         }
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Returns a string that represents the current object. </summary>
-        ///
-        /// <remarks>   Lucas Alves, 11/01/2016. </remarks>
-        ///
-        /// <returns>   A string that represents the current object. </returns>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        /// <summary>
+        /// Returns a string that represents the current object.
+        /// </summary>
+        /// <returns>A string that represents the current object.</returns>
+        /// <remarks>Lucas Alves, 15/01/2016.</remarks>
+        
 
         public abstract override string ToString();
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Serves as the default hash function. </summary>
-        ///
-        /// <remarks>   Lucas Alves, 11/01/2016. </remarks>
-        ///
-        /// <returns>   A hash code for the current object. </returns>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        /// <summary>
+        /// Serves as the default hash function.
+        /// </summary>
+        /// <returns>A hash code for the current object.</returns>
+        /// <remarks>Lucas Alves, 15/01/2016.</remarks>
+        
 
         public abstract override int GetHashCode();
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Determines whether the specified object is equal to the current object. </summary>
-        ///
-        /// <remarks>   Lucas Alves, 11/01/2016. </remarks>
-        ///
-        /// <param name="obj">  The object to compare with the current object. </param>
-        ///
-        /// <returns>
-        ///     true if the specified object  is equal to the current object; otherwise, false.
-        /// </returns>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        /// <summary>
+        /// Determines whether the specified object is equal to the current object.
+        /// </summary>
+        /// <param name="obj">The object to compare with the current object.</param>
+        /// <returns>true if the specified object  is equal to the current object; otherwise, false.</returns>
+        /// <remarks>Lucas Alves, 15/01/2016.</remarks>
+        
 
         public abstract override bool Equals(object obj);
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Equality operator. </summary>
-        ///
-        /// <remarks>   Lucas Alves, 11/01/2016. </remarks>
-        ///
-        /// <param name="a">    The AbstractEvent to process. </param>
-        /// <param name="b">    The AbstractEvent to process. </param>
-        ///
-        /// <returns>   The result of the operation. </returns>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        /// <summary>
+        /// Equality operator.
+        /// </summary>
+        /// <param name="a">The AbstractEvent to process.</param>
+        /// <param name="b">The AbstractEvent to process.</param>
+        /// <returns>The result of the operation.</returns>
+        /// <remarks>Lucas Alves, 11/01/2016.</remarks>
+        
 
         public static bool operator ==(AbstractEvent a, AbstractEvent b)
         {
@@ -90,16 +90,15 @@ namespace UltraDES
             return ReferenceEquals(a, b);
         }
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Inequality operator. </summary>
-        ///
-        /// <remarks>   Lucas Alves, 11/01/2016. </remarks>
-        ///
-        /// <param name="a">    The AbstractEvent to process. </param>
-        /// <param name="b">    The AbstractEvent to process. </param>
-        ///
-        /// <returns>   The result of the operation. </returns>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        /// <summary>
+        /// Inequality operator.
+        /// </summary>
+        /// <param name="a">The AbstractEvent to process.</param>
+        /// <param name="b">The AbstractEvent to process.</param>
+        /// <returns>The result of the operation.</returns>
+        /// <remarks>Lucas Alves, 11/01/2016.</remarks>
+        
 
         public static bool operator !=(AbstractEvent a, AbstractEvent b)
         {
@@ -107,17 +106,22 @@ namespace UltraDES
         }
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// <summary>   Values that represent controllabilities. </summary>
-    ///
-    /// <remarks>   Lucas Alves, 11/01/2016. </remarks>
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    /// <summary>
+    /// Values that represent controllabilities.
+    /// </summary>
+    /// <remarks>Lucas Alves, 11/01/2016.</remarks>
+    
 
     public enum Controllability : byte
     {
-        /// <summary>   An enum constant representing the controllable option. </summary>
+        /// <summary>
+        /// An enum constant representing the controllable option.
+        /// </summary>
         Controllable = 1,
-        /// <summary>   An enum constant representing the uncontrollable option. </summary>
+        /// <summary>
+        /// An enum constant representing the uncontrollable option.
+        /// </summary>
         Uncontrollable = 0
     }
 }

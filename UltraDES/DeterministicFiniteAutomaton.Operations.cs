@@ -1,6 +1,15 @@
-﻿using System;
+﻿// ***********************************************************************
+// Assembly         : UltraDES
+// Author           : Lucas Alves
+// Created          : 04-22-2020
+//
+// Last Modified By : Lucas Alves
+// Last Modified On : 05-20-2020
+// ***********************************************************************
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -8,8 +17,15 @@ namespace UltraDES
 {
     using DFA = DeterministicFiniteAutomaton;
 
+    /// <summary>
+    /// Class DeterministicFiniteAutomaton. This class cannot be inherited.
+    /// </summary>
     partial class DeterministicFiniteAutomaton
     {
+        /// <summary>
+        /// Gets the accessible part.
+        /// </summary>
+        /// <value>The accessible part.</value>
         public DFA AccessiblePart
         {
             get
@@ -20,6 +36,10 @@ namespace UltraDES
             }
         }
 
+        /// <summary>
+        /// Gets the coaccessible part.
+        /// </summary>
+        /// <value>The coaccessible part.</value>
         public DFA CoaccessiblePart
         {
             get
@@ -30,8 +50,17 @@ namespace UltraDES
             }
         }
 
+        /// <summary>
+        /// Gets the kleene closure.
+        /// </summary>
+        /// <value>The kleene closure.</value>
+        /// <exception cref="NotImplementedException">Sorry. This is still in TO-DO List</exception>
         public int KleeneClosure => throw new NotImplementedException("Sorry. This is still in TO-DO List");
 
+        /// <summary>
+        /// Gets the minimal.
+        /// </summary>
+        /// <value>The minimal.</value>
         public DFA Minimal
         {
             get
@@ -39,12 +68,16 @@ namespace UltraDES
                 if (IsEmpty()) return Clone();
 
                 var G = AccessiblePart;
-                G.simplify();
-                G.minimize();
+                G.Simplify();
+                G.Minimize();
                 return G;
             }
         }
 
+        /// <summary>
+        /// Gets the prefix closure.
+        /// </summary>
+        /// <value>The prefix closure.</value>
         public DFA PrefixClosure
         {
             get
@@ -57,6 +90,10 @@ namespace UltraDES
             }
         }
 
+        /// <summary>
+        /// Gets the trim.
+        /// </summary>
+        /// <value>The trim.</value>
         public DFA Trim
         {
             get
@@ -67,31 +104,33 @@ namespace UltraDES
             }
         }
 
+        /// <summary>
+        /// Builds the product.
+        /// </summary>
         private void BuildProduct()
         {
-            var n = _statesList.Count;
-            var pos = new int[n];
-            var nextPos = new int[n];
+            var numAutomata = _statesList.Count;
+            var origin = new int[numAutomata];
+            var destination = new int[numAutomata];
             _statesStack = new Stack<StatesTuple>();
 
-            var initialState = new StatesTuple(pos, _bits, _tupleSize);
+            var initialState = new StatesTuple(origin, _bits, _tupleSize);
 
             _statesStack.Push(initialState);
 
-            _validStates = new Dictionary<StatesTuple, bool>(StatesTupleComparator.GetInstance());
-            _validStates.Add(initialState, false);
+            _validStates = new Dictionary<StatesTuple, bool>(StatesTupleComparator.GetInstance()) {{initialState, false}};
 
             while (_statesStack.Count > 0)
             {
-                _statesStack.Pop().Get(pos, _bits, _maxSize);
+                _statesStack.Pop().Get(origin, _bits, _maxSize);
 
                 for (var e = 0; e < _eventsUnion.Length; ++e)
                 {
                     var nextEvent = false;
-                    for (var i = 0; i < n; ++i)
+                    for (var i = 0; i < numAutomata; ++i)
                     {
-                        if (_adjacencyList[i].HasEvent(pos[i], e))
-                            nextPos[i] = _adjacencyList[i][pos[i], e];
+                        if (_adjacencyList[i].HasEvent(origin[i], e))
+                            destination[i] = _adjacencyList[i][origin[i], e];
                         else
                         {
                             nextEvent = true;
@@ -100,88 +139,117 @@ namespace UltraDES
                     }
 
                     if (nextEvent) continue;
-                    var nextState = new StatesTuple(nextPos, _bits, _tupleSize);
+                    var nextState = new StatesTuple(destination, _bits, _tupleSize);
 
-                    if (!_validStates.ContainsKey(nextState))
-                    {
-                        _statesStack.Push(nextState);
-                        _validStates.Add(nextState, false);
-                    }
+                    if (_validStates.ContainsKey(nextState)) continue;
+                    _statesStack.Push(nextState);
+                    _validStates.Add(nextState, false);
                 }
             }
 
             Size = (ulong) _validStates.Count;
         }
 
-        private static DFA ConcatDFA(DFA G1, DFA G2)
+        /// <summary>
+        /// Concatenations the specified g1.
+        /// </summary>
+        /// <param name="G1">The g1.</param>
+        /// <param name="G2">The g2.</param>
+        /// <returns>DFA.</returns>
+        private static DFA Concatenation(DFA G1, DFA G2)
         {
-            if (G1._validStates != null) G1.simplify();
-            if (G2._validStates != null) G2.simplify();
+            if (G1._validStates != null) G1.Simplify();
+            if (G2._validStates != null) G2.Simplify();
 
             var n = G1._adjacencyList.Count + G2._adjacencyList.Count;
-            var G1G2 = G1.Clone(n);
+            var G12 = G1.Clone(n);
 
-            G1G2.Name += "||" + G2.Name;
-            G1G2._adjacencyList.Clear();
-            G1G2._eventsUnion = G1G2._eventsUnion.Concat(G2._eventsUnion).Distinct().OrderBy(i => i.Controllability)
+            G12.Name += "||" + G2.Name;
+            G12._adjacencyList.Clear();
+            G12._eventsUnion = G12._eventsUnion.Concat(G2._eventsUnion).Distinct().OrderBy(i => i.Controllability)
                 .ToArray();
-            G1G2._eventsList.Clear();
-            G1G2._statesList.AddRange(G2._statesList);
-            G1G2._validStates = null;
-            G1G2._numberOfPlants = n;
-            G1G2.Size *= G2.Size;
+            G12._eventsList.Clear();
+            G12._statesList.AddRange(G2._statesList);
+            G12._validStates = null;
+            G12._numberOfPlants = n;
+            G12.Size *= G2.Size;
 
-            G1G2._tupleSize = 1;
+            G12._tupleSize = 1;
             var k = 0;
             for (var i = 0; i < n; ++i)
             {
-                G1G2._bits[i] = k;
-                var p = (int) Math.Max(Math.Ceiling(Math.Log(G1G2._statesList[i].Length, 2)), 1);
-                G1G2._maxSize[i] = (1 << p) - 1;
+                G12._bits[i] = k;
+                var p = MinNumOfBits(G12._statesList[i].Length);//var p = (int) Math.Max(Math.Ceiling(Math.Log(G12._statesList[i].Length, 2)), 1);
+                G12._maxSize[i] = (1 << p) - 1;
                 k += p;
-                if (k > sizeof(int) * 8)
-                {
-                    G1G2._bits[i] = 0;
-                    ++G1G2._tupleSize;
-                    k = p;
-                }
+                if (k <= sizeof(int) * 8) continue;
+
+                G12._bits[i] = 0;
+                ++G12._tupleSize;
+                k = p;
             }
 
             for (var i = 0; i < G1._adjacencyList.Count; ++i)
             {
-                G1G2._eventsList.Add(new bool[G1G2._eventsUnion.Length]);
+                G12._eventsList.Add(new bool[G12._eventsUnion.Length]);
                 for (var e = 0; e < G1._eventsUnion.Length; ++e)
-                    G1G2._eventsList[i][Array.IndexOf(G1G2._eventsUnion, G1._eventsUnion[e])] = G1._eventsList[i][e];
-                G1G2._adjacencyList.Add(new AdjacencyMatrix(G1._statesList[i].Length, G1G2._eventsUnion.Length));
+                    G12._eventsList[i][Array.IndexOf(G12._eventsUnion, G1._eventsUnion[e])] = G1._eventsList[i][e];
+                G12._adjacencyList.Add(new AdjacencyMatrix(G1._statesList[i].Length, G12._eventsUnion.Length));
                 for (var j = 0; j < G1._statesList[i].Length; ++j)
                 {
                     foreach (var p in G1._adjacencyList[i][j])
-                        G1G2._adjacencyList[i].Add(j, Array.IndexOf(G1G2._eventsUnion, G1._eventsUnion[p.Key]),
+                        G12._adjacencyList[i].Add(j, Array.IndexOf(G12._eventsUnion, G1._eventsUnion[p.Key]),
                             p.Value);
                 }
             }
 
             for (var i = G1._adjacencyList.Count; i < n; ++i)
             {
-                G1G2._eventsList.Add(new bool[G1G2._eventsUnion.Length]);
+                G12._eventsList.Add(new bool[G12._eventsUnion.Length]);
                 for (var e = 0; e < G2._eventsUnion.Length; ++e)
                 {
-                    G1G2._eventsList[i][Array.IndexOf(G1G2._eventsUnion, G2._eventsUnion[e])] =
+                    G12._eventsList[i][Array.IndexOf(G12._eventsUnion, G2._eventsUnion[e])] =
                         G2._eventsList[i - G1._adjacencyList.Count][e];
                 }
 
-                G1G2._adjacencyList.Add(new AdjacencyMatrix(G1G2._statesList[i].Length, G1G2._eventsUnion.Length));
-                for (var j = 0; j < G1G2._statesList[i].Length; ++j)
+                G12._adjacencyList.Add(new AdjacencyMatrix(G12._statesList[i].Length, G12._eventsUnion.Length));
+                for (var j = 0; j < G12._statesList[i].Length; ++j)
                 {
                     foreach (var q in G2._adjacencyList[i - G1._adjacencyList.Count][j])
-                        G1G2._adjacencyList[i].Add(j, Array.IndexOf(G1G2._eventsUnion, G2._eventsUnion[q.Key]),
+                        G12._adjacencyList[i].Add(j, Array.IndexOf(G12._eventsUnion, G2._eventsUnion[q.Key]),
                             q.Value);
                 }
             }
 
-            return G1G2;
+            return G12;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static int MinNumOfBits(int n)
+        {
+            var MultiplyDeBruijnBitPosition2 = new[]
+            {
+                0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8, 31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18,
+                6, 11, 5, 10, 9
+            };
+
+            var v = (uint) n;
+            v--;
+            v |= v >> 1;
+            v |= v >> 2;
+            v |= v >> 4;
+            v |= v >> 8;
+            v |= v >> 16;
+            v++;
+
+            return MultiplyDeBruijnBitPosition2[(v * 0x077CB531U) >> 27];
+        }
+
+        /// <summary>
+        /// Inverses the projection.
+        /// </summary>
+        /// <param name="events">The events.</param>
+        /// <returns>DFA.</returns>
         public DFA InverseProjection(IEnumerable<AbstractEvent> events)
         {
             if (IsEmpty()) return Clone();
@@ -225,80 +293,124 @@ namespace UltraDES
             return invProj;
         }
 
-        public DFA InverseProjection(params AbstractEvent[] events)
-        {
-            return InverseProjection((IEnumerable<AbstractEvent>) events);
-        }
+        /// <summary>
+        /// Inverses the projection.
+        /// </summary>
+        /// <param name="events">The events.</param>
+        /// <returns>DFA.</returns>
+        public DFA InverseProjection(params AbstractEvent[] events) => InverseProjection((IEnumerable<AbstractEvent>) events);
 
-        public static DFA ParallelComposition(IEnumerable<DFA> list, bool removeNoAccessibleStates = true)
-        {
-            return list.Aggregate((a, b) => a.ParallelCompositionWith(b, removeNoAccessibleStates));
-        }
+        /// <summary>
+        /// Parallels the composition.
+        /// </summary>
+        /// <param name="list">The list.</param>
+        /// <param name="removeNoAccessibleStates">if set to <c>true</c> [remove no accessible states].</param>
+        /// <returns>DFA.</returns>
+        public static DFA ParallelComposition(IEnumerable<DFA> list, bool removeNoAccessibleStates = true) => list.Aggregate((a, b) => a.ParallelCompositionWith(b, removeNoAccessibleStates));
 
-        public static DFA ParallelComposition(DFA A, params DFA[] others)
-        {
-            return A.ParallelCompositionWith(others, true);
-        }
+        /// <summary>
+        /// Parallels the composition.
+        /// </summary>
+        /// <param name="A">a.</param>
+        /// <param name="others">The others.</param>
+        /// <returns>DFA.</returns>
+        public static DFA ParallelComposition(DFA A, params DFA[] others) => A.ParallelCompositionWith(others, true);
 
+        /// <summary>
+        /// Parallels the composition with.
+        /// </summary>
+        /// <param name="G2">The g2.</param>
+        /// <param name="removeNoAccessibleStates">if set to <c>true</c> [remove no accessible states].</param>
+        /// <returns>DFA.</returns>
         public DFA ParallelCompositionWith(DFA G2, bool removeNoAccessibleStates = true)
         {
-            var G1G2 = ConcatDFA(this, G2);
+            var G1G2 = Concatenation(this, G2);
 
-            if (removeNoAccessibleStates)
-            {
-                G1G2.RemoveNoAccessibleStates();
-                GC.Collect();
-                GC.Collect();
-            }
+            if (!removeNoAccessibleStates) return G1G2;
+            
+            G1G2.RemoveNoAccessibleStates();
+            GC.Collect();
+            GC.Collect();
 
             return G1G2;
         }
 
-        public DFA ParallelCompositionWith(IEnumerable<DFA> list, bool removeNoAccessibleStates = true)
-        {
-            return ParallelCompositionWith(
-                list.Aggregate((a, b) => a.ParallelCompositionWith(b, removeNoAccessibleStates)),
+        /// <summary>
+        /// Parallels the composition with.
+        /// </summary>
+        /// <param name="list">The list.</param>
+        /// <param name="removeNoAccessibleStates">if set to <c>true</c> [remove no accessible states].</param>
+        /// <returns>DFA.</returns>
+        public DFA ParallelCompositionWith(IEnumerable<DFA> list, bool removeNoAccessibleStates = true) =>
+            ParallelCompositionWith(list.Aggregate((a, b) => a.ParallelCompositionWith(b, removeNoAccessibleStates)),
                 removeNoAccessibleStates);
-        }
 
-        public DFA ParallelCompositionWith(params DFA[] others)
-        {
-            return ParallelCompositionWith(others, true);
-        }
+        /// <summary>
+        /// Parallels the composition with.
+        /// </summary>
+        /// <param name="others">The others.</param>
+        /// <returns>DFA.</returns>
+        public DFA ParallelCompositionWith(params DFA[] others) => ParallelCompositionWith(others, true);
 
+        /// <summary>
+        /// Products the specified list.
+        /// </summary>
+        /// <param name="list">The list.</param>
+        /// <returns>DFA.</returns>
         public static DFA Product(IEnumerable<DFA> list)
         {
             if (!list.Any()) return null;
-            var G1G2 = list.Aggregate((a, b) => ConcatDFA(a, b));
+            var G1G2 = list.Aggregate(Concatenation);
             G1G2.BuildProduct();
             return G1G2;
         }
 
+        /// <summary>
+        /// Products the specified g.
+        /// </summary>
+        /// <param name="G">The g.</param>
+        /// <param name="others">The others.</param>
+        /// <returns>DFA.</returns>
         public static DFA Product(DFA G, params DFA[] others)
         {
             return G.ProductWith(others);
         }
 
+        /// <summary>
+        /// Products the with.
+        /// </summary>
+        /// <param name="Gs">The gs.</param>
+        /// <returns>DFA.</returns>
         public DFA ProductWith(params DFA[] Gs)
         {
             return ProductWith((IEnumerable<DFA>) Gs);
         }
 
+        /// <summary>
+        /// Products the with.
+        /// </summary>
+        /// <param name="list">The list.</param>
+        /// <returns>DFA.</returns>
         public DFA ProductWith(IEnumerable<DFA> list)
         {
             var G1G2 = this;
-            foreach (var G in list) G1G2 = ConcatDFA(G1G2, G);
+            G1G2 = list.Aggregate(G1G2, Concatenation);
             G1G2.BuildProduct();
             return G1G2;
         }
 
+        /// <summary>
+        /// Projections the specified remove events.
+        /// </summary>
+        /// <param name="removeEvents">The remove events.</param>
+        /// <returns>DFA.</returns>
         public DFA Projection(IEnumerable<AbstractEvent> removeEvents)
         {
             if (IsEmpty()) return Clone();
 
             var evLength = _eventsUnion.Length;
 
-            simplify();
+            Simplify();
             var evs = removeEvents.Select(e => Array.IndexOf(_eventsUnion, e)).Where(i => i >= 0).ToArray();
             var removeEvsArray = removeEvents.ToArray();
             var auxEvs = new List<int>();
@@ -320,19 +432,15 @@ namespace UltraDES
             var removeEventsHash = new bool[evLength];
             foreach (var e in evs) removeEventsHash[e] = true;
 
-            if (evs.Count() == 0) return Clone();
+            if (!evs.Any()) return Clone();
 
-            int[] statesMap;
-            List<int>[] newStatesList;
-
-            projectionStates(evs, out statesMap, out newStatesList);
+            projectionStates(evs, out var statesMap, out var newStatesList);
 
             // Determinizing...
 
             var transitions = new Dictionary<int, int[]>();
             var frontier = new Stack<Tuple<int, HashSet<int>>>();
-            var visited = new Dictionary<int[], int>(IntArrayComparator.GetInstance());
-            visited.Add(new[] {0}, 0);
+            var visited = new Dictionary<int[], int>(IntArrayComparator.GetInstance()) {{new[] {0}, 0}};
 
             var initial = new HashSet<int>();
             for (var i = 0; i < newStatesList[0].Count; ++i) initial.Add(newStatesList[0][i]);
@@ -366,66 +474,54 @@ namespace UltraDES
                         {
                             var nextNewStates = new HashSet<int>();
                             int k;
-                            foreach (var state in oldStates)
+                            foreach (var state in oldStates.Where(state => _adjacencyList[0].HasEvent(state, rEvs[e])))
                             {
-                                if (!_adjacencyList[0].HasEvent(state, rEvs[e])) continue;
                                 k = _adjacencyList[0][state, rEvs[e]];
                                 if (!nextNewStates.Contains(statesMap[k])) nextNewStates.Add(statesMap[k]);
                             }
 
-                            if (nextNewStates.Count > 0)
-                            {
-                                var sortedStates = nextNewStates.OrderBy(i => i).ToArray();
-                                int nextPosition;
-                                bool alreadyVisited;
-                                lock (_lockObject3)
-                                {
-                                    alreadyVisited = visited.TryGetValue(sortedStates, out nextPosition);
-                                    if (!alreadyVisited)
-                                    {
-                                        nextPosition = visited.Count;
-                                        visited.Add(sortedStates, nextPosition);
-                                    }
-                                }
+                            if (nextNewStates.Count <= 0) continue;
 
+                            var sortedStates = nextNewStates.OrderBy(i => i).ToArray();
+                            int nextPosition;
+                            bool alreadyVisited;
+                            lock (_lockObject3)
+                            {
+                                alreadyVisited = visited.TryGetValue(sortedStates, out nextPosition);
                                 if (!alreadyVisited)
                                 {
-                                    var nextOldStates = new HashSet<int>();
-
-                                    for (var i = 0; i < sortedStates.Length; ++i)
-                                    {
-                                        var t = newStatesList[sortedStates[i]];
-                                        for (var j = 0; j < t.Count; ++j)
-                                        {
-                                            if (!nextOldStates.Contains(t[j]))
-                                                nextOldStates.Add(t[j]);
-                                        }
-                                    }
-
-                                    lock (_lockObject2)
-                                    {
-                                        frontier.Push(new Tuple<int, HashSet<int>>(nextPosition, nextOldStates));
-                                    }
+                                    nextPosition = visited.Count;
+                                    visited.Add(sortedStates, nextPosition);
                                 }
+                            }
 
-                                if (firstTransition)
+                            if (!alreadyVisited)
+                            {
+                                var nextOldStates = new HashSet<int>();
+
+                                foreach (var t2 in sortedStates)
                                 {
-                                    var transition = new int[rEvs.Length];
-                                    for (var x = 0; x < transition.Length; ++x) transition[x] = -1;
-                                    transition[e] = nextPosition;
-                                    firstTransition = false;
-                                    lock (_lockObject)
-                                    {
-                                        transitions.Add(newStatePos, transition);
-                                    }
+                                    var t = newStatesList[t2];
+                                    foreach (var t1 in t.Where(t1 => !nextOldStates.Contains(t1))) nextOldStates.Add(t1);
                                 }
-                                else
+
+                                lock (_lockObject2) frontier.Push(new Tuple<int, HashSet<int>>(nextPosition, nextOldStates));
+                            }
+
+                            if (firstTransition)
+                            {
+                                var transition = new int[rEvs.Length];
+                                for (var x = 0; x < transition.Length; ++x) transition[x] = -1;
+                                transition[e] = nextPosition;
+                                firstTransition = false;
+                                lock (_lockObject)
                                 {
-                                    lock (_lockObject)
-                                    {
-                                        transitions[newStatePos][e] = nextPosition;
-                                    }
+                                    transitions.Add(newStatePos, transition);
                                 }
+                            }
+                            else
+                            {
+                                lock (_lockObject) transitions[newStatePos][e] = nextPosition;
                             }
                         }
                     }
@@ -454,15 +550,13 @@ namespace UltraDES
                 var oldPositions = new List<int>();
                 var newPositions = t.Key;
                 foreach (var t1 in newPositions)
-                foreach (var t2 in newStatesList[t1])
-                    if (!oldPositions.Contains(t2))
-                        oldPositions.Add(t2);
+                foreach (var t2 in newStatesList[t1].Where(t2 => !oldPositions.Contains(t2)))
+                    oldPositions.Add(t2);
 
-                statesList[t.Value] = mergeStates(oldPositions, 0);
+                statesList[t.Value] = MergeStates(oldPositions, 0);
             }
 
-            var proj = new DFA(1);
-            proj._eventsUnion = new Event[rEvs.Length];
+            var proj = new DFA(1) {_eventsUnion = new AbstractEvent[rEvs.Length]};
             proj._statesList.Add(statesList);
             proj._eventsList.Add(new bool[rEvs.Length]);
             proj._adjacencyList.Add(new AdjacencyMatrix(statesList.Length, rEvs.Length));
@@ -477,8 +571,7 @@ namespace UltraDES
             foreach (var j in transitions)
                 for (var e = 0; e < j.Value.Length; ++e)
                 {
-                    if (j.Value[e] != -1)
-                        proj._adjacencyList[0].Add(j.Key, e, j.Value[e]);
+                    if (j.Value[e] != -1) proj._adjacencyList[0].Add(j.Key, e, j.Value[e]);
                 }
 
             proj._adjacencyList[0].TrimExcess();
@@ -491,11 +584,22 @@ namespace UltraDES
             return proj;
         }
 
+        /// <summary>
+        /// Projections the specified remove events.
+        /// </summary>
+        /// <param name="removeEvents">The remove events.</param>
+        /// <returns>DFA.</returns>
         public DFA Projection(params AbstractEvent[] removeEvents)
         {
             return Projection((IEnumerable<AbstractEvent>) removeEvents);
         }
 
+        /// <summary>
+        /// Projections the states.
+        /// </summary>
+        /// <param name="evs">The evs.</param>
+        /// <param name="statesMap">The states map.</param>
+        /// <param name="newStatesList">The new states list.</param>
         private void projectionStates(int[] evs, out int[] statesMap, out List<int>[] newStatesList)
         {
             var size = (int) Size;
@@ -510,8 +614,7 @@ namespace UltraDES
                 var currentPosition = statesMap[i];
                 if (currentPosition == -1)
                 {
-                    var newGroup = new List<int>();
-                    newGroup.Add(i);
+                    var newGroup = new List<int> {i};
                     newStates.Add(newGroup);
                     currentPosition = newStates.Count - 1;
                     statesMap[i] = currentPosition;
@@ -561,10 +664,9 @@ namespace UltraDES
                 newStates[initialPos] = null;
             }
 
-            for (var i = 0; i < newStates.Count; ++i)
+            foreach (var t in newStates.Where(t => t != null))
             {
-                if (newStates[i] == null) continue;
-                newStatesList[++k] = newStates[i];
+                newStatesList[++k] = t;
                 foreach (var st in newStatesList[k]) statesMap[st] = k;
             }
         }

@@ -1,13 +1,28 @@
-﻿using System;
+﻿// ***********************************************************************
+// Assembly         : UltraDES
+// Author           : Lucas Alves
+// Created          : 04-20-2020
+//
+// Last Modified By : Lucas Alves
+// Last Modified On : 04-20-2020
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
-using System.Windows;
 
 namespace UltraDES
 {
+    /// <summary>
+    /// Class Drawing.
+    /// </summary>
     internal static class Drawing
     {
+        /// <summary>
+        /// Rounds the vector.
+        /// </summary>
+        /// <param name="v">The v.</param>
+        /// <returns>Vector.</returns>
         public static Vector RoundVector(Vector v)
         {
             double x = Math.Round(v.X, Constants.NUMBER_OF_DIGITS_TO_ROUND);
@@ -15,6 +30,12 @@ namespace UltraDES
             return new Vector(x, y);
         }
 
+        /// <summary>
+        /// Rounds the specified p.
+        /// </summary>
+        /// <param name="p">The p.</param>
+        /// <param name="precision">The precision.</param>
+        /// <returns>System.String.</returns>
         public static string round(double p, int precision = -1)
         {
             if (precision == -1) precision = Constants.NUMBER_OF_DIGITS_TO_ROUND;
@@ -22,6 +43,12 @@ namespace UltraDES
         }
 
         //coloca o automato em na configuração inicial na forma de um circulo
+        /// <summary>
+        /// Initials the configuration.
+        /// </summary>
+        /// <param name="statesList">The states list.</param>
+        /// <param name="radius">The radius.</param>
+        /// <param name="center">The center.</param>
         private static void initialConfiguration(Dictionary<string, DrawingState> statesList, double radius, Vector center)
         {
             double angleUnit = (2 * Math.PI) / (statesList.Count());
@@ -44,6 +71,12 @@ namespace UltraDES
         }
 
         //Calcula o offset (com sinal) baseado em um angulo de inclinação (em radianos) entre dois estados
+        /// <summary>
+        /// Gets the offset.
+        /// </summary>
+        /// <param name="offset">The offset.</param>
+        /// <param name="theta">The theta.</param>
+        /// <returns>Vector.</returns>
         public static Vector getOffset(int offset, double theta)
         {
             double xd = 0, yd = 0;
@@ -81,6 +114,12 @@ namespace UltraDES
 
         }
 
+        /// <summary>
+        /// Gets the maximum and minimum.
+        /// </summary>
+        /// <param name="states">The states.</param>
+        /// <param name="max">The maximum.</param>
+        /// <param name="min">The minimum.</param>
         private static void getMaxAndMin(Dictionary<string, DrawingState> states, out Vector max, out Vector min)
         {
             min = new Vector(10000, 10000);
@@ -111,6 +150,12 @@ namespace UltraDES
         }
 
         //gera arquivo de desenho do autômato
+        /// <summary>
+        /// Draws the SVG.
+        /// </summary>
+        /// <param name="G">The g.</param>
+        /// <param name="fileName">Name of the file.</param>
+        /// <param name="openAfterFinish">if set to <c>true</c> [open after finish].</param>
         public static void drawSVG(DeterministicFiniteAutomaton G, string fileName, bool openAfterFinish = true)
         {
             Dictionary<string, DrawingState> statesList = prepare(G);
@@ -150,6 +195,12 @@ namespace UltraDES
         }
 
         //gera arquivo de desenho do autômato
+        /// <summary>
+        /// Draws the latex figure.
+        /// </summary>
+        /// <param name="G">The g.</param>
+        /// <param name="fileName">Name of the file.</param>
+        /// <param name="openAfterFinish">if set to <c>true</c> [open after finish].</param>
         public static void drawLatexFigure(DeterministicFiniteAutomaton G, string fileName, bool openAfterFinish = true)
         {
             string fontSize = "normalsize";
@@ -192,6 +243,11 @@ namespace UltraDES
         }
 
         //Simula a dinamica de força do sistema
+        /// <summary>
+        /// Prepares the specified g.
+        /// </summary>
+        /// <param name="G">The g.</param>
+        /// <returns>Dictionary&lt;System.String, DrawingState&gt;.</returns>
         private static Dictionary<string, DrawingState> prepare(DeterministicFiniteAutomaton G)
         {
             //CRIANDO MÉTODO QUE SERA UTILIZADO PARA O DESENVOLVIMENTO DA BIBLIOTECA

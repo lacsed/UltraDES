@@ -1,15 +1,45 @@
-﻿using System;
+﻿// ***********************************************************************
+// Assembly         : UltraDES
+// Author           : Lucas Alves
+// Created          : 04-21-2020
+//
+// Last Modified By : Lucas Alves
+// Last Modified On : 05-20-2020
+// ***********************************************************************
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Sockets;
-using System.Text;
 
 namespace UltraDES
 {
+    /// <summary>
+    /// Class Graph.
+    /// </summary>
     public static class Graph
     {
+        /// <summary>
+        /// Converts to unlabelededges.
+        /// </summary>
+        /// <typeparam name="TNode">The type of the t node.</typeparam>
+        /// <typeparam name="TLabel">The type of the t label.</typeparam>
+        /// <param name="edges">The edges.</param>
+        /// <returns>IEnumerable&lt;System.ValueTuple&lt;TNode, TNode&gt;&gt;.</returns>
         public static IEnumerable<(TNode o, TNode d)> ToUnlabeledEdges<TNode, TLabel>(this IEnumerable<(TNode o, TLabel l, TNode d)> edges) => edges.Select(e => (e.o, e.d));
+        /// <summary>
+        /// Reverses the edges.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="edges">The edges.</param>
+        /// <returns>IEnumerable&lt;System.ValueTuple&lt;T, T&gt;&gt;.</returns>
         public static IEnumerable<(T o, T d)> ReverseEdges<T>(this IEnumerable<(T o, T d)> edges) => edges.Select(e => (e.d, e.o)).ToList();
+        /// <summary>
+        /// Breadthes the first search.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="edges">The edges.</param>
+        /// <param name="v0">The v0.</param>
+        /// <returns>IEnumerable&lt;T&gt;.</returns>
         public static IEnumerable<T> BreadthFirstSearch<T>(this IEnumerable<(T o, T d)> edges, T v0) => edges.BreadthFirstSearch(v0, (i, j) => i.Equals(j));
         public static IEnumerable<T> BreadthFirstSearch<T>(this IEnumerable<(T o, T d)> edges, T v0, Func<T,T,bool> equals)
         {

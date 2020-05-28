@@ -1,16 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿// ***********************************************************************
+// Assembly         : UltraDES
+// Author           : Lucas Alves
+// Created          : 04-20-2020
+//
+// Last Modified By : Lucas Alves
+// Last Modified On : 04-20-2020
 
 namespace UltraDES.PetriNets
 {
+    /// <summary>
+    /// Class Node.
+    /// </summary>
     public abstract class Node
     {
-        protected readonly string _alias;
+        /// <summary>
+        /// The alias
+        /// </summary>
+        protected readonly string ALIAS;
 
-        protected Node(string alias)
-        {
-            _alias = alias;
-        }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Node"/> class.
+        /// </summary>
+        /// <param name="alias">The alias.</param>
+        protected Node(string alias) => ALIAS = alias;
     }
 }

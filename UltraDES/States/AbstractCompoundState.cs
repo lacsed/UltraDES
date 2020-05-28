@@ -1,21 +1,29 @@
-﻿////////////////////////////////////////////////////////////////////////////////////////////////////
-// file:	States\AbstractCompoundState.cs
+﻿// ***********************************************************************
+// Assembly         : UltraDES
+// Author           : Lucas Alves
+// Created          : 04-20-2020
 //
-// summary:	Implements the abstract compound state class
-////////////////////////////////////////////////////////////////////////////////////////////////////
+// Last Modified By : Lucas Alves
+// Last Modified On : 05-20-2020
+// ***********************************************************************
 
 using System;
 
 namespace UltraDES
 {
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// <summary>   (Serializable)a abstract compound state. </summary>
-    /// <remarks>   Lucas Alves, 05/01/2016. </remarks>
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /// <summary>
+    /// Class AbstractCompoundState.
+    /// Implements the <see cref="UltraDES.AbstractState" />
+    /// </summary>
+    /// <seealso cref="UltraDES.AbstractState" />
     [Serializable]
     public abstract class AbstractCompoundState : AbstractState
     {
-
+        /// <summary>
+        /// Joins this instance.
+        /// </summary>
+        /// <returns>AbstractState.</returns>
         public AbstractState Join()
         {
             return new State(ToString(), Marking);

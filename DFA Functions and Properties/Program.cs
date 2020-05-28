@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UltraDES;
 
-namespace DFA_Functions_and_Properties
+namespace DFAFunctionsAndProperties
 {
     class Program
     {
@@ -253,16 +253,16 @@ namespace DFA_Functions_and_Properties
 
             var G = plants.First(s => s.Name == "Robot");
 
-            Console.WriteLine("Automaton: {0}", G); // or G.Name
+            Console.WriteLine($"Automaton: {G}"); // or G.Name
 
-            Console.WriteLine("\tInitial state: {0}", G.InitialState);
+            Console.WriteLine($"\tInitial state: {G.InitialState}");
 
-            Console.WriteLine("\tAccessible Part: {0} states", G.AccessiblePart.Size);
-            Console.WriteLine("\tCoaccessible Part: {0} states", G.CoaccessiblePart.Size);
-            Console.WriteLine("\tTrim: {0} states", G.Trim.Size);
+            Console.WriteLine($"\tAccessible Part: {G.AccessiblePart.Size} states");
+            Console.WriteLine($"\tCoaccessible Part: {G.CoaccessiblePart.Size} states");
+            Console.WriteLine($"\tTrim: {G.Trim.Size} states");
 
-            Console.WriteLine("\tMinimal: {0} states", G.Minimal.Size);
-            Console.WriteLine("\tPrefix Closure: {0} states", G.PrefixClosure.Size);
+            Console.WriteLine($"\tMinimal: {G.Minimal.Size} states");
+            Console.WriteLine($"\tPrefix Closure: {G.PrefixClosure.Size} states");
         }
 
         private static void ShowDisablement(DeterministicFiniteAutomaton S, DeterministicFiniteAutomaton G, int limit)
@@ -271,9 +271,9 @@ namespace DFA_Functions_and_Properties
             var i = 0;
             foreach (var pairStateEventList in statesAndEventsList)
             {
-                Console.WriteLine("\tState: {0}", pairStateEventList.Key);
+                Console.WriteLine($"\tState: {pairStateEventList.Key}");
 
-                foreach (var _event in pairStateEventList.Value) Console.WriteLine("\t\tEvent: {0}", _event);
+                foreach (var _event in pairStateEventList.Value) Console.WriteLine($"\t\tEvent: {_event}");
                 Console.Write("\n");
 
                 if (++i >= limit) break;
@@ -290,9 +290,9 @@ namespace DFA_Functions_and_Properties
             var Specification = DeterministicFiniteAutomaton.ParallelComposition(specs);
             var K = Plant.ParallelCompositionWith(Specification);
 
-            Console.WriteLine("\tPlant: {0} states", Plant.Size);
-            Console.WriteLine("\tSpecification: {0} states", Specification.Size);
-            Console.WriteLine("\tK: {0} states", K.Size);
+            Console.WriteLine($"\tPlant: {Plant.Size} states");
+            Console.WriteLine($"\tSpecification: {Specification.Size} states");
+            Console.WriteLine($"\tK: {K.Size} states");
 
             // Controllability
             Console.WriteLine(K.IsControllable(Plant) ? "\tK is controllable" : "\tK is not controllable");
@@ -304,14 +304,14 @@ namespace DFA_Functions_and_Properties
                 true
             );
 
-            Console.WriteLine("\tSupervisor: {0} states", S.Size);
+            Console.WriteLine($"\tSupervisor: {S.Size} states");
 
             // Computes the supervisor using all plants and specifications.
             S = DeterministicFiniteAutomaton.MonolithicSupervisor(plants, specs, true);
-            Console.WriteLine("\tSupervisor (method 2): {0} states", S.Size);
+            Console.WriteLine($"\tSupervisor (method 2): {S.Size} states");
 
             var proj = S.Projection(S.UncontrollableEvents);
-            Console.WriteLine("\tProjection: {0} states", proj.Size);
+            Console.WriteLine($"\tProjection: {proj.Size} states");
 
             S.simplifyName("S");
             Console.WriteLine("\tDisabled Events (first 5):");
@@ -320,11 +320,11 @@ namespace DFA_Functions_and_Properties
             Console.WriteLine("------------------------------------------------------");
 
             var P = Plant.ProductWith(Specification);
-            Console.WriteLine("\tProduct 1: {0} state{1}", P.Size, P.Size > 1 ? "s" : "");
+            Console.WriteLine($"\tProduct 1: {P.Size} state{(P.Size > 1 ? "s" : "")}");
             P = DeterministicFiniteAutomaton.Product(plants);
-            Console.WriteLine("\tProduct 2: {0} state{1}", P.Size, P.Size > 1 ? "s" : "");
+            Console.WriteLine($"\tProduct 2: {P.Size} state{(P.Size > 1 ? "s" : "")}");
             P = Plant.ProductWith(specs);
-            Console.WriteLine("\tProduct 3: {0} state{1}", P.Size, P.Size > 1 ? "s" : "");
+            Console.WriteLine($"\tProduct 3: {P.Size} state{(P.Size > 1 ? "s" : "")}");
         }
 
         private static void HandlingFiles()

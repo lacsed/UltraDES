@@ -1,4 +1,12 @@
-﻿using System;
+﻿// ***********************************************************************
+// Assembly         : UltraDES
+// Author           : Lucas Alves
+// Created          : 04-20-2020
+//
+// Last Modified By : Lucas Alves
+// Last Modified On : 05-20-2020
+// ***********************************************************************
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,43 +18,109 @@ namespace UltraDES
 {
     using DFA = DeterministicFiniteAutomaton;
 
+    /// <summary>
+    /// Class DeterministicFiniteAutomaton. This class cannot be inherited.
+    /// </summary>
     [Serializable]
     public sealed partial class DeterministicFiniteAutomaton
     {
+        /// <summary>
+        /// The number of threads
+        /// </summary>
         private static readonly int NumberOfThreads = Math.Max(2, Environment.ProcessorCount);
 
+        /// <summary>
+        /// The adjacency list
+        /// </summary>
         private readonly List<AdjacencyMatrix> _adjacencyList;
 
+        /// <summary>
+        /// The events list
+        /// </summary>
         private readonly List<bool[]> _eventsList;
 
+        /// <summary>
+        /// The lock object
+        /// </summary>
         private readonly object _lockObject = new object();
 
+        /// <summary>
+        /// The lock object2
+        /// </summary>
         private readonly object _lockObject2 = new object();
 
+        /// <summary>
+        /// The lock object3
+        /// </summary>
         private readonly object _lockObject3 = new object();
 
+        /// <summary>
+        /// The states list
+        /// </summary>
         private readonly List<AbstractState[]> _statesList;
 
+        /// <summary>
+        /// The bits
+        /// </summary>
         private int[] _bits;
 
+        /// <summary>
+        /// The events union
+        /// </summary>
         private AbstractEvent[] _eventsUnion;
+        /// <summary>
+        /// The maximum size
+        /// </summary>
         private int[] _maxSize;
+        /// <summary>
+        /// The number of plants
+        /// </summary>
         private int _numberOfPlants;
 
+        /// <summary>
+        /// The number of running threads
+        /// </summary>
         private int _numberOfRunningThreads;
 
+        /// <summary>
+        /// The remove bad states
+        /// </summary>
         private Stack<bool> _removeBadStates;
 
+        /// <summary>
+        /// The reverse transitions list
+        /// </summary>
         private List<List<int>[]>[] _reverseTransitionsList;
 
+        /// <summary>
+        /// The states stack
+        /// </summary>
         private Stack<StatesTuple> _statesStack;
+        /// <summary>
+        /// The tuple size
+        /// </summary>
         private int _tupleSize;
 
+        /// <summary>
+        /// The valid states
+        /// </summary>
         private Dictionary<StatesTuple, bool> _validStates;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DeterministicFiniteAutomaton"/> class.
+        /// </summary>
+        /// <param name="transitions">The transitions.</param>
+        /// <param name="initial">The initial.</param>
+        /// <param name="name">The name.</param>
         public DeterministicFiniteAutomaton(IEnumerable<(AbstractState, AbstractEvent, AbstractState)> transitions, AbstractState initial, string name) : 
             this(transitions.Select(t => (Transition)t), initial, name)
         { }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DeterministicFiniteAutomaton"/> class.
+        /// </summary>
+        /// <param name="transitions">The transitions.</param>
+        /// <param name="initial">The initial.</param>
+        /// <param name="name">The name.</param>
         public DeterministicFiniteAutomaton(IEnumerable<Transition> transitions, AbstractState initial, string name) : this(1)
         {
             Name = name;
@@ -74,7 +148,7 @@ namespace UltraDES
             Size = (ulong) _statesList[0].Length;
 
             _bits[0] = 0;
-            _maxSize[0] = (1 << (int) Math.Max(Math.Ceiling(Math.Log(Size, 2)), 1)) - 1;
+            _maxSize[0] = (1 << MinNumOfBits(_statesList[0].Length)) - 1; //(1 << (int) Math.Max(Math.Ceiling(Math.Log(Size, 2)), 1)) - 1;
             _tupleSize = 1;
 
             for (var i = 0; i < _statesList[0].Length; ++i)
@@ -86,6 +160,10 @@ namespace UltraDES
             }
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DeterministicFiniteAutomaton"/> class.
+        /// </summary>
+        /// <param name="n">The n.</param>
         private DeterministicFiniteAutomaton(int n)
         {
             _statesList = new List<AbstractState[]>(n);
@@ -96,10 +174,22 @@ namespace UltraDES
             _numberOfPlants = n;
         }
 
+        /// <summary>
+        /// Gets the events.
+        /// </summary>
+        /// <value>The events.</value>
         public IEnumerable<AbstractEvent> Events => _eventsUnion;
 
-        public AbstractState InitialState => IsEmpty() ? null : composeState(new int[_statesList.Count]);
+        /// <summary>
+        /// Gets the initial state.
+        /// </summary>
+        /// <value>The initial state.</value>
+        public AbstractState InitialState => IsEmpty() ? null : ComposeState(new int[_statesList.Count]);
 
+        /// <summary>
+        /// Gets the marked states.
+        /// </summary>
+        /// <value>The marked states.</value>
         public IEnumerable<AbstractState> MarkedStates
         {
             get
@@ -113,7 +203,7 @@ namespace UltraDES
                     {
                         s.Key.Get(pos, _bits, _maxSize);
                         if (IsMarketState(pos))
-                            yield return composeState(pos);
+                            yield return ComposeState(pos);
                     }
                 }
                 else if (!IsEmpty())
@@ -121,16 +211,28 @@ namespace UltraDES
                     do
                     {
                         if (IsMarketState(pos))
-                            yield return composeState(pos);
+                            yield return ComposeState(pos);
                     } while (IncrementPosition(pos));
                 }
             }
         }
 
+        /// <summary>
+        /// Gets the name.
+        /// </summary>
+        /// <value>The name.</value>
         public string Name { get; private set; }
 
+        /// <summary>
+        /// Gets the size.
+        /// </summary>
+        /// <value>The size.</value>
         public ulong Size { get; private set; }
 
+        /// <summary>
+        /// Gets the states.
+        /// </summary>
+        /// <value>The states.</value>
         public IEnumerable<AbstractState> States
         {
             get
@@ -143,20 +245,24 @@ namespace UltraDES
                     foreach (var s in _validStates)
                     {
                         s.Key.Get(pos, _bits, _maxSize);
-                        yield return composeState(pos);
+                        yield return ComposeState(pos);
                     }
                 }
                 else if (!IsEmpty())
                 {
                     do
                     {
-                        yield return composeState(pos);
+                        yield return ComposeState(pos);
                     } while (IncrementPosition(pos));
                 }
             }
         }
 
 
+        /// <summary>
+        /// Converts to dotcode.
+        /// </summary>
+        /// <value>To dot code.</value>
         public string ToDotCode
         {
             get
@@ -175,9 +281,9 @@ namespace UltraDES
 
                 var addTransitions = new Action(() =>
                 {
-                    foreach (var group in getTransitionsFromState(pos).GroupBy(t => t.Destination))
+                    foreach (var group in GetTransitionsFromState(pos).GroupBy(t => t.Destination))
                     {
-                        dot.AppendFormat("\"{0}\" -> \"{1}\" [ label = \"", group.First().Origin, group.Key);
+                        dot.Append($"\"{@group.First().Origin}\" -> \"{@group.Key}\" [ label = \"");
                         var first = true;
                         foreach (var t in group)
                         {
@@ -196,10 +302,10 @@ namespace UltraDES
                     {
                         s.Key.Get(pos, _bits, _maxSize);
                         if (!IsMarketState(pos))
-                            dot.AppendFormat(" \"{0}\" ", composeState(pos));
+                            dot.Append($" \"{ComposeState(pos)}\" ");
                     }
 
-                    dot.AppendFormat("\nnode [shape = point ]; Initial\nInitial -> \"{0}\";\n", InitialState);
+                    dot.Append($"\nnode [shape = point ]; Initial\nInitial -> \"{InitialState}\";\n");
                     foreach (var s in _validStates)
                     {
                         s.Key.Get(pos, _bits, _maxSize);
@@ -211,10 +317,10 @@ namespace UltraDES
                     do
                     {
                         if (!IsMarketState(pos))
-                            dot.AppendFormat(" \"{0}\" ", composeState(pos));
+                            dot.Append($" \"{ComposeState(pos)}\" ");
                     } while (IncrementPosition(pos));
 
-                    dot.AppendFormat("\nnode [shape = point ]; Initial\nInitial -> \"{0}\";\n", InitialState);
+                    dot.Append($"\nnode [shape = point ]; Initial\nInitial -> \"{InitialState}\";\n");
 
                     do
                     {
@@ -228,16 +334,18 @@ namespace UltraDES
             }
         }
 
+
+        /// <summary>
+        /// Converts to regularexpression.
+        /// </summary>
+        /// <value>To regular expression.</value>
         public RegularExpression ToRegularExpression
         {
             get
             {
                 if (IsEmpty()) return Symbol.Empty;
-                simplify();
+                Simplify();
 
-                var t = Enumerable.Range(0, (int) Size).ToArray();
-
-                var len = _statesList.Count;
                 var size = (int) Size;
                 var b = new RegularExpression[size];
                 var a = new RegularExpression[size, size];
@@ -272,6 +380,10 @@ namespace UltraDES
         }
 
 
+        /// <summary>
+        /// Gets the transition function.
+        /// </summary>
+        /// <value>The transition function.</value>
         public Func<AbstractState, AbstractEvent, Option<AbstractState>> TransitionFunction
         {
             get
@@ -315,11 +427,15 @@ namespace UltraDES
                     if (_validStates != null && !_validStates.ContainsKey(new StatesTuple(pos, _bits, _tupleSize)))
                         return None<AbstractState>.Create();
 
-                    return Some<AbstractState>.Create(n == 1 ? _statesList[0][pos[0]] : composeState(pos));
+                    return Some<AbstractState>.Create(n == 1 ? _statesList[0][pos[0]] : ComposeState(pos));
                 };
             }
         }
 
+        /// <summary>
+        /// Gets the transitions.
+        /// </summary>
+        /// <value>The transitions.</value>
         public IEnumerable<Transition> Transitions
         {
             get
@@ -331,7 +447,7 @@ namespace UltraDES
                     foreach (var s in _validStates)
                     {
                         s.Key.Get(pos, _bits, _maxSize);
-                        foreach (var i in getTransitionsFromState(pos))
+                        foreach (var i in GetTransitionsFromState(pos))
                             yield return i;
                     }
                 }
@@ -339,19 +455,27 @@ namespace UltraDES
                 {
                     do
                     {
-                        foreach (var i in getTransitionsFromState(pos))
+                        foreach (var i in GetTransitionsFromState(pos))
                             yield return i;
                     } while (IncrementPosition(pos));
                 }
             }
         }
 
+        /// <summary>
+        /// Gets the uncontrollable events.
+        /// </summary>
+        /// <value>The uncontrollable events.</value>
         public IEnumerable<AbstractEvent> UncontrollableEvents => _eventsUnion.Where(i => !i.IsControllable);
 
+        /// <summary>
+        /// Clones the specified capacity.
+        /// </summary>
+        /// <param name="capacity">The capacity.</param>
+        /// <returns>DFA.</returns>
         public DFA Clone(int capacity)
         {
-            var G = new DFA(capacity);
-            G._eventsUnion = (AbstractEvent[]) _eventsUnion.Clone();
+            var G = new DFA(capacity) {_eventsUnion = (AbstractEvent[]) _eventsUnion.Clone()};
             G._statesList.AddRange(_statesList);
 
             for (var i = 0; i < _adjacencyList.Count; ++i)
@@ -373,29 +497,44 @@ namespace UltraDES
             return G;
         }
 
+        /// <summary>
+        /// Clones this instance.
+        /// </summary>
+        /// <returns>DFA.</returns>
         public DFA Clone()
         {
             return Clone(_statesList.Count());
         }
 
-        private AbstractState composeState(int[] p_pos)
+        /// <summary>
+        /// Composes the state.
+        /// </summary>
+        /// <param name="pPos">The p position.</param>
+        /// <returns>AbstractState.</returns>
+        private AbstractState ComposeState(int[] pPos)
         {
-            var n = p_pos.Length;
+            var n = pPos.Length;
 
-            if (n == 1) return _statesList[0][p_pos[0]];
+            if (n == 1) return _statesList[0][pPos[0]];
 
-            var marked = _statesList[0][p_pos[0]].IsMarked;
+            var marked = _statesList[0][pPos[0]].IsMarked;
             var states = new AbstractState[n];
-            states[0] = _statesList[0][p_pos[0]];
+            states[0] = _statesList[0][pPos[0]];
             for (var j = 1; j < n; ++j)
             {
-                states[j] = _statesList[j][p_pos[j]];
-                marked &= _statesList[j][p_pos[j]].IsMarked;
+                states[j] = _statesList[j][pPos[j]];
+                marked &= _statesList[j][pPos[j]].IsMarked;
             }
 
             return new CompoundState(states, marked ? Marking.Marked : Marking.Unmarked);
         }
 
+        /// <summary>
+        /// Depthes the first search.
+        /// </summary>
+        /// <param name="acceptAllStates">if set to <c>true</c> [accept all states].</param>
+        /// <param name="checkForBadStates">if set to <c>true</c> [check for bad states].</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private bool DepthFirstSearch(bool acceptAllStates, bool checkForBadStates = false)
         {
             _statesStack = new Stack<StatesTuple>();
@@ -424,9 +563,7 @@ namespace UltraDES
             var vUncontrollableEventsCount = UncontrollableEvents.Count();
             if (checkForBadStates)
             {
-                foreach (var p in _validStates)
-                    if (!p.Value)
-                        vNewBadStates |= RemoveBadStates(p.Key, vUncontrollableEventsCount, true);
+                vNewBadStates = _validStates.Where(p => !p.Value).Aggregate(false, (current, p) => current | RemoveBadStates(p.Key, vUncontrollableEventsCount, true));
             }
 
             foreach (var p in _validStates.Reverse())
@@ -435,6 +572,10 @@ namespace UltraDES
             return vNewBadStates;
         }
 
+        /// <summary>
+        /// Depthes the first search thread.
+        /// </summary>
+        /// <param name="param">The parameter.</param>
         private void DepthFirstSearchThread(object param)
         {
             var length = 0;
@@ -514,6 +655,11 @@ namespace UltraDES
             }
         }
 
+        /// <summary>
+        /// Draws the latex figure.
+        /// </summary>
+        /// <param name="fileName">Name of the file.</param>
+        /// <param name="openAfterFinish">if set to <c>true</c> [open after finish].</param>
         public void drawLatexFigure(string fileName = null, bool openAfterFinish = true)
         {
             if (fileName == null) fileName = Name;
@@ -521,6 +667,11 @@ namespace UltraDES
             Drawing.drawLatexFigure(this, fileName, openAfterFinish);
         }
 
+        /// <summary>
+        /// Draws the SVG figure.
+        /// </summary>
+        /// <param name="fileName">Name of the file.</param>
+        /// <param name="openAfterFinish">if set to <c>true</c> [open after finish].</param>
         public void drawSVGFigure(string fileName = null, bool openAfterFinish = true)
         {
             if (fileName == null) fileName = Name;
@@ -529,7 +680,11 @@ namespace UltraDES
         }
 
 
-        private void findStates(int obj)
+        /// <summary>
+        /// Finds the states.
+        /// </summary>
+        /// <param name="obj">The object.</param>
+        private void FindStates(int obj)
         {
             var n = _statesList.Count;
             var nPlant = obj;
@@ -688,23 +843,27 @@ namespace UltraDES
         }
 
 
-        private IEnumerable<Transition> getTransitionsFromState(int[] pos)
+        /// <summary>
+        /// Gets the state of the transitions from.
+        /// </summary>
+        /// <param name="pos">The position.</param>
+        /// <returns>IEnumerable&lt;Transition&gt;.</returns>
+        private IEnumerable<Transition> GetTransitionsFromState(int[] pos)
         {
             var n = _statesList.Count;
             var nextPosition = new int[n];
-            int e, i, k;
-            bool plantHasEvent;
+            int e, i;
             var uncontrollableEventsCount = UncontrollableEvents.Count();
             var nextStates = new StatesTuple[uncontrollableEventsCount];
-            var v_events = new int[uncontrollableEventsCount];
-            k = 0;
+            var vEvents = new int[uncontrollableEventsCount];
+            var k = 0;
 
-            var currentState = composeState(pos);
+            var currentState = ComposeState(pos);
 
             for (e = 0; e < uncontrollableEventsCount; ++e)
             {
                 var nextEvent = false;
-                plantHasEvent = false;
+                var plantHasEvent = false;
 
                 for (i = 0; i < _numberOfPlants; ++i)
                 {
@@ -745,18 +904,16 @@ namespace UltraDES
                 if (nextEvent) continue;
 
                 nextStates[k] = new StatesTuple(nextPosition, _bits, _tupleSize);
-                if (_validStates == null || _validStates.ContainsKey(nextStates[k]))
-                {
-                    v_events[k] = e;
-                    ++k;
-                }
+                if (_validStates != null && !_validStates.ContainsKey(nextStates[k])) continue;
+                vEvents[k] = e;
+                ++k;
             }
 
             for (i = 0; i < k; ++i)
             {
                 nextStates[i].Get(nextPosition, _bits, _maxSize);
-                var nextState = composeState(nextPosition);
-                yield return new Transition(currentState, _eventsUnion[v_events[i]], nextState);
+                var nextState = ComposeState(nextPosition);
+                yield return new Transition(currentState, _eventsUnion[vEvents[i]], nextState);
             }
 
             for (e = uncontrollableEventsCount; e < _eventsUnion.Length; ++e)
@@ -779,29 +936,36 @@ namespace UltraDES
                 if (nextEvent) continue;
                 var nextTuple = new StatesTuple(nextPosition, _bits, _tupleSize);
 
-                if (_validStates == null || _validStates.ContainsKey(nextTuple))
-                {
-                    var nextState = composeState(nextPosition);
-                    yield return new Transition(currentState, _eventsUnion[e], nextState);
-                }
+                if (_validStates != null && !_validStates.ContainsKey(nextTuple)) continue;
+                var nextState = ComposeState(nextPosition);
+                yield return new Transition(currentState, _eventsUnion[e], nextState);
             }
         }
 
-        private bool IncrementPosition(int[] p_pos)
+        /// <summary>
+        /// Increments the position.
+        /// </summary>
+        /// <param name="pPos">The p position.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        private bool IncrementPosition(int[] pPos)
         {
             var k = _statesList.Count - 1;
             while (k >= 0)
             {
-                if (++p_pos[k] < _statesList[k].Length)
+                if (++pPos[k] < _statesList[k].Length)
                     return true;
-                p_pos[k] = 0;
+                pPos[k] = 0;
                 --k;
             }
 
             return false;
         }
 
-        private void InverseSearchThread(object p_param)
+        /// <summary>
+        /// Inverses the search thread.
+        /// </summary>
+        /// <param name="pParam">The p parameter.</param>
+        private void InverseSearchThread(object pParam)
         {
             var length = 0;
             var n = _statesList.Count;
@@ -809,7 +973,7 @@ namespace UltraDES
             var nextPos = new int[n];
             var movs = new int[n];
 
-            var v_NotCheckValidState = (bool) p_param;
+            var vNotCheckValidState = (bool) pParam;
 
             while (true)
             {
@@ -836,11 +1000,9 @@ namespace UltraDES
                         int i;
                         for (i = 0; i < n; ++i)
                         {
-                            if (!_reverseTransitionsList[i][pos[i]][e].Any())
-                            {
-                                nextEvent = true;
-                                break;
-                            }
+                            if (_reverseTransitionsList[i][pos[i]][e].Any()) continue;
+                            nextEvent = true;
+                            break;
                         }
 
                         if (nextEvent) continue;
@@ -864,12 +1026,9 @@ namespace UltraDES
                             tuple = new StatesTuple(nextPos, _bits, _tupleSize);
                             lock (_lockObject)
                             {
-                                bool value;
-                                if ((_validStates.TryGetValue(tuple, out value) || v_NotCheckValidState) && !value)
-                                {
-                                    _validStates[tuple] = true;
-                                    _statesStack.Push(tuple);
-                                }
+                                if ((!_validStates.TryGetValue(tuple, out var value) && !vNotCheckValidState) || value) continue;
+                                _validStates[tuple] = true;
+                                _statesStack.Push(tuple);
                             }
                         }
                     }
@@ -891,23 +1050,35 @@ namespace UltraDES
         }
 
 
+        /// <summary>
+        /// Determines whether this instance is empty.
+        /// </summary>
+        /// <returns><c>true</c> if this instance is empty; otherwise, <c>false</c>.</returns>
         private bool IsEmpty()
         {
             return Size == 0;
         }
 
-        private bool IsMarketState(int[] p_pos)
+        /// <summary>
+        /// Determines whether [is market state] [the specified p position].
+        /// </summary>
+        /// <param name="pPos">The p position.</param>
+        /// <returns><c>true</c> if [is market state] [the specified p position]; otherwise, <c>false</c>.</returns>
+        private bool IsMarketState(int[] pPos)
         {
             var n = _statesList.Count;
             for (var i = 0; i < n; ++i)
             {
-                if (!_statesList[i][p_pos[i]].IsMarked)
+                if (!_statesList[i][pPos[i]].IsMarked)
                     return false;
             }
 
             return true;
         }
 
+        /// <summary>
+        /// Makes the reverse transitions.
+        /// </summary>
         private void MakeReverseTransitions()
         {
             if (_reverseTransitionsList != null)
@@ -932,11 +1103,9 @@ namespace UltraDES
 
                 for (var e = 0; e < _eventsUnion.Count(); ++e)
                 {
-                    if (!_eventsList[i][e])
-                    {
-                        for (var state = 0; state < _statesList[i].Length; ++state)
-                            _reverseTransitionsList[i][state][e].Add(state);
-                    }
+                    if (_eventsList[i][e]) continue;
+                    for (var state = 0; state < _statesList[i].Length; ++state)
+                        _reverseTransitionsList[i][state][e].Add(state);
                 }
 
                 for (var state = 0; state < _statesList[i].Length; ++state)
@@ -947,23 +1116,32 @@ namespace UltraDES
             });
         }
 
-        private State mergeStates(List<int> p_states, int p_index)
+        /// <summary>
+        /// Merges the states.
+        /// </summary>
+        /// <param name="pStates">The p states.</param>
+        /// <param name="pIndex">Index of the p.</param>
+        /// <returns>State.</returns>
+        private State MergeStates(List<int> pStates, int pIndex)
         {
-            var first = _statesList[p_index][p_states[0]].ToString();
-            var name = new StringBuilder(first, (first.Length + 2) * p_states.Count);
-            var marked = _statesList[p_index][p_states[0]].IsMarked;
+            var first = _statesList[pIndex][pStates[0]].ToString();
+            var name = new StringBuilder(first, (first.Length + 2) * pStates.Count);
+            var marked = _statesList[pIndex][pStates[0]].IsMarked;
 
-            for (var i = 1; i < p_states.Count; ++i)
+            for (var i = 1; i < pStates.Count; ++i)
             {
                 name.Append("|");
-                name.Append(_statesList[p_index][p_states[i]]);
-                marked |= _statesList[p_index][p_states[i]].IsMarked;
+                name.Append(_statesList[pIndex][pStates[i]]);
+                marked |= _statesList[pIndex][pStates[i]].IsMarked;
             }
 
             return new State(name.ToString(), marked ? Marking.Marked : Marking.Unmarked);
         }
 
-        private void minimize()
+        /// <summary>
+        /// Minimizes this instance.
+        /// </summary>
+        private void Minimize()
         {
             var numStatesOld = _statesList[0].Length;
             var statesMap = new int[numStatesOld];
@@ -1010,12 +1188,10 @@ namespace UltraDES
                         l = positions[j];
                         for (var e = numEvents - 1; e >= 0; --e)
                         {
-                            if (hasEvents[e] != _adjacencyList[0].HasEvent(l, e) || hasEvents[e] &&
-                                statesMap[transitions[e]] != statesMap[_adjacencyList[0][l, e]])
-                            {
-                                nextState = true;
-                                break;
-                            }
+                            if (hasEvents[e] == _adjacencyList[0].HasEvent(l, e) &&
+                                (!hasEvents[e] || statesMap[transitions[e]] == statesMap[_adjacencyList[0][l, e]])) continue;
+                            nextState = true;
+                            break;
                         }
 
                         if (nextState) break;
@@ -1073,23 +1249,26 @@ namespace UltraDES
                 k = k == 0 ? initial : k == initial ? 0 : k;
                 for (var e = 0; e < numEvents; ++e)
                 {
-                    if (_adjacencyList[0].HasEvent(i, e))
-                    {
-                        l = statesMap[_adjacencyList[0][i, e]];
-                        l = l == 0 ? initial : l == initial ? 0 : l;
-                        newTransitions.Add(k, e, l);
-                    }
+                    if (!_adjacencyList[0].HasEvent(i, e)) continue;
+                    l = statesMap[_adjacencyList[0][i, e]];
+                    l = l == 0 ? initial : l == initial ? 0 : l;
+                    newTransitions.Add(k, e, l);
                 }
             }
 
             _statesList[0] = newStates;
             _adjacencyList[0] = newTransitions;
-            _maxSize[0] = (1 << (int) Math.Max(Math.Ceiling(Math.Log(newStates.Length, 2)), 1)) - 1;
+            _maxSize[0] = (1 << MinNumOfBits(newStates.Length)) - 1;//(1 << (int) Math.Max(Math.Ceiling(Math.Log(newStates.Length, 2)), 1)) - 1;
             Size = (ulong) newStates.Length;
             Name = "Min(" + Name + ")";
         }
 
 
+        /// <summary>
+        /// Radixes the sort.
+        /// </summary>
+        /// <param name="map">The map.</param>
+        /// <param name="positions">The positions.</param>
         private void RadixSort(int[] map, int[] positions)
         {
             var n = positions.Length;
@@ -1127,6 +1306,13 @@ namespace UltraDES
             }
         }
 
+        /// <summary>
+        /// Removes the bad states.
+        /// </summary>
+        /// <param name="initialPos">The initial position.</param>
+        /// <param name="uncontrolEventsCount">The uncontrol events count.</param>
+        /// <param name="defaultValue">if set to <c>true</c> [default value].</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private bool RemoveBadStates(StatesTuple initialPos, int uncontrolEventsCount, bool defaultValue = false)
         {
             var n = _statesList.Count;
@@ -1150,11 +1336,9 @@ namespace UltraDES
                     int i;
                     for (i = 0; i < n; ++i)
                     {
-                        if (!_reverseTransitionsList[i][pos[i]][e].Any())
-                        {
-                            nextEvent = true;
-                            break;
-                        }
+                        if (_reverseTransitionsList[i][pos[i]][e].Count > 0) continue;
+                        nextEvent = true;
+                        break;
                     }
 
                     if (nextEvent) continue;
@@ -1190,6 +1374,9 @@ namespace UltraDES
             return found;
         }
 
+        /// <summary>
+        /// Removes the no accessible states.
+        /// </summary>
         private void RemoveNoAccessibleStates()
         {
             if (_validStates == null)
@@ -1201,7 +1388,11 @@ namespace UltraDES
                 DepthFirstSearch(false);
         }
 
-        private static void removeUnusedTransitions(DFA[] composition)
+        /// <summary>
+        /// Removes the unused transitions.
+        /// </summary>
+        /// <param name="composition">The composition.</param>
+        private static void RemoveUnusedTransitions(DFA[] composition)
         {
             var stack1 = new Stack<int>();
             var stack2 = new Stack<int>();
@@ -1276,26 +1467,38 @@ namespace UltraDES
             }
         }
 
+
+        /// <summary>
+        /// Shows the automaton.
+        /// </summary>
+        /// <param name="name">The name.</param>
+        [Obsolete("This method will soon be deprecated. Use ShowAutomaton instead.")]
         public void showAutomaton(string name = "")
         {
             ShowAutomaton(name);
         }
 
+        /// <summary>
+        /// Shows the automaton.
+        /// </summary>
+        /// <param name="name">The name.</param>
         public void ShowAutomaton(string name = "")
         {
             if (name == "") name = Name;
             Draw.ShowDotCode(ToDotCode, name);
         }
 
-        private void simplify()
+        /// <summary>
+        /// Simplifies this instance.
+        /// </summary>
+        private void Simplify()
         {
             var newStates = new AbstractState[Size];
             var newAdjacencyMatrix = new AdjacencyMatrix((int) Size, _eventsUnion.Length, true);
-            int id = 0, n = _statesList.Count();
+            int id, n = _statesList.Count();
             var positionNewStates = new Dictionary<StatesTuple, int>(StatesTupleComparator.GetInstance());
 
-            if (_validStates == null && n == 1)
-                return;
+            if (_validStates == null && n == 1) return;
 
             id = 0;
             var pos0 = new int[n];
@@ -1305,7 +1508,7 @@ namespace UltraDES
                 foreach (var state in _validStates)
                 {
                     state.Key.Get(pos0, _bits, _maxSize);
-                    newStates[id] = composeState(pos0);
+                    newStates[id] = ComposeState(pos0);
                     positionNewStates.Add(state.Key, id);
                     ++id;
                 }
@@ -1314,7 +1517,7 @@ namespace UltraDES
             {
                 do
                 {
-                    newStates[id] = composeState(pos0);
+                    newStates[id] = ComposeState(pos0);
                     positionNewStates.Add(new StatesTuple(pos0, _bits, _tupleSize), id);
                     ++id;
                 } while (IncrementPosition(pos0));
@@ -1350,8 +1553,7 @@ namespace UltraDES
                     if (nextEvent) continue;
 
                     nextTuple.Set(nextPos, _bits);
-                    var k = 0;
-                    if (positionNewStates.TryGetValue(nextTuple, out k)) newAdjacencyMatrix.Add(state.Value, e, k);
+                    if (positionNewStates.TryGetValue(nextTuple, out var k)) newAdjacencyMatrix.Add(state.Value, e, k);
                 }
             });
 
@@ -1376,14 +1578,20 @@ namespace UltraDES
             _tupleSize = 1;
             _numberOfPlants = 1;
             _maxSize = new int[1];
-            _maxSize[0] = (1 << (int) Math.Max(Math.Ceiling(Math.Log(Size, 2)), 1)) - 1;
+            _maxSize[0] = (1 << MinNumOfBits((int)Size)) - 1;//(1 << (int) Math.Max(Math.Ceiling(Math.Log(Size, 2)), 1)) - 1;
 
             GC.Collect();
         }
 
+        /// <summary>
+        /// Simplifies the name.
+        /// </summary>
+        /// <param name="newName">The new name.</param>
+        /// <param name="simplifyStatesName">if set to <c>true</c> [simplify states name].</param>
+        /// <returns>Dictionary&lt;System.String, System.String&gt;.</returns>
         public Dictionary<string, string> simplifyName(string newName = null, bool simplifyStatesName = true)
         {
-            simplify();
+            Simplify();
             var namesMap = new Dictionary<string, string>(_statesList[0].Length);
 
             if (simplifyStatesName)
@@ -1402,9 +1610,10 @@ namespace UltraDES
         }
 
 
-        public override string ToString()
-        {
-            return Name;
-        }
+        /// <summary>
+        /// Returns a <see cref="System.String" /> that represents this instance.
+        /// </summary>
+        /// <returns>A <see cref="System.String" /> that represents this instance.</returns>
+        public override string ToString() => Name;
     }
 }

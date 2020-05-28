@@ -1,26 +1,68 @@
-﻿using System;
+﻿// ***********************************************************************
+// Assembly         : UltraDES
+// Author           : Lucas Alves
+// Created          : 04-20-2020
+//
+// Last Modified By : Lucas Alves
+// Last Modified On : 04-22-2020
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Weight = System.Collections.Generic.Dictionary<UltraDES.PetriNets.Node, System.Collections.Generic.Dictionary<UltraDES.PetriNets.Node, uint>>;
 
 namespace UltraDES.PetriNets
 {
-    #warning Development code, could change in newer versions.
+    /// <summary>
+    /// Class PetriNet.
+    /// </summary>
     public class PetriNet
     {
+        /// <summary>
+        /// Gets the name.
+        /// </summary>
+        /// <value>The name.</value>
         public string Name { get; }
 
+        /// <summary>
+        /// The places
+        /// </summary>
         private readonly HashSet<Place> _places = new HashSet<Place>();
+        /// <summary>
+        /// The transitions
+        /// </summary>
         private readonly HashSet<Transition> _transitions = new HashSet<Transition>();
+        /// <summary>
+        /// The weights
+        /// </summary>
         private readonly Weight _weights = new Dictionary<Node, Dictionary<Node, uint>>();
 
+        /// <summary>
+        /// Gets the places.
+        /// </summary>
+        /// <value>The places.</value>
         public IEnumerable<Place> Places => _places;
+        /// <summary>
+        /// Gets the transitions.
+        /// </summary>
+        /// <value>The transitions.</value>
         public IEnumerable<Transition> Transitions => _transitions;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PetriNet"/> class.
+        /// </summary>
+        /// <param name="inputs">The inputs.</param>
+        /// <param name="outputs">The outputs.</param>
+        /// <param name="name">The name.</param>
         public PetriNet(IEnumerable<(Place p, Transition t, uint weight)> inputs, IEnumerable<(Place p, Transition t, uint weight)> outputs, string name)
         :this(inputs.Select(i => ((Node)i.p, (Node)i.t, i.weight)).Union(outputs.Select(o => ((Node)o.t,(Node)o.p,o.weight ))), name)
         { }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PetriNet"/> class.
+        /// </summary>
+        /// <param name="arcs">The arcs.</param>
+        /// <param name="name">The name.</param>
         public PetriNet(IEnumerable<(Node x, Node y, uint weight)> arcs, string name)
         {
             Name = name;

@@ -29,6 +29,7 @@
 var events = [];
 
 function Link(a, b) {
+
 	this.nodeA = a;
 	this.nodeB = b;
 	this.text = '';
@@ -40,6 +41,7 @@ function Link(a, b) {
 }
 
 Link.prototype.getAnchorPoint = function() {
+
 	var dx = this.nodeB.x - this.nodeA.x;
 	var dy = this.nodeB.y - this.nodeA.y;
 	var scale = Math.sqrt(dx * dx + dy * dy);
@@ -50,6 +52,7 @@ Link.prototype.getAnchorPoint = function() {
 };
 
 Link.prototype.setAnchorPoint = function(x, y) {
+
 	var dx = this.nodeB.x - this.nodeA.x;
 	var dy = this.nodeB.y - this.nodeA.y;
 	var scale = Math.sqrt(dx * dx + dy * dy);
@@ -63,6 +66,7 @@ Link.prototype.setAnchorPoint = function(x, y) {
 };
 
 Link.prototype.getEndPointsAndCircle = function() {
+
 	if(this.perpendicularPart == 0) {
 		var midX = (this.nodeA.x + this.nodeB.x) / 2;
 		var midY = (this.nodeA.y + this.nodeB.y) / 2;
@@ -103,6 +107,7 @@ Link.prototype.getEndPointsAndCircle = function() {
 };
 
 Link.prototype.draw = function(c) {
+
 	var stuff = this.getEndPointsAndCircle();
 	// draw arc
 	c.beginPath();
@@ -139,6 +144,7 @@ Link.prototype.draw = function(c) {
 };
 
 Link.prototype.containsPoint = function(x, y) {
+
 	var stuff = this.getEndPointsAndCircle();
 	if(stuff.hasCircle) {
 		var dx = x - stuff.circleX;
@@ -175,6 +181,7 @@ Link.prototype.containsPoint = function(x, y) {
 };
 
 function Node(x, y) {
+
 	this.x = x;
 	this.y = y;
 	this.mouseOffsetX = 0;
@@ -184,17 +191,19 @@ function Node(x, y) {
 }
 
 Node.prototype.setMouseStart = function(x, y) {
+
 	this.mouseOffsetX = this.x - x;
 	this.mouseOffsetY = this.y - y;
 };
 
 Node.prototype.setAnchorPoint = function(x, y) {
+
 	this.x = x + this.mouseOffsetX;
 	this.y = y + this.mouseOffsetY;
 };
 
 Node.prototype.draw = function(c) {
-	// draw the circle
+
 	c.beginPath();
 	c.arc(this.x, this.y, nodeRadius, 0, 2 * Math.PI, false);
 	c.stroke();
@@ -211,6 +220,7 @@ Node.prototype.draw = function(c) {
 };
 
 Node.prototype.closestPointOnCircle = function(x, y) {
+
 	var dx = x - this.x;
 	var dy = y - this.y;
 	var scale = Math.sqrt(dx * dx + dy * dy);
@@ -221,10 +231,12 @@ Node.prototype.closestPointOnCircle = function(x, y) {
 };
 
 Node.prototype.containsPoint = function(x, y) {
+
 	return (x - this.x)*(x - this.x) + (y - this.y)*(y - this.y) < nodeRadius*nodeRadius;
 };
 
 function SelfLink(node, mouse) {
+
 	this.node = node;
 	this.anchorAngle = 0;
 	this.mouseOffsetAngle = 0;
@@ -236,10 +248,12 @@ function SelfLink(node, mouse) {
 }
 
 SelfLink.prototype.setMouseStart = function(x, y) {
+
 	this.mouseOffsetAngle = this.anchorAngle - Math.atan2(y - this.node.y, x - this.node.x);
 };
 
 SelfLink.prototype.setAnchorPoint = function(x, y) {
+
 	this.anchorAngle = Math.atan2(y - this.node.y, x - this.node.x) + this.mouseOffsetAngle;
 	// snap to 90 degrees
 	var snap = Math.round(this.anchorAngle / (Math.PI / 2)) * (Math.PI / 2);
@@ -250,6 +264,7 @@ SelfLink.prototype.setAnchorPoint = function(x, y) {
 };
 
 SelfLink.prototype.getEndPointsAndCircle = function() {
+
 	var circleX = this.node.x + 1.5 * nodeRadius * Math.cos(this.anchorAngle);
 	var circleY = this.node.y + 1.5 * nodeRadius * Math.sin(this.anchorAngle);
 	var circleRadius = 0.75 * nodeRadius;
@@ -274,6 +289,7 @@ SelfLink.prototype.getEndPointsAndCircle = function() {
 };
 
 SelfLink.prototype.draw = function(c) {
+
 	var stuff = this.getEndPointsAndCircle();
 	// draw arc
 	c.beginPath();
@@ -288,6 +304,7 @@ SelfLink.prototype.draw = function(c) {
 };
 
 SelfLink.prototype.containsPoint = function(x, y) {
+
 	var stuff = this.getEndPointsAndCircle();
 	var dx = x - stuff.circleX;
 	var dy = y - stuff.circleY;
@@ -296,6 +313,7 @@ SelfLink.prototype.containsPoint = function(x, y) {
 };
 
 function StartLink(node, start) {
+
 	this.node = node;
 	this.deltaX = 0;
 	this.deltaY = 0;
@@ -308,6 +326,10 @@ function StartLink(node, start) {
 }
 
 StartLink.prototype.setAnchorPoint = function(x, y) {
+	/// <summary>
+	/// </summary>
+	/// <param name="x">The x.</param>
+	/// <param name="y">The y.</param>
 	this.deltaX = x - this.node.x;
 	this.deltaY = y - this.node.y;
 
@@ -321,6 +343,8 @@ StartLink.prototype.setAnchorPoint = function(x, y) {
 };
 
 StartLink.prototype.getEndPoints = function() {
+	/// <summary>
+	/// </summary>
 	var startX = this.node.x + this.deltaX;
 	var startY = this.node.y + this.deltaY;
 	var end = this.node.closestPointOnCircle(startX, startY);
@@ -333,6 +357,9 @@ StartLink.prototype.getEndPoints = function() {
 };
 
 StartLink.prototype.draw = function(c) {
+	/// <summary>
+	/// </summary>
+	/// <param name="c">The c.</param>
 	var stuff = this.getEndPoints();
 
 	// draw the line
@@ -350,6 +377,10 @@ StartLink.prototype.draw = function(c) {
 };
 
 StartLink.prototype.containsPoint = function(x, y) {
+	/// <summary>
+	/// </summary>
+	/// <param name="x">The x.</param>
+	/// <param name="y">The y.</param>
 	var stuff = this.getEndPoints();
 	var dx = stuff.endX - stuff.startX;
 	var dy = stuff.endY - stuff.startY;
@@ -360,12 +391,20 @@ StartLink.prototype.containsPoint = function(x, y) {
 };
 
 function TemporaryLink(from, to) {
+	/// <summary>
+	/// Temporaries the link.
+	/// </summary>
+	/// <param name="from">From.</param>
+	/// <param name="to">To.</param>
 	this.from = from;
 	this.to = to;
 }
 
 TemporaryLink.prototype.draw = function(c) {
 	// draw the line
+	/// <summary>
+	/// </summary>
+	/// <param name="c">The c.</param>
 	c.beginPath();
 	c.moveTo(this.to.x, this.to.y);
 	c.lineTo(this.from.x, this.from.y);
@@ -377,11 +416,16 @@ TemporaryLink.prototype.draw = function(c) {
 
 // draw using this instead of a canvas and call toLaTeX() afterward
 function ExportAsLaTeX() {
+	/// <summary>
+	/// Exports as la te x.
+	/// </summary>
 	this._points = [];
 	this._texData = '';
 	this._scale = 0.1; // to convert pixels to document space (TikZ breaks if the numbers get too big, above 500?)
 
 	this.toLaTeX = function() {
+		/// <summary>
+		/// </summary>
 		return '\\documentclass[12pt]{article}\n' +
 			'\\usepackage{tikz}\n' +
 			'\n' +
@@ -398,9 +442,19 @@ function ExportAsLaTeX() {
 	};
 
 	this.beginPath = function() {
+		/// <summary>
+		/// </summary>
 		this._points = [];
 	};
 	this.arc = function(x, y, radius, startAngle, endAngle, isReversed) {
+		/// <summary>
+		/// </summary>
+		/// <param name="x">The x.</param>
+		/// <param name="y">The y.</param>
+		/// <param name="radius">The radius.</param>
+		/// <param name="startAngle">The start angle.</param>
+		/// <param name="endAngle">The end angle.</param>
+		/// <param name="isReversed">The is reversed.</param>
 		x *= this._scale;
 		y *= this._scale;
 		radius *= this._scale;
@@ -429,11 +483,17 @@ function ExportAsLaTeX() {
 		}
 	};
 	this.moveTo = this.lineTo = function(x, y) {
+		/// <summary>
+		/// </summary>
+		/// <param name="x">The x.</param>
+		/// <param name="y">The y.</param>
 		x *= this._scale;
 		y *= this._scale;
 		this._points.push({ 'x': x, 'y': y });
 	};
 	this.stroke = function() {
+		/// <summary>
+		/// </summary>
 		if(this._points.length == 0) return;
 		this._texData += '\\draw [' + this.strokeStyle + ']';
 		for(var i = 0; i < this._points.length; i++) {
@@ -443,6 +503,8 @@ function ExportAsLaTeX() {
 		this._texData += ';\n';
 	};
 	this.fill = function() {
+		/// <summary>
+		/// </summary>
 		if(this._points.length == 0) return;
 		this._texData += '\\fill [' + this.strokeStyle + ']';
 		for(var i = 0; i < this._points.length; i++) {
@@ -452,11 +514,21 @@ function ExportAsLaTeX() {
 		this._texData += ';\n';
 	};
 	this.measureText = function(text) {
+		/// <summary>
+		/// </summary>
+		/// <param name="text">The text.</param>
 		var c = canvas.getContext('2d');
 		c.font = '20px "Times New Romain", serif';
 		return c.measureText(text);
 	};
 	this.advancedFillText = function(text, originalText, x, y, angleOrNull) {
+		/// <summary>
+		/// </summary>
+		/// <param name="text">The text.</param>
+		/// <param name="originalText">The original text.</param>
+		/// <param name="x">The x.</param>
+		/// <param name="y">The y.</param>
+		/// <param name="angleOrNull">The angle or null.</param>
 		if(text.replace(' ', '').length > 0) {
 			var nodeParams = '';
 			// x and y start off as the center of the text, but will be moved to one side of the box when angleOrNull != null
@@ -478,11 +550,16 @@ function ExportAsLaTeX() {
 		}
 	};
 
+/// <summary>
+/// </summary>
 	this.translate = this.save = this.restore = this.clearRect = function(){};
 }
 
 // draw using this instead of a canvas and call toSVG() afterward
 function ExportAsSVG() {
+	/// <summary>
+	/// Exports as SVG.
+	/// </summary>
 	this.fillStyle = 'black';
 	this.strokeStyle = 'black';
 	this.lineWidth = 1;
@@ -493,13 +570,25 @@ function ExportAsSVG() {
 	this._transY = 0;
 
 	this.toSVG = function() {
+		/// <summary>
+		/// </summary>
 		return '<?xml version="1.0" standalone="no"?>\n<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n\n<svg width="800" height="600" version="1.1" xmlns="http://www.w3.org/2000/svg">\n' + this._svgData + '</svg>\n';
 	};
 
 	this.beginPath = function() {
+		/// <summary>
+		/// </summary>
 		this._points = [];
 	};
 	this.arc = function(x, y, radius, startAngle, endAngle, isReversed) {
+		/// <summary>
+		/// </summary>
+		/// <param name="x">The x.</param>
+		/// <param name="y">The y.</param>
+		/// <param name="radius">The radius.</param>
+		/// <param name="startAngle">The start angle.</param>
+		/// <param name="endAngle">The end angle.</param>
+		/// <param name="isReversed">The is reversed.</param>
 		x += this._transX;
 		y += this._transY;
 		var style = 'stroke="' + this.strokeStyle + '" stroke-width="' + this.lineWidth + '" fill="none"';
@@ -535,11 +624,17 @@ function ExportAsSVG() {
 		}
 	};
 	this.moveTo = this.lineTo = function(x, y) {
+		/// <summary>
+		/// </summary>
+		/// <param name="x">The x.</param>
+		/// <param name="y">The y.</param>
 		x += this._transX;
 		y += this._transY;
 		this._points.push({ 'x': x, 'y': y });
 	};
 	this.stroke = function() {
+		/// <summary>
+		/// </summary>
 		if(this._points.length == 0) return;
 		this._svgData += '\t<polygon stroke="' + this.strokeStyle + '" stroke-width="' + this.lineWidth + '" points="';
 		for(var i = 0; i < this._points.length; i++) {
@@ -548,6 +643,8 @@ function ExportAsSVG() {
 		this._svgData += '"/>\n';
 	};
 	this.fill = function() {
+		/// <summary>
+		/// </summary>
 		if(this._points.length == 0) return;
 		this._svgData += '\t<polygon fill="' + this.fillStyle + '" stroke-width="' + this.lineWidth + '" points="';
 		for(var i = 0; i < this._points.length; i++) {
@@ -556,11 +653,19 @@ function ExportAsSVG() {
 		this._svgData += '"/>\n';
 	};
 	this.measureText = function(text) {
+		/// <summary>
+		/// </summary>
+		/// <param name="text">The text.</param>
 		var c = canvas.getContext('2d');
 		c.font = '20px "Times New Romain", serif';
 		return c.measureText(text);
 	};
 	this.fillText = function(text, x, y) {
+		/// <summary>
+		/// </summary>
+		/// <param name="text">The text.</param>
+		/// <param name="x">The x.</param>
+		/// <param name="y">The y.</param>
 		x += this._transX;
 		y += this._transY;
 		if(text.replace(' ', '').length > 0) {
@@ -568,17 +673,28 @@ function ExportAsSVG() {
 		}
 	};
 	this.translate = function(x, y) {
+		/// <summary>
+		/// </summary>
+		/// <param name="x">The x.</param>
+		/// <param name="y">The y.</param>
 		this._transX = x;
 		this._transY = y;
 	};
 
+/// <summary>
+/// </summary>
 	this.save = this.restore = this.clearRect = function(){};
 }
 
+/// <var>The greek letter names</var>
 var greekLetterNames = [ 'Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon', 'Zeta', 'Eta', 'Theta', 'Iota', 'Kappa', 'Lambda', 'Mu', 'Nu', 'Xi', 'Omicron', 'Pi', 'Rho', 'Sigma', 'Tau', 'Upsilon', 'Phi', 'Chi', 'Psi', 'Omega' ];
 
 function convertLatexShortcuts(text) {
 	// html greek characters
+	/// <summary>
+	/// Converts the latex shortcuts.
+	/// </summary>
+	/// <param name="text">The text.</param>
 	for(var i = 0; i < greekLetterNames.length; i++) {
 		var name = greekLetterNames[i];
 		text = text.replace(new RegExp('\\\\' + name, 'g'), String.fromCharCode(913 + i + (i > 16)));
@@ -594,6 +710,10 @@ function convertLatexShortcuts(text) {
 }
 
 function textToXML(text) {
+	/// <summary>
+	/// Texts to XML.
+	/// </summary>
+	/// <param name="text">The text.</param>
 	text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 	var result = '';
 	for(var i = 0; i < text.length; i++) {
@@ -608,6 +728,13 @@ function textToXML(text) {
 }
 
 function drawArrow(c, x, y, angle) {
+	/// <summary>
+	/// Draws the arrow.
+	/// </summary>
+	/// <param name="c">The c.</param>
+	/// <param name="x">The x.</param>
+	/// <param name="y">The y.</param>
+	/// <param name="angle">The angle.</param>
 	var dx = Math.cos(angle);
 	var dy = Math.sin(angle);
 	c.beginPath();
@@ -618,10 +745,22 @@ function drawArrow(c, x, y, angle) {
 }
 
 function canvasHasFocus() {
+	/// <summary>
+	/// Canvases the has focus.
+	/// </summary>
 	return (document.activeElement || document.body) == document.body;
 }
 
 function drawText(c, originalText, x, y, angleOrNull, isSelected) {
+	/// <summary>
+	/// Draws the text.
+	/// </summary>
+	/// <param name="c">The c.</param>
+	/// <param name="originalText">The original text.</param>
+	/// <param name="x">The x.</param>
+	/// <param name="y">The y.</param>
+	/// <param name="angleOrNull">The angle or null.</param>
+	/// <param name="isSelected">The is selected.</param>
 	text = convertLatexShortcuts(originalText);
 	c.font = '20px "Times New Roman", serif';
 	var width = c.measureText(text).width;
@@ -657,29 +796,49 @@ function drawText(c, originalText, x, y, angleOrNull, isSelected) {
 	}
 }
 
+/// <var>The caret timer</var>
 var caretTimer;
+/// <var>The caret visible</var>
 var caretVisible = true;
 
 function resetCaret() {
+	/// <summary>
+	/// Resets the caret.
+	/// </summary>
 	clearInterval(caretTimer);
 	caretTimer = setInterval('caretVisible = !caretVisible; draw()', 500);
 	caretVisible = true;
 }
 
+/// <var>The canvas</var>
 var canvas;
+/// <var>The node radius</var>
 var nodeRadius = 30;
+/// <var>The nodes</var>
 var nodes = [];
+/// <var>The links</var>
 var links = [];
 
+/// <var>The cursor visible</var>
 var cursorVisible = true;
+/// <var>The snap to padding</var>
 var snapToPadding = 6; // pixels
+/// <var>The hit target padding</var>
 var hitTargetPadding = 6; // pixels
+/// <var>The selected object</var>
 var selectedObject = null; // either a Link or a Node
+/// <var>The current link</var>
 var currentLink = null; // a Link
+/// <var>The moving object</var>
 var movingObject = false;
+/// <var>The original click</var>
 var originalClick;
 
 function drawUsing(c) {
+	/// <summary>
+	/// Draws the using.
+	/// </summary>
+	/// <param name="c">The c.</param>
 	c.clearRect(0, 0, canvas.width, canvas.height);
 	c.save();
 	c.translate(0.5, 0.5);
@@ -761,6 +920,8 @@ function drawUsing(c) {
 	var tab = $('#eventos tr');
 	for(var i = 1; i < tab.length; i++) {
 		$(tab[i]).click(function(){
+			/// <summary>
+			/// </summary>
 			this.innerHTML.match(/<td>(.+?)<\/td>/);
 			var evName = RegExp.$1;
 			events[evName].controllable = !events[evName].controllable;
@@ -770,11 +931,19 @@ function drawUsing(c) {
 }
 
 function draw() {
+	/// <summary>
+	/// Draws this instance.
+	/// </summary>
 	drawUsing(canvas.getContext('2d'));
 	saveBackup();
 }
 
 function selectObject(x, y) {
+	/// <summary>
+	/// Selects the object.
+	/// </summary>
+	/// <param name="x">The x.</param>
+	/// <param name="y">The y.</param>
 	for(var i = 0; i < nodes.length; i++) {
 		if(nodes[i].containsPoint(x, y)) {
 			return nodes[i];
@@ -789,6 +958,10 @@ function selectObject(x, y) {
 }
 
 function snapNode(node) {
+	/// <summary>
+	/// Snaps the node.
+	/// </summary>
+	/// <param name="node">The node.</param>
 	for(var i = 0; i < nodes.length; i++) {
 		if(nodes[i] == node) continue;
 
@@ -803,11 +976,16 @@ function snapNode(node) {
 }
 
 window.onload = function() {
+	/// <summary>
+	/// </summary>
 	canvas = document.getElementById('canvas');
 	restoreBackup();
 	draw();
 
 	canvas.onmousedown = function(e) {
+		/// <summary>
+		/// </summary>
+		/// <param name="e">The e.</param>
 		var mouse = crossBrowserRelativeMousePos(e);
 		selectedObject = selectObject(mouse.x, mouse.y);
 		movingObject = false;
@@ -841,6 +1019,9 @@ window.onload = function() {
 	};
 
 	canvas.ondblclick = function(e) {
+		/// <summary>
+		/// </summary>
+		/// <param name="e">The e.</param>
 		var mouse = !e.type || e.type != "dblclick" ? e : crossBrowserRelativeMousePos(e);
 		selectedObject = selectObject(mouse.x, mouse.y);
 
@@ -856,6 +1037,9 @@ window.onload = function() {
 	};
 
 	canvas.onmousemove = function(e) {
+		/// <summary>
+		/// </summary>
+		/// <param name="e">The e.</param>
 		var mouse = crossBrowserRelativeMousePos(e);
 
 		if(currentLink != null) {
@@ -892,6 +1076,9 @@ window.onload = function() {
 	};
 
 	canvas.onmouseup = function(e) {
+		/// <summary>
+		/// </summary>
+		/// <param name="e">The e.</param>
 		movingObject = false;
 
 		if(currentLink != null) {
@@ -906,9 +1093,13 @@ window.onload = function() {
 	};
 }
 
+/// <var>The shift</var>
 var shift = false;
 
 document.onkeydown = function(e) {
+	/// <summary>
+	/// </summary>
+	/// <param name="e">The e.</param>
 	var key = crossBrowserKey(e);
 
 	if(key == 16) {
@@ -944,6 +1135,9 @@ document.onkeydown = function(e) {
 };
 
 document.onkeyup = function(e) {
+	/// <summary>
+	/// </summary>
+	/// <param name="e">The e.</param>
 	var key = crossBrowserKey(e);
 
 	if(key == 16) {
@@ -953,6 +1147,9 @@ document.onkeyup = function(e) {
 
 document.onkeypress = function(e) {
 	// don't read keystrokes when other things have focus
+	/// <summary>
+	/// </summary>
+	/// <param name="e">The e.</param>
 	var key = crossBrowserKey(e);
 	if(!canvasHasFocus()) {
 		// don't read keystrokes when other things have focus
@@ -971,11 +1168,19 @@ document.onkeypress = function(e) {
 };
 
 function crossBrowserKey(e) {
+	/// <summary>
+	/// Crosses the browser key.
+	/// </summary>
+	/// <param name="e">The e.</param>
 	e = e || window.event;
 	return e.which || e.keyCode;
 }
 
 function crossBrowserElementPos(e) {
+	/// <summary>
+	/// Crosses the browser element position.
+	/// </summary>
+	/// <param name="e">The e.</param>
 	e = e || window.event;
 	var obj = e.target || e.srcElement;
 	var x = 0, y = 0;
@@ -988,6 +1193,10 @@ function crossBrowserElementPos(e) {
 }
 
 function crossBrowserMousePos(e) {
+	/// <summary>
+	/// Crosses the browser mouse position.
+	/// </summary>
+	/// <param name="e">The e.</param>
 	e = e || window.event;
 	return {
 		'x': e.pageX || e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft,
@@ -996,6 +1205,10 @@ function crossBrowserMousePos(e) {
 }
 
 function crossBrowserRelativeMousePos(e) {
+	/// <summary>
+	/// Crosses the browser relative mouse position.
+	/// </summary>
+	/// <param name="e">The e.</param>
 	var element = crossBrowserElementPos(e);
 	var mouse = crossBrowserMousePos(e);
 	return {
@@ -1005,12 +1218,19 @@ function crossBrowserRelativeMousePos(e) {
 }
 
 function output(text) {
+	/// <summary>
+	/// Outputs the specified text.
+	/// </summary>
+	/// <param name="text">The text.</param>
 	var element = document.getElementById('output');
 	element.style.display = 'block';
 	element.value = text;
 }
 
 function saveAsPNG() {
+	/// <summary>
+	/// Saves as PNG.
+	/// </summary>
 	var oldSelectedObject = selectedObject;
 	selectedObject = null;
 	drawUsing(canvas.getContext('2d'));
@@ -1020,6 +1240,9 @@ function saveAsPNG() {
 }
 
 function saveAsSVG() {
+	/// <summary>
+	/// Saves as SVG.
+	/// </summary>
 	var exporter = new ExportAsSVG();
 	var oldSelectedObject = selectedObject;
 	selectedObject = null;
@@ -1032,6 +1255,9 @@ function saveAsSVG() {
 }
 
 function saveAsLaTeX() {
+	/// <summary>
+	/// Saves as la te x.
+	/// </summary>
 	var exporter = new ExportAsLaTeX();
 	var oldSelectedObject = selectedObject;
 	selectedObject = null;
@@ -1042,10 +1268,31 @@ function saveAsLaTeX() {
 }
 
 function det(a, b, c, d, e, f, g, h, i) {
+	/// <summary>
+	/// Dets the specified a.
+	/// </summary>
+	/// <param name="a">a.</param>
+	/// <param name="b">The b.</param>
+	/// <param name="c">The c.</param>
+	/// <param name="d">The d.</param>
+	/// <param name="e">The e.</param>
+	/// <param name="f">The f.</param>
+	/// <param name="g">The g.</param>
+	/// <param name="h">The h.</param>
+	/// <param name="i">The i.</param>
 	return a*e*i + b*f*g + c*d*h - a*f*h - b*d*i - c*e*g;
 }
 
 function circleFromThreePoints(x1, y1, x2, y2, x3, y3) {
+	/// <summary>
+	/// Circles from three points.
+	/// </summary>
+	/// <param name="x1">The x1.</param>
+	/// <param name="y1">The y1.</param>
+	/// <param name="x2">The x2.</param>
+	/// <param name="y2">The y2.</param>
+	/// <param name="x3">The x3.</param>
+	/// <param name="y3">The y3.</param>
 	var a = det(x1, y1, 1, x2, y2, 1, x3, y3, 1);
 	var bx = -det(x1*x1 + y1*y1, y1, 1, x2*x2 + y2*y2, y2, 1, x3*x3 + y3*y3, y3, 1);
 	var by = det(x1*x1 + y1*y1, x1, 1, x2*x2 + y2*y2, x2, 1, x3*x3 + y3*y3, x3, 1);
@@ -1058,10 +1305,18 @@ function circleFromThreePoints(x1, y1, x2, y2, x3, y3) {
 }
 
 function fixed(number, digits) {
+	/// <summary>
+	/// Fixeds the specified number.
+	/// </summary>
+	/// <param name="number">The number.</param>
+	/// <param name="digits">The digits.</param>
 	return number.toFixed(digits).replace(/0+$/, '').replace(/\.$/, '');
 }
 
 function restoreBackup() {
+	/// <summary>
+	/// Restores the backup.
+	/// </summary>
 	if(!localStorage || !JSON) {
 		return;
 	}
@@ -1105,6 +1360,9 @@ function restoreBackup() {
 }
 
 function saveBackup() {
+	/// <summary>
+	/// Saves the backup.
+	/// </summary>
 	if(!localStorage || !JSON) {
 		return;
 	}

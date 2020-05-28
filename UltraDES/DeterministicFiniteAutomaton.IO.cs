@@ -1,4 +1,12 @@
-﻿using System;
+﻿// ***********************************************************************
+// Assembly         : UltraDES
+// Author           : Lucas Alves
+// Created          : 04-22-2020
+//
+// Last Modified By : Lucas Alves
+// Last Modified On : 05-20-2020
+// ***********************************************************************
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,13 +19,20 @@ namespace UltraDES
 {
     using DFA = DeterministicFiniteAutomaton;
 
+    /// <summary>
+    /// Class DeterministicFiniteAutomaton. This class cannot be inherited.
+    /// </summary>
     partial class DeterministicFiniteAutomaton
     {
+        /// <summary>
+        /// Converts to xml.
+        /// </summary>
+        /// <value>To XML.</value>
         public string ToXML
         {
             get
             {
-                simplify();
+                Simplify();
                 var doc = new XmlDocument();
                 var automaton = (XmlElement) doc.AppendChild(doc.CreateElement("Automaton"));
                 automaton.SetAttribute("Name", Name);
@@ -65,6 +80,11 @@ namespace UltraDES
             }
         }
 
+        /// <summary>
+        /// Deserializes the automaton.
+        /// </summary>
+        /// <param name="filepath">The filepath.</param>
+        /// <returns>DFA.</returns>
         public static DFA DeserializeAutomaton(string filepath)
         {
             IFormatter formatter = new BinaryFormatter();
@@ -74,61 +94,69 @@ namespace UltraDES
             return obj;
         }
 
-        public static DFA FromAdsFile(string p_FilePath)
+        /// <summary>
+        /// Froms the ads file.
+        /// </summary>
+        /// <param name="pFilePath">The p file path.</param>
+        /// <returns>DFA.</returns>
+        /// <exception cref="Exception">File is not on ADS Format.</exception>
+        /// <exception cref="Exception">File is not on ADS Format.</exception>
+        /// <exception cref="Exception">File is not on ADS Format.</exception>
+        public static DFA FromAdsFile(string pFilePath)
         {
-            var v_file = File.OpenText(p_FilePath);
+            var vFile = File.OpenText(pFilePath);
 
-            var v_name = NextValidLine(v_file);
+            var vName = NextValidLine(vFile);
 
-            if (!NextValidLine(v_file).Contains("State size"))
+            if (!NextValidLine(vFile).Contains("State size"))
                 throw new Exception("File is not on ADS Format.");
 
-            var states = int.Parse(NextValidLine(v_file));
+            var states = int.Parse(NextValidLine(vFile));
 
-            if (!NextValidLine(v_file).Contains("Marker states"))
+            if (!NextValidLine(vFile).Contains("Marker states"))
                 throw new Exception("File is not on ADS Format.");
 
-            var v_marked = string.Empty;
+            var vMarked = string.Empty;
 
-            var v_line = NextValidLine(v_file);
-            if (!v_line.Contains("Vocal states"))
+            var vLine = NextValidLine(vFile);
+            if (!vLine.Contains("Vocal states"))
             {
-                v_marked = v_line;
-                v_line = NextValidLine(v_file);
+                vMarked = vLine;
+                vLine = NextValidLine(vFile);
             }
 
-            AbstractState[] v_stateSet;
+            AbstractState[] vStateSet;
 
-            if (v_marked == "*")
-                v_stateSet = Enumerable.Range(0, states).Select(i => new State(i.ToString(), Marking.Marked)).ToArray();
-            else if (v_marked == string.Empty)
+            if (vMarked == "*")
+                vStateSet = Enumerable.Range(0, states).Select(i => new State(i.ToString(), Marking.Marked)).ToArray();
+            else if (vMarked == string.Empty)
             {
-                v_stateSet = Enumerable.Range(0, states).Select(i => new State(i.ToString())).ToArray();
+                vStateSet = Enumerable.Range(0, states).Select(i => new State(i.ToString())).ToArray();
             }
             else
             {
-                var markedSet = v_marked.Split().Select(int.Parse).ToList();
-                v_stateSet = Enumerable.Range(0, states).Select(i =>
+                var markedSet = vMarked.Split().Select(int.Parse).ToList();
+                vStateSet = Enumerable.Range(0, states).Select(i =>
                         markedSet.Contains(i) ? new State(i.ToString(), Marking.Marked) : new State(i.ToString()))
                     .ToArray();
             }
 
-            if (!v_line.Contains("Vocal states"))
+            if (!vLine.Contains("Vocal states"))
                 throw new Exception("File is not on ADS Format.");
 
-            v_line = NextValidLine(v_file);
-            while (!v_line.Contains("Transitions"))
-                v_line = NextValidLine(v_file);
+            vLine = NextValidLine(vFile);
+            while (!vLine.Contains("Transitions"))
+                vLine = NextValidLine(vFile);
 
             var evs = new Dictionary<int, AbstractEvent>();
             var transitions = new List<Transition>();
 
-            while (!v_file.EndOfStream)
+            while (!vFile.EndOfStream)
             {
-                v_line = NextValidLine(v_file);
-                if (v_line == string.Empty) continue;
+                vLine = NextValidLine(vFile);
+                if (vLine == string.Empty) continue;
 
-                var trans = v_line.Split().Where(txt => txt != string.Empty).Select(int.Parse).ToArray();
+                var trans = vLine.Split().Where(txt => txt != string.Empty).Select(int.Parse).ToArray();
 
                 if (!evs.ContainsKey(trans[1]))
                 {
@@ -139,14 +167,27 @@ namespace UltraDES
                     evs.Add(trans[1], e);
                 }
 
-                transitions.Add(new Transition(v_stateSet[trans[0]], evs[trans[1]], v_stateSet[trans[2]]));
+                transitions.Add(new Transition(vStateSet[trans[0]], evs[trans[1]], vStateSet[trans[2]]));
             }
 
-            return new DFA(transitions, v_stateSet[0], v_name);
+            return new DFA(transitions, vStateSet[0], vName);
         }
 
 
 
+        /// <summary>
+        /// Froms the FSM file.
+        /// </summary>
+        /// <param name="fileName">Name of the file.</param>
+        /// <returns>DFA.</returns>
+        /// <exception cref="Exception">Filename can not be null.</exception>
+        /// <exception cref="Exception">File not found.</exception>
+        /// <exception cref="Exception">Invalid Format.</exception>
+        /// <exception cref="Exception">Invalid Format.</exception>
+        /// <exception cref="Exception">Invalid Format.</exception>
+        /// <exception cref="Exception">Invalid Format: Duplicated state.</exception>
+        /// <exception cref="Exception">Invalid Format.</exception>
+        /// <exception cref="Exception">Invalid transition. Destination state not found.</exception>
         public static DFA FromFsmFile(string fileName)
         {
             if (fileName == null) throw new Exception("Filename can not be null.");
@@ -224,31 +265,41 @@ namespace UltraDES
             return new DFA(transitionsList, initialState, automatonName);
         }
 
-        public static void FromWmodFile(string p_filename, out List<DFA> p_plants, out List<DFA> p_specs)
+        /// <summary>
+        /// Froms the wmod file.
+        /// </summary>
+        /// <param name="pFilename">The p filename.</param>
+        /// <param name="pPlants">The p plants.</param>
+        /// <param name="pSpecs">The p specs.</param>
+        /// <exception cref="Exception">Invalid Format.</exception>
+        /// <exception cref="Exception">Invalid Format.</exception>
+        /// <exception cref="Exception">Invalid Format.</exception>
+        /// <exception cref="Exception">Invalid Format.</exception>
+        public static void FromWmodFile(string pFilename, out List<DFA> pPlants, out List<DFA> pSpecs)
         {
-            p_plants = new List<DFA>();
-            p_specs = new List<DFA>();
-            var v_events = new List<AbstractEvent>();
-            var v_eventsMap = new Dictionary<string, AbstractEvent>();
+            pPlants = new List<DFA>();
+            pSpecs = new List<DFA>();
+            var vEvents = new List<AbstractEvent>();
+            var vEventsMap = new Dictionary<string, AbstractEvent>();
 
-            using (var reader = XmlReader.Create(p_filename, new XmlReaderSettings()))
+            using (var reader = XmlReader.Create(pFilename, new XmlReaderSettings()))
             {
                 if (!reader.ReadToFollowing("EventDeclList")) throw new Exception("Invalid Format.");
                 var eventsReader = reader.ReadSubtree();
                 while (eventsReader.ReadToFollowing("EventDecl"))
                 {
                     eventsReader.MoveToAttribute("Kind");
-                    var v_kind = eventsReader.Value;
-                    if (v_kind == "PROPOSITION") continue;
+                    var vKind = eventsReader.Value;
+                    if (vKind == "PROPOSITION") continue;
                     eventsReader.MoveToAttribute("Name");
-                    var v_name = eventsReader.Value;
-                    var ev = new Event(v_name,
-                        v_kind == "CONTROLLABLE"
+                    var vName = eventsReader.Value;
+                    var ev = new Event(vName,
+                        vKind == "CONTROLLABLE"
                             ? UltraDES.Controllability.Controllable
                             : UltraDES.Controllability.Uncontrollable);
 
-                    v_events.Add(ev);
-                    v_eventsMap.Add(v_name, ev);
+                    vEvents.Add(ev);
+                    vEventsMap.Add(vName, ev);
                 }
 
                 if (!reader.ReadToFollowing("ComponentList")) throw new Exception("Invalid Format.");
@@ -258,7 +309,7 @@ namespace UltraDES
                 while (componentsReader.ReadToFollowing("SimpleComponent"))
                 {
                     componentsReader.MoveToAttribute("Kind");
-                    var v_kind = componentsReader.Value;
+                    var vKind = componentsReader.Value;
                     componentsReader.MoveToAttribute("Name");
                     var v_DFAName = componentsReader.Value;
 
@@ -273,19 +324,19 @@ namespace UltraDES
                         var evList = statesReader.ReadSubtree();
 
                         statesReader.MoveToAttribute("Name");
-                        var v_name = statesReader.Value;
-                        var v_marked = false;
+                        var vName = statesReader.Value;
+                        var vMarked = false;
                         if (statesReader.MoveToAttribute("Initial") && statesReader.ReadContentAsBoolean())
-                            initial = v_name;
+                            initial = vName;
 
                         if (evList.ReadToFollowing("EventList"))
                         {
                             evList.ReadToFollowing("SimpleIdentifier");
                             evList.MoveToAttribute("Name");
-                            v_marked = evList.Value == ":accepting";
+                            vMarked = evList.Value == ":accepting";
                         }
 
-                        states.Add(v_name, new State(v_name, v_marked ? Marking.Marked : Marking.Unmarked));
+                        states.Add(vName, new State(vName, vMarked ? Marking.Marked : Marking.Unmarked));
                     }
 
                     if (!componentsReader.ReadToFollowing("EdgeList")) throw new Exception("Invalid Format.");
@@ -297,51 +348,62 @@ namespace UltraDES
                         eventsReader = componentsReader.ReadSubtree();
 
                         edgesReader.MoveToAttribute("Source");
-                        var v_source = edgesReader.Value;
+                        var vSource = edgesReader.Value;
                         edgesReader.MoveToAttribute("Target");
-                        var v_target = edgesReader.Value;
+                        var vTarget = edgesReader.Value;
 
                         while (eventsReader.ReadToFollowing("SimpleIdentifier"))
                         {
                             eventsReader.MoveToAttribute("Name");
-                            var v_event = eventsReader.Value;
-                            transitions.Add(new Transition(states[v_source], v_eventsMap[v_event], states[v_target]));
+                            var vEvent = eventsReader.Value;
+                            transitions.Add(new Transition(states[vSource], vEventsMap[vEvent], states[vTarget]));
                         }
                     }
 
                     var G = new DFA(transitions, states[initial], v_DFAName);
-                    if (v_kind == "PLANT") p_plants.Add(G);
-                    else p_specs.Add(G);
+                    if (vKind == "PLANT") pPlants.Add(G);
+                    else pSpecs.Add(G);
                 }
             }
 
             GC.Collect();
         }
 
-        public static DFA FromXMLFile(string p_FilePath, bool p_StateName = true)
+        /// <summary>
+        /// Froms the XML file.
+        /// </summary>
+        /// <param name="pFilePath">The p file path.</param>
+        /// <param name="pStateName">if set to <c>true</c> [p state name].</param>
+        /// <returns>DFA.</returns>
+        public static DFA FromXMLFile(string pFilePath, bool pStateName = true)
         {
-            var v_xdoc = XDocument.Load(p_FilePath);
+            var vXdoc = XDocument.Load(pFilePath);
 
-            var v_name = v_xdoc.Descendants("Automaton").Select(dfa => dfa.Attribute("Name").Value).Single();
-            var v_states = v_xdoc.Descendants("State").ToDictionary(s => s.Attribute("Id").Value,
-                s => new State(p_StateName ? s.Attribute("Name").Value : s.Attribute("Id").Value,
+            var vName = vXdoc.Descendants("Automaton").Select(dfa => dfa.Attribute("Name").Value).Single();
+            var vStates = vXdoc.Descendants("State").ToDictionary(s => s.Attribute("Id").Value,
+                s => new State(pStateName ? s.Attribute("Name").Value : s.Attribute("Id").Value,
                     s.Attribute("Marking").Value == "Marked" ? Marking.Marked : Marking.Unmarked));
 
-            var v_events = v_xdoc.Descendants("Event").ToDictionary(e => e.Attribute("Id").Value,
+            var vEvents = vXdoc.Descendants("Event").ToDictionary(e => e.Attribute("Id").Value,
                 e => new Event(e.Attribute("Name").Value,
                     e.Attribute("Controllability").Value == "Controllable"
                         ? UltraDES.Controllability.Controllable
                         : UltraDES.Controllability.Uncontrollable));
 
-            var v_initial = v_xdoc.Descendants("InitialState").Select(i => v_states[i.Attribute("Id").Value]).Single();
+            var vInitial = vXdoc.Descendants("InitialState").Select(i => vStates[i.Attribute("Id").Value]).Single();
 
-            var v_transitions = v_xdoc.Descendants("Transition").Select(t =>
-                new Transition(v_states[t.Attribute("Origin").Value], v_events[t.Attribute("Trigger").Value],
-                    v_states[t.Attribute("Destination").Value]));
+            var vTransitions = vXdoc.Descendants("Transition").Select(t =>
+                new Transition(vStates[t.Attribute("Origin").Value], vEvents[t.Attribute("Trigger").Value],
+                    vStates[t.Attribute("Destination").Value]));
 
-            return new DFA(v_transitions, v_initial, v_name);
+            return new DFA(vTransitions, vInitial, vName);
         }
 
+        /// <summary>
+        /// Nexts the valid line.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <returns>System.String.</returns>
         private static string NextValidLine(StreamReader file)
         {
             var line = string.Empty;
@@ -362,6 +424,10 @@ namespace UltraDES
             return line;
         }
 
+        /// <summary>
+        /// Serializes the automaton.
+        /// </summary>
+        /// <param name="filepath">The filepath.</param>
         public void SerializeAutomaton(string filepath)
         {
             IFormatter formatter = new BinaryFormatter();
@@ -370,11 +436,18 @@ namespace UltraDES
             stream.Close();
         }
 
-        public void ToAdsFile(string filepath, int odd = 1, int even = 2)
-        {
-            ToAdsFile(new[] {this}, new[] {filepath}, odd, even);
-        }
+        /// <summary>
+        /// Converts to adsfile.
+        /// </summary>
+        /// <param name="filepath">The filepath.</param>
+        /// <param name="odd">The odd.</param>
+        /// <param name="even">The even.</param>
+        public void ToAdsFile(string filepath, int odd = 1, int even = 2) => ToAdsFile(new[] {this}, new[] {filepath}, odd, even);
 
+        /// <summary>
+        /// Converts to fm.
+        /// </summary>
+        /// <param name="filepath">The filepath.</param>
         public void ToFM(string filepath)
         {
             var G = this;
@@ -388,10 +461,17 @@ namespace UltraDES
             }
         }
 
+        /// <summary>
+        /// Converts to adsfile.
+        /// </summary>
+        /// <param name="automata">The automata.</param>
+        /// <param name="filepaths">The filepaths.</param>
+        /// <param name="odd">The odd.</param>
+        /// <param name="even">The even.</param>
         public static void ToAdsFile(IEnumerable<DFA> automata, IEnumerable<string> filepaths, int odd = 1,
             int even = 2)
         {
-            foreach (var g in automata) g.simplify();
+            foreach (var g in automata) g.Simplify();
 
             var vEventsUnion = automata.SelectMany(g => g.Events).Distinct();
             var vEvents = new Dictionary<AbstractEvent, int>();
@@ -422,29 +502,26 @@ namespace UltraDES
 
                 file.WriteLine("# UltraDES ADS FILE - LACSED | UFMG\r\n");
 
-                file.WriteLine("{0}\r\n", g.Name);
+                file.WriteLine($"{g.Name}\r\n");
 
                 file.WriteLine("State size (State set will be (0,1....,size-1)):");
-                file.WriteLine("{0}\r\n", g.Size);
+                file.WriteLine($"{g.Size}\r\n");
 
                 file.WriteLine("Marker states:");
                 var vMarkedStates = "";
                 var vFirst = true;
                 for (var s = 0; s < g._statesList[0].Length; ++s)
                 {
-                    if (g._statesList[0][s].IsMarked)
+                    if (!g._statesList[0][s].IsMarked) continue;
+                    if (vFirst)
                     {
-                        if (vFirst)
-                        {
-                            vFirst = false;
-                            vMarkedStates = s.ToString();
-                        }
-                        else
-                            vMarkedStates += "\r\n" + s;
+                        vFirst = false;
+                        vMarkedStates = s.ToString();
                     }
+                    else vMarkedStates += "\r\n" + s;
                 }
 
-                file.WriteLine("{0}\r\n", vMarkedStates);
+                file.WriteLine($"{vMarkedStates}\r\n");
 
                 file.WriteLine("Vocal states:\r\n");
 
@@ -452,12 +529,16 @@ namespace UltraDES
 
                 for (var s = 0; s < g._statesList[0].Length; ++s)
                     foreach (var t in g._adjacencyList[0][s])
-                        file.WriteLine("{0,-5} {1,-3} {2,-5}", s, vEventsMaps[t.Key], t.Value);
+                        file.WriteLine($"{s,-5} {vEventsMaps[t.Key],-3} {t.Value,-5}");
 
                 file.Close();
             }
         }
 
+        /// <summary>
+        /// Converts to fsmfile.
+        /// </summary>
+        /// <param name="fileName">Name of the file.</param>
         public void ToFsmFile(string fileName = null)
         {
             var n = _statesList.Count;
@@ -483,7 +564,7 @@ namespace UltraDES
             {
                 if (_validStates != null)
                 {
-                    writeState(composeState(pos), getTransitionsFromState(pos).ToArray());
+                    writeState(ComposeState(pos), GetTransitionsFromState(pos).ToArray());
                     foreach (var sT in _validStates)
                     {
                         sT.Key.Get(pos, _bits, _maxSize);
@@ -491,14 +572,14 @@ namespace UltraDES
                         for (var i = 0; i < n; ++i)
                         {
                             if (pos[i] == 0) continue;
-                            writeState(composeState(pos), getTransitionsFromState(pos).ToArray());
+                            writeState(ComposeState(pos), GetTransitionsFromState(pos).ToArray());
                             break;
                         }
                     }
                 }
                 else
                 {
-                    do writeState(composeState(pos), getTransitionsFromState(pos).ToArray());
+                    do writeState(ComposeState(pos), GetTransitionsFromState(pos).ToArray());
                     while (IncrementPosition(pos));
                 }
             }
@@ -506,8 +587,15 @@ namespace UltraDES
             writer.Close();
         }
 
-        public static void ToWmodFile(string p_filename, IEnumerable<DFA> p_plants, IEnumerable<DFA> p_specifications,
-            string p_ModuleName = "UltraDES")
+        /// <summary>
+        /// Converts to wmodfile.
+        /// </summary>
+        /// <param name="pFilename">The p filename.</param>
+        /// <param name="pPlants">The p plants.</param>
+        /// <param name="pSpecifications">The p specifications.</param>
+        /// <param name="pModuleName">Name of the p module.</param>
+        public static void ToWmodFile(string pFilename, IEnumerable<DFA> pPlants, IEnumerable<DFA> pSpecifications,
+            string pModuleName = "UltraDES")
         {
             var settings = new XmlWriterSettings
             {
@@ -516,12 +604,12 @@ namespace UltraDES
                 NewLineChars = "\r\n"
             };
 
-            using (var writer = XmlWriter.Create(p_filename, settings))
+            using (var writer = XmlWriter.Create(pFilename, settings))
             {
                 writer.WriteStartDocument(true);
 
                 writer.WriteStartElement("Module", "http://waters.sourceforge.net/xsd/module");
-                writer.WriteAttributeString("Name", p_ModuleName);
+                writer.WriteAttributeString("Name", pModuleName);
                 writer.WriteAttributeString("xmlns", "ns2", null, "http://waters.sourceforge.net/xsd/base");
 
                 writer.WriteElementString("ns2", "Comment", null, "By UltraDES");
@@ -537,15 +625,15 @@ namespace UltraDES
                 writer.WriteAttributeString("Name", ":forbidden");
                 writer.WriteEndElement();
 
-                var v_events = new List<AbstractEvent>();
-                foreach (var v_plant in p_plants) v_events = v_events.Union(v_plant.Events).ToList();
-                foreach (var v_spec in p_specifications) v_events = v_events.Union(v_spec.Events).ToList();
+                var vEvents = new List<AbstractEvent>();
+                vEvents = pPlants.Aggregate(vEvents, (current, v_plant) => current.Union(v_plant.Events).ToList());
+                vEvents = pSpecifications.Aggregate(vEvents, (current, v_spec) => current.Union(v_spec.Events).ToList());
 
-                foreach (var v_event in v_events)
+                foreach (var vEvent in vEvents)
                 {
                     writer.WriteStartElement("EventDecl");
-                    writer.WriteAttributeString("Kind", v_event.IsControllable ? "CONTROLLABLE" : "UNCONTROLLABLE");
-                    writer.WriteAttributeString("Name", v_event.ToString());
+                    writer.WriteAttributeString("Kind", vEvent.IsControllable ? "CONTROLLABLE" : "UNCONTROLLABLE");
+                    writer.WriteAttributeString("Name", vEvent.ToString());
                     writer.WriteEndElement();
                 }
 
@@ -589,18 +677,16 @@ namespace UltraDES
                         for (var e = 0; e < G._eventsList[0].Count(); ++e)
                         {
                             var v_target = G._adjacencyList[0][i, e];
-                            if (v_target >= 0)
-                            {
-                                writer.WriteStartElement("Edge");
-                                writer.WriteAttributeString("Source", v_source);
-                                writer.WriteAttributeString("Target", G._statesList[0][v_target].ToString());
-                                writer.WriteStartElement("LabelBlock");
-                                writer.WriteStartElement("SimpleIdentifier");
-                                writer.WriteAttributeString("Name", G._eventsUnion[e].ToString());
-                                writer.WriteEndElement();
-                                writer.WriteEndElement();
-                                writer.WriteEndElement();
-                            }
+                            if (v_target < 0) continue;
+                            writer.WriteStartElement("Edge");
+                            writer.WriteAttributeString("Source", v_source);
+                            writer.WriteAttributeString("Target", G._statesList[0][v_target].ToString());
+                            writer.WriteStartElement("LabelBlock");
+                            writer.WriteStartElement("SimpleIdentifier");
+                            writer.WriteAttributeString("Name", G._eventsUnion[e].ToString());
+                            writer.WriteEndElement();
+                            writer.WriteEndElement();
+                            writer.WriteEndElement();
                         }
                     }
 
@@ -610,8 +696,8 @@ namespace UltraDES
                     writer.WriteEndElement();
                 });
 
-                foreach (var v_plant in p_plants) addAutomaton(v_plant, "PLANT");
-                foreach (var v_spec in p_specifications) addAutomaton(v_spec, "SPEC");
+                foreach (var vPlant in pPlants) addAutomaton(vPlant, "PLANT");
+                foreach (var vSpec in pSpecifications) addAutomaton(vSpec, "SPEC");
 
                 writer.WriteEndElement();
                 writer.WriteEndElement();
@@ -621,6 +707,10 @@ namespace UltraDES
             GC.Collect();
         }
 
+        /// <summary>
+        /// Converts to xmlfile.
+        /// </summary>
+        /// <param name="filepath">The filepath.</param>
         public void ToXMLFile(string filepath)
         {
             var settings = new XmlWriterSettings
@@ -633,7 +723,7 @@ namespace UltraDES
             var n = _statesList.Count();
             var pos = new int[n];
             var nextPos = new int[n];
-            var v_states = new Dictionary<StatesTuple, ulong>((int) Size, StatesTupleComparator.GetInstance());
+            var vStates = new Dictionary<StatesTuple, ulong>((int) Size, StatesTupleComparator.GetInstance());
             var nextTuple = new StatesTuple(_tupleSize);
 
             using (var writer = XmlWriter.Create(filepath, settings))
@@ -646,9 +736,9 @@ namespace UltraDES
                 var addState = new Action<StatesTuple, ulong>((state, id) =>
                 {
                     state.Get(pos, _bits, _maxSize);
-                    v_states.Add(state, id);
+                    vStates.Add(state, id);
 
-                    var s = composeState(pos);
+                    var s = ComposeState(pos);
 
                     writer.WriteStartElement("State");
                     writer.WriteAttributeString("Name", s.ToString());
@@ -694,7 +784,7 @@ namespace UltraDES
 
                 writer.WriteStartElement("Transitions");
 
-                foreach (var state in v_states)
+                foreach (var state in vStates)
                 {
                     state.Key.Get(pos, _bits, _maxSize);
 
@@ -721,16 +811,15 @@ namespace UltraDES
 
                         nextTuple.Set(nextPos, _bits);
 
-                        if (v_states.TryGetValue(nextTuple, out var value))
-                        {
-                            writer.WriteStartElement("Transition");
+                        if (!vStates.TryGetValue(nextTuple, out var value)) continue;
 
-                            writer.WriteAttributeString("Origin", state.Value.ToString());
-                            writer.WriteAttributeString("Trigger", j.ToString());
-                            writer.WriteAttributeString("Destination", value.ToString());
+                        writer.WriteStartElement("Transition");
 
-                            writer.WriteEndElement();
-                        }
+                        writer.WriteAttributeString("Origin", state.Value.ToString());
+                        writer.WriteAttributeString("Trigger", j.ToString());
+                        writer.WriteAttributeString("Destination", value.ToString());
+
+                        writer.WriteEndElement();
                     }
                 }
 
@@ -738,8 +827,6 @@ namespace UltraDES
 
                 writer.WriteEndElement();
             }
-
-            v_states = null;
 
             GC.Collect();
             GC.Collect();

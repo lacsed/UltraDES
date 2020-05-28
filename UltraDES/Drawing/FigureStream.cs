@@ -1,13 +1,29 @@
-﻿using System;
+﻿// ***********************************************************************
+// Assembly         : UltraDES
+// Author           : Lucas Alves
+// Created          : 04-20-2020
+//
+// Last Modified By : Lucas Alves
+// Last Modified On : 04-20-2020
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
-using System.Windows;
 
 namespace UltraDES
 {
+    /// <summary>
+    /// Class FigureStream.
+    /// </summary>
     internal static class FigureStream
     {
+        /// <summary>
+        /// Writes the SVG header.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="width">The width.</param>
+        /// <param name="heigth">The heigth.</param>
         public static void WriteSVGHeader(StreamWriter file, double width, double heigth)
         {
             string widthString = Drawing.round(width, 0);
@@ -19,6 +35,12 @@ namespace UltraDES
                     " width=\"" + widthString + "px\" height=\" " + heigthString + "px\" viewBox=\"0 0 " + widthString + " " + heigthString + "\" >  ");
         }
 
+        /// <summary>
+        /// Writes the latex header.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="width">The width.</param>
+        /// <param name="heigth">The heigth.</param>
         public static void WriteLatexHeader(StreamWriter file, double width, double heigth)
         {
             file.WriteLine("\\centering");
@@ -26,16 +48,30 @@ namespace UltraDES
             file.WriteLine("\\tikzstyle{every node}+=[inner sep=0pt]");
         }
 
+        /// <summary>
+        /// Writes the SVG end.
+        /// </summary>
+        /// <param name="file">The file.</param>
         public static void WriteSVGEnd(StreamWriter file)
         {
             file.WriteLine("</svg>");
         }
 
+        /// <summary>
+        /// Writes the latex end.
+        /// </summary>
+        /// <param name="file">The file.</param>
         public static void WriteLatexEnd(StreamWriter file)
         {
             file.WriteLine("\\end{tikzpicture}");
         }
 
+        /// <summary>
+        /// Draws the state of the SVG.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="state">The state.</param>
+        /// <param name="radius">The radius.</param>
         public static void drawSVGState(StreamWriter file, DrawingState state, int radius)
         {
             string y = Drawing.round(state.position.Y);
@@ -53,6 +89,13 @@ namespace UltraDES
             writeTextSVG(file, state.position, state.Alias, 0, gap, "none", fontSize);
         }
 
+        /// <summary>
+        /// Draws the state of the latex.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="state">The state.</param>
+        /// <param name="radius">The radius.</param>
+        /// <param name="fontSize">Size of the font.</param>
         public static void drawLatexState(StreamWriter file, DrawingState state, int radius, string fontSize)
         {
             string y = Drawing.round(state.position.Y);
@@ -67,6 +110,13 @@ namespace UltraDES
             writeTextLatex(file, state.position, state.Alias, fontSize, 0);
         }
 
+        /// <summary>
+        /// Draws the SVG arrow.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="arrowLocation">The arrow location.</param>
+        /// <param name="arrowInclination">The arrow inclination.</param>
+        /// <param name="inclinationReference">The inclination reference.</param>
         public static void drawSVGArrow(StreamWriter file, Vector arrowLocation, double arrowInclination, Vector inclinationReference)
         {
 
@@ -101,6 +151,13 @@ namespace UltraDES
 
         }
 
+        /// <summary>
+        /// Draws the latex arrow.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="arrowLocation">The arrow location.</param>
+        /// <param name="arrowInclination">The arrow inclination.</param>
+        /// <param name="inclinationReference">The inclination reference.</param>
         public static void drawLatexArrow(StreamWriter file, Vector arrowLocation, double arrowInclination, Vector inclinationReference)
         {
             int arrowLength = 15;
@@ -132,6 +189,14 @@ namespace UltraDES
                 x1+","+y1 + ") -- (" + x2+","+y2 + ") -- (" + x3+","+y3 + ");");
         }
 
+        /// <summary>
+        /// Draws the SVG line.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="originPosition">The origin position.</param>
+        /// <param name="destinationPosition">The destination position.</param>
+        /// <param name="inclination">The inclination.</param>
+        /// <param name="inclinationReference">The inclination reference.</param>
         public static void drawSVGLine(StreamWriter file, Vector originPosition, Vector destinationPosition, double inclination, Vector inclinationReference)
         {
             string x1 = Drawing.round(originPosition.X);
@@ -149,6 +214,14 @@ namespace UltraDES
                 inclinationDegrees + " " + (xi) + "," + yi + ")\" />");
         }
 
+        /// <summary>
+        /// Draws the latex line.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="originPosition">The origin position.</param>
+        /// <param name="destinationPosition">The destination position.</param>
+        /// <param name="inclination">The inclination.</param>
+        /// <param name="inclinationReference">The inclination reference.</param>
         public static void drawLatexLine(StreamWriter file, Vector originPosition, Vector destinationPosition, double inclination, Vector inclinationReference)
         {
             string x1 = Drawing.round(originPosition.X);
@@ -168,6 +241,15 @@ namespace UltraDES
 
         }
 
+        /// <summary>
+        /// Draws the line transition.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="origin">The origin.</param>
+        /// <param name="destination">The destination.</param>
+        /// <param name="transitionName">Name of the transition.</param>
+        /// <param name="fontFill">The font fill.</param>
+        /// <param name="fontSize">Size of the font.</param>
         public static void drawLineTransition(StreamWriter file, DrawingState origin, DrawingState destination, 
             string transitionName, string fontFill, int fontSize)
         {
@@ -229,6 +311,14 @@ namespace UltraDES
             writeTextSVG(file, textPoint, transitionName, stateAngle, gap, fontFill, fontSize);
         }
 
+        /// <summary>
+        /// Draws the line transition latex.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="origin">The origin.</param>
+        /// <param name="destination">The destination.</param>
+        /// <param name="transitionName">Name of the transition.</param>
+        /// <param name="fontSize">Size of the font.</param>
         public static void drawLineTransitionLatex(StreamWriter file, DrawingState origin, DrawingState destination, string transitionName, string fontSize)
         {
             Vector length;
@@ -278,6 +368,15 @@ namespace UltraDES
             writeTextLatex(file, textPoint, transitionName, fontSize, -stateAngle);
         }
 
+        /// <summary>
+        /// Draws the curve transition2.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="origin">The origin.</param>
+        /// <param name="destination">The destination.</param>
+        /// <param name="transitionName">Name of the transition.</param>
+        /// <param name="fontFill">The font fill.</param>
+        /// <param name="fontSize">Size of the font.</param>
         public static void drawCurveTransition2(StreamWriter file, DrawingState origin, DrawingState destination, string transitionName, string fontFill, int fontSize)
         {
             Vector stateDistance = destination.position - origin.position;
@@ -345,6 +444,14 @@ namespace UltraDES
             writeTextSVG(file, textPoint, transitionName, transitionInclination, gap, fontFill, fontSize);
         }
 
+        /// <summary>
+        /// Draws the curve transition latex.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="origin">The origin.</param>
+        /// <param name="destination">The destination.</param>
+        /// <param name="transitionName">Name of the transition.</param>
+        /// <param name="fontSize">Size of the font.</param>
         public static void drawCurveTransitionLatex(StreamWriter file, DrawingState origin, DrawingState destination, string transitionName, string fontSize)
         {
             Vector startArc = new Vector();
@@ -421,6 +528,15 @@ namespace UltraDES
             writeTextLatex(file, transitionNamePoint, transitionName, fontSize, stateAngle);
         }
 
+        /// <summary>
+        /// Draws the automatic transition.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="stateCoord">The state coord.</param>
+        /// <param name="angle">The angle.</param>
+        /// <param name="statesName">Name of the states.</param>
+        /// <param name="fontFill">The font fill.</param>
+        /// <param name="fontSize">Size of the font.</param>
         public static void drawAutoTransition(StreamWriter file, Vector stateCoord, double angle, string statesName, string fontFill, int fontSize)  //angulo em radianos
         {
             double gapValue = 6;
@@ -480,6 +596,13 @@ namespace UltraDES
             writeTextSVG(file, transitionNamePoint, statesName, angle, gap, fontFill, fontSize);
         }
 
+        /// <summary>
+        /// Draws the automatic transition latex.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="stateCoord">The state coord.</param>
+        /// <param name="angle">The angle.</param>
+        /// <param name="eventsName">Name of the events.</param>
         public static void drawAutoTransitionLatex(StreamWriter file, Vector stateCoord, double angle, string eventsName)  //angulo em radianos
         {
             //angle *= -1;
@@ -559,6 +682,16 @@ namespace UltraDES
             writeTextLatex(file, transitionNamePoint, eventsName, "normalsize", angle);
         }
 
+        /// <summary>
+        /// Writes the text SVG.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="position">The position.</param>
+        /// <param name="text">The text.</param>
+        /// <param name="thetaInRad">The theta in RAD.</param>
+        /// <param name="gap">The gap.</param>
+        /// <param name="fontFill">The font fill.</param>
+        /// <param name="fontSize">Size of the font.</param>
         public static void writeTextSVG(StreamWriter file, Vector position, string text, double thetaInRad, Vector gap, string fontFill, int fontSize)
         {
             //Vector pontoRound = new Vector(Math.Round(ponto.X), Math.Round(ponto.Y));
@@ -583,6 +716,14 @@ namespace UltraDES
                 text + "</text>");
         }
 
+        /// <summary>
+        /// Writes the text latex.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="position">The position.</param>
+        /// <param name="text">The text.</param>
+        /// <param name="fontSize">Size of the font.</param>
+        /// <param name="thetaInRad">The theta in RAD.</param>
         public static void writeTextLatex(StreamWriter file, Vector position, string text, string fontSize, double thetaInRad)
         {
             if (thetaInRad<0) thetaInRad += 2 * Math.PI;
@@ -605,6 +746,11 @@ namespace UltraDES
                 text + "$};");
         }
 
+        /// <summary>
+        /// Draws the figure SVG.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="statesList">The states list.</param>
         public static void drawFigureSVG(StreamWriter file, Dictionary<string, DrawingState> statesList)
         {
             Vector length = new Vector();
@@ -695,6 +841,12 @@ namespace UltraDES
             }
         }
 
+        /// <summary>
+        /// Draws the figure latex.
+        /// </summary>
+        /// <param name="file">The file.</param>
+        /// <param name="statesList">The states list.</param>
+        /// <param name="fontSize">Size of the font.</param>
         public static void drawFigureLatex(StreamWriter file, Dictionary<string, DrawingState> statesList, string fontSize)
         {
             Vector length = new Vector();

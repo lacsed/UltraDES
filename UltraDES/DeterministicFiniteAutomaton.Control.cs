@@ -1,4 +1,12 @@
-﻿using System;
+﻿// ***********************************************************************
+// Assembly         : UltraDES
+// Author           : Lucas Alves
+// Created          : 04-22-2020
+//
+// Last Modified By : Lucas Alves
+// Last Modified On : 05-20-2020
+// ***********************************************************************
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,8 +15,22 @@ namespace UltraDES
 {
     using DFA = DeterministicFiniteAutomaton;
 
+    /// <summary>
+    /// Class DeterministicFiniteAutomaton. This class cannot be inherited.
+    /// </summary>
     partial class DeterministicFiniteAutomaton
     {
+        /// <summary>
+        /// Checks the state.
+        /// </summary>
+        /// <param name="G">The g.</param>
+        /// <param name="nG">The n g.</param>
+        /// <param name="nS">The n s.</param>
+        /// <param name="posG">The position g.</param>
+        /// <param name="posS">The position s.</param>
+        /// <param name="eG">The e g.</param>
+        /// <param name="eS">The e s.</param>
+        /// <returns>Tuple&lt;System.Boolean, System.Boolean, System.Int32[], System.Int32[]&gt;.</returns>
         private Tuple<bool, bool, int[], int[]> CheckState(DFA G, int nG, int nS, int[] posG, int[] posS, int eG,
             int eS)
         {
@@ -66,22 +88,44 @@ namespace UltraDES
             return new Tuple<bool, bool, int[], int[]>(hasNextG, hasNextS, nextG, nextS);
         }
 
+        /// <summary>
+        /// Controllabilities the specified plants.
+        /// </summary>
+        /// <param name="plants">The plants.</param>
+        /// <returns>Controllability.</returns>
         public Controllability Controllability(params DFA[] plants)
         {
             return Controllability((IEnumerable<DFA>) plants);
         }
 
+        /// <summary>
+        /// Controllabilities the specified plants.
+        /// </summary>
+        /// <param name="plants">The plants.</param>
+        /// <returns>Controllability.</returns>
         public Controllability Controllability(IEnumerable<DFA> plants)
         {
             return ControllabilityAndDisabledEvents(plants, false).Item1;
         }
 
+        /// <summary>
+        /// Controllabilities the and disabled events.
+        /// </summary>
+        /// <param name="plants">The plants.</param>
+        /// <returns>Tuple&lt;Controllability, Dictionary&lt;AbstractState, List&lt;AbstractEvent&gt;&gt;&gt;.</returns>
         public Tuple<Controllability, Dictionary<AbstractState, List<AbstractEvent>>> ControllabilityAndDisabledEvents(
             params DFA[] plants)
         {
             return ControllabilityAndDisabledEvents(plants, true);
         }
 
+        /// <summary>
+        /// Controllabilities the and disabled events.
+        /// </summary>
+        /// <param name="plants">The plants.</param>
+        /// <param name="getDisabledEvents">if set to <c>true</c> [get disabled events].</param>
+        /// <returns>Tuple&lt;Controllability, Dictionary&lt;AbstractState, List&lt;AbstractEvent&gt;&gt;&gt;.</returns>
+        /// <exception cref="Exception">Plant is invalid.</exception>
         public Tuple<Controllability, Dictionary<AbstractState, List<AbstractEvent>>> ControllabilityAndDisabledEvents(
             IEnumerable<DFA> plants, bool getDisabledEvents = true)
         {
@@ -133,7 +177,7 @@ namespace UltraDES
 
                 if (getDisabledEvents)
                 {
-                    currentState = composeState(pos2);
+                    currentState = ComposeState(pos2);
                     disabled.Add(currentState, new List<AbstractEvent>());
                 }
 
@@ -206,16 +250,31 @@ namespace UltraDES
             return new Tuple<Controllability, Dictionary<AbstractState, List<AbstractEvent>>>(controllable, disabled);
         }
 
+        /// <summary>
+        /// Disableds the events.
+        /// </summary>
+        /// <param name="plants">The plants.</param>
+        /// <returns>Dictionary&lt;AbstractState, List&lt;AbstractEvent&gt;&gt;.</returns>
         public Dictionary<AbstractState, List<AbstractEvent>> DisabledEvents(params DFA[] plants)
         {
             return DisabledEvents((IEnumerable<DFA>) plants);
         }
 
+        /// <summary>
+        /// Disableds the events.
+        /// </summary>
+        /// <param name="plants">The plants.</param>
+        /// <returns>Dictionary&lt;AbstractState, List&lt;AbstractEvent&gt;&gt;.</returns>
         public Dictionary<AbstractState, List<AbstractEvent>> DisabledEvents(IEnumerable<DFA> plants)
         {
             return ControllabilityAndDisabledEvents(plants).Item2;
         }
 
+        /// <summary>
+        /// Finds the supervisor.
+        /// </summary>
+        /// <param name="nPlant">The n plant.</param>
+        /// <param name="nonBlocking">if set to <c>true</c> [non blocking].</param>
         private void FindSupervisor(int nPlant, bool nonBlocking)
         {
             _numberOfRunningThreads = 0;
@@ -232,9 +291,9 @@ namespace UltraDES
 
             var vThreads = new Task[NumberOfThreads - 1];
 
-            for (var i = 0; i < NumberOfThreads - 1; ++i) vThreads[i] = Task.Factory.StartNew(() => findStates(nPlant));
+            for (var i = 0; i < NumberOfThreads - 1; ++i) vThreads[i] = Task.Factory.StartNew(() => FindStates(nPlant));
 
-            findStates(nPlant);
+            FindStates(nPlant);
 
             for (var i = 0; i < NumberOfThreads - 1; ++i) vThreads[i].Wait();
 
@@ -252,9 +311,14 @@ namespace UltraDES
             } while (vNewBadStates);
         }
 
+        /// <summary>
+        /// Determines whether the specified supervisors is conflicting.
+        /// </summary>
+        /// <param name="supervisors">The supervisors.</param>
+        /// <returns><c>true</c> if the specified supervisors is conflicting; otherwise, <c>false</c>.</returns>
         public static bool IsConflicting(IEnumerable<DFA> supervisors)
         {
-            Parallel.ForEach(supervisors, s => { s.simplify(); });
+            Parallel.ForEach(supervisors, s => { s.Simplify(); });
 
             var composition = supervisors.Aggregate((a, b) => a.ParallelCompositionWith(b));
             var oldSize = composition.Size;
@@ -262,16 +326,34 @@ namespace UltraDES
             return composition.Size != oldSize;
         }
 
+        /// <summary>
+        /// Determines whether the specified plants is controllable.
+        /// </summary>
+        /// <param name="plants">The plants.</param>
+        /// <returns><c>true</c> if the specified plants is controllable; otherwise, <c>false</c>.</returns>
         public bool IsControllable(params DFA[] plants)
         {
             return IsControllable((IEnumerable<DFA>) plants);
         }
 
+        /// <summary>
+        /// Determines whether the specified plants is controllable.
+        /// </summary>
+        /// <param name="plants">The plants.</param>
+        /// <returns><c>true</c> if the specified plants is controllable; otherwise, <c>false</c>.</returns>
         public bool IsControllable(IEnumerable<DFA> plants)
         {
             return Controllability(plants) == UltraDES.Controllability.Controllable;
         }
 
+        /// <summary>
+        /// Locals the modular supervisor.
+        /// </summary>
+        /// <param name="plants">The plants.</param>
+        /// <param name="specifications">The specifications.</param>
+        /// <param name="conflictResolvingSupervisor">The conflict resolving supervisor.</param>
+        /// <returns>IEnumerable&lt;DFA&gt;.</returns>
+        /// <exception cref="Exception">conflicting supervisors</exception>
         public static IEnumerable<DFA> LocalModularSupervisor(IEnumerable<DFA> plants, IEnumerable<DFA> specifications,
             IEnumerable<DFA> conflictResolvingSupervisor = null)
         {
@@ -290,6 +372,15 @@ namespace UltraDES
             return complete;
         }
 
+        /// <summary>
+        /// Locals the modular supervisor.
+        /// </summary>
+        /// <param name="plants">The plants.</param>
+        /// <param name="specifications">The specifications.</param>
+        /// <param name="compoundPlants">The compound plants.</param>
+        /// <param name="conflictResolvingSupervisor">The conflict resolving supervisor.</param>
+        /// <returns>IEnumerable&lt;DFA&gt;.</returns>
+        /// <exception cref="Exception">conflicting supervisors</exception>
         public static IEnumerable<DFA> LocalModularSupervisor(IEnumerable<DFA> plants, IEnumerable<DFA> specifications,
             out List<DFA> compoundPlants, IEnumerable<DFA> conflictResolvingSupervisor = null)
         {
@@ -315,6 +406,13 @@ namespace UltraDES
             return complete;
         }
 
+        /// <summary>
+        /// Monolithics the supervisor.
+        /// </summary>
+        /// <param name="plants">The plants.</param>
+        /// <param name="specifications">The specifications.</param>
+        /// <param name="nonBlocking">if set to <c>true</c> [non blocking].</param>
+        /// <returns>DFA.</returns>
         public static DFA MonolithicSupervisor(IEnumerable<DFA> plants, IEnumerable<DFA> specifications,
             bool nonBlocking = true)
         {
@@ -329,6 +427,12 @@ namespace UltraDES
             return result;
         }
 
+        /// <summary>
+        /// Monolithics the supervisor legacy.
+        /// </summary>
+        /// <param name="plant">The plant.</param>
+        /// <param name="spec">The spec.</param>
+        /// <returns>DFA.</returns>
         [Obsolete("MonolithicSupervisorLegacy is deprecated, please use MonolithicSupervisor instead.")]
         public static DFA MonolithicSupervisorLegacy(DFA plant, DFA spec)
         {
@@ -350,6 +454,11 @@ namespace UltraDES
             return new DFA(trans, sup.InitialState, $"sup({sup.Name})");
         }
 
+        /// <summary>
+        /// Removes the blocking states.
+        /// </summary>
+        /// <param name="checkForBadStates">if set to <c>true</c> [check for bad states].</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private bool RemoveBlockingStates(bool checkForBadStates = false)
         {
             MakeReverseTransitions();

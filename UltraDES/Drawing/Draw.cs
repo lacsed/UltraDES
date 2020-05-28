@@ -1,4 +1,13 @@
-﻿using System.Diagnostics;
+﻿// ***********************************************************************
+// Assembly         : UltraDES
+// Author           : Lucas Alves
+// Created          : 04-20-2020
+//
+// Last Modified By : Lucas Alves
+// Last Modified On : 04-28-2020
+// ***********************************************************************
+
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -6,8 +15,16 @@ using System.Threading;
 
 namespace UltraDES
 {
+    /// <summary>
+    /// Class Draw.
+    /// </summary>
     internal static class Draw
     {
+        /// <summary>
+        /// Shows the dot code.
+        /// </summary>
+        /// <param name="dot">The dot.</param>
+        /// <param name="name">The name.</param>
         public static void ShowDotCode(string dot, string name = "image")
         {
             name = Path.GetInvalidFileNameChars().Aggregate(name, (current, c) => current.Replace(c, '_'));

@@ -1,35 +1,43 @@
-﻿////////////////////////////////////////////////////////////////////////////////////////////////////
-// file:	Regular Expressions\Concatenation.cs
+﻿// ***********************************************************************
+// Assembly         : UltraDES
+// Author           : Lucas Alves
+// Created          : 04-20-2020
 //
-// summary:	Implements the concatenation class
-////////////////////////////////////////////////////////////////////////////////////////////////////
+// Last Modified By : Lucas Alves
+// Last Modified On : 04-20-2020
+
 
 using System;
 
 namespace UltraDES
 {
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// <summary>   (Serializable)a concatenation. </summary>
-    ///
-    /// <remarks>   Lucas Alves, 15/01/2016. </remarks>
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    /// <summary>
+    /// (Serializable)a concatenation.
+    /// </summary>
+    /// <remarks>Lucas Alves, 15/01/2016.</remarks>
+    
 
     [Serializable]
     public class Concatenation : RegularExpression
     {
-        /// <summary>   a. </summary>
+        /// <summary>
+        /// a.
+        /// </summary>
         private readonly RegularExpression _a;
-        /// <summary>   The b. </summary>
+        /// <summary>
+        /// The b.
+        /// </summary>
         private readonly RegularExpression _b;
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Constructor. </summary>
-        ///
-        /// <remarks>   Lucas Alves, 15/01/2016. </remarks>
-        ///
-        /// <param name="a">    The RegularExpression to process. </param>
-        /// <param name="b">    The RegularExpression to process. </param>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="a">The RegularExpression to process.</param>
+        /// <param name="b">The RegularExpression to process.</param>
+        /// <remarks>Lucas Alves, 15/01/2016.</remarks>
+        
 
         public Concatenation(RegularExpression a, RegularExpression b)
         {
@@ -37,11 +45,12 @@ namespace UltraDES
             _b = b;
         }
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Gets the step simplify. </summary>
-        ///
-        /// <value> The step simplify. </value>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        /// <summary>
+        /// Gets the step simplify.
+        /// </summary>
+        /// <value>The step simplify.</value>
+        
 
         public override RegularExpression StepSimplify
         {
@@ -60,43 +69,40 @@ namespace UltraDES
             }
         }
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Serves as the default hash function. </summary>
-        ///
-        /// <remarks>   Lucas Alves, 15/01/2016. </remarks>
-        ///
-        /// <returns>   A hash code for the current object. </returns>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        /// <summary>
+        /// Serves as the default hash function.
+        /// </summary>
+        /// <returns>A hash code for the current object.</returns>
+        /// <remarks>Lucas Alves, 15/01/2016.</remarks>
+        
 
         public override int GetHashCode()
         {
             return _a.GetHashCode() ^ _b.GetHashCode();
         }
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Returns a string that represents the current object. </summary>
-        ///
-        /// <remarks>   Lucas Alves, 15/01/2016. </remarks>
-        ///
-        /// <returns>   A string that represents the current object. </returns>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        /// <summary>
+        /// Returns a string that represents the current object.
+        /// </summary>
+        /// <returns>A string that represents the current object.</returns>
+        /// <remarks>Lucas Alves, 15/01/2016.</remarks>
+        
 
         public override string ToString()
         {
             return string.Format("{0}.{1}", _a, _b);
         }
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Determines whether the specified object is equal to the current object. </summary>
-        ///
-        /// <remarks>   Lucas Alves, 15/01/2016. </remarks>
-        ///
-        /// <param name="obj">  The object to compare with the current object. </param>
-        ///
-        /// <returns>
-        ///     true if the specified object  is equal to the current object; otherwise, false.
-        /// </returns>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        /// <summary>
+        /// Determines whether the specified object is equal to the current object.
+        /// </summary>
+        /// <param name="obj">The object to compare with the current object.</param>
+        /// <returns>true if the specified object  is equal to the current object; otherwise, false.</returns>
+        /// <remarks>Lucas Alves, 15/01/2016.</remarks>
+        
 
         public override bool Equals(object obj)
         {

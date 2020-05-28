@@ -1,35 +1,41 @@
-﻿////////////////////////////////////////////////////////////////////////////////////////////////////
-// file:	Regular Expressions\RegularExpression.cs
+﻿// ***********************************************************************
+// Assembly         : UltraDES
+// Author           : Lucas Alves
+// Created          : 04-20-2020
 //
-// summary:	Implements the regular expression class
-////////////////////////////////////////////////////////////////////////////////////////////////////
+// Last Modified By : Lucas Alves
+// Last Modified On : 04-20-2020
+
 
 using System;
 
 namespace UltraDES
 {
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    /// <summary>   (Serializable)a regular expression. </summary>
-    ///
-    /// <remarks>   Lucas Alves, 15/01/2016. </remarks>
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    /// <summary>
+    /// (Serializable)a regular expression.
+    /// </summary>
+    /// <remarks>Lucas Alves, 15/01/2016.</remarks>
+    
 
     [Serializable]
     public abstract class RegularExpression
     {
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Gets the step simplify. </summary>
-        ///
-        /// <value> The step simplify. </value>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        /// <summary>
+        /// Gets the step simplify.
+        /// </summary>
+        /// <value>The step simplify.</value>
+        
 
         public abstract RegularExpression StepSimplify { get; }
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Gets the simplify. </summary>
-        ///
-        /// <value> The simplify. </value>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        /// <summary>
+        /// Gets the simplify.
+        /// </summary>
+        /// <value>The simplify.</value>
+        
 
         public RegularExpression Simplify
         {
@@ -48,50 +54,46 @@ namespace UltraDES
             }
         }
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Serves as the default hash function. </summary>
-        ///
-        /// <remarks>   Lucas Alves, 15/01/2016. </remarks>
-        ///
-        /// <returns>   A hash code for the current object. </returns>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        /// <summary>
+        /// Serves as the default hash function.
+        /// </summary>
+        /// <returns>A hash code for the current object.</returns>
+        /// <remarks>Lucas Alves, 15/01/2016.</remarks>
+        
 
         public abstract override int GetHashCode();
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Returns a string that represents the current object. </summary>
-        ///
-        /// <remarks>   Lucas Alves, 15/01/2016. </remarks>
-        ///
-        /// <returns>   A string that represents the current object. </returns>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        /// <summary>
+        /// Returns a string that represents the current object.
+        /// </summary>
+        /// <returns>A string that represents the current object.</returns>
+        /// <remarks>Lucas Alves, 15/01/2016.</remarks>
+        
 
         public abstract override string ToString();
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Determines whether the specified object is equal to the current object. </summary>
-        ///
-        /// <remarks>   Lucas Alves, 15/01/2016. </remarks>
-        ///
-        /// <param name="obj">  The object to compare with the current object. </param>
-        ///
-        /// <returns>
-        ///     true if the specified object  is equal to the current object; otherwise, false.
-        /// </returns>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        /// <summary>
+        /// Determines whether the specified object is equal to the current object.
+        /// </summary>
+        /// <param name="obj">The object to compare with the current object.</param>
+        /// <returns>true if the specified object  is equal to the current object; otherwise, false.</returns>
+        /// <remarks>Lucas Alves, 15/01/2016.</remarks>
+        
 
         public abstract override bool Equals(object obj);
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Equality operator. </summary>
-        ///
-        /// <remarks>   Lucas Alves, 15/01/2016. </remarks>
-        ///
-        /// <param name="a">    The RegularExpression to process. </param>
-        /// <param name="b">    The RegularExpression to process. </param>
-        ///
-        /// <returns>   The result of the operation. </returns>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        /// <summary>
+        /// Equality operator.
+        /// </summary>
+        /// <param name="a">The RegularExpression to process.</param>
+        /// <param name="b">The RegularExpression to process.</param>
+        /// <returns>The result of the operation.</returns>
+        /// <remarks>Lucas Alves, 15/01/2016.</remarks>
+        
 
         public static bool operator ==(RegularExpression a, RegularExpression b)
         {
@@ -99,48 +101,45 @@ namespace UltraDES
             return !ReferenceEquals(a, null) && a.Equals(b);
         }
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Inequality operator. </summary>
-        ///
-        /// <remarks>   Lucas Alves, 15/01/2016. </remarks>
-        ///
-        /// <param name="a">    The RegularExpression to process. </param>
-        /// <param name="b">    The RegularExpression to process. </param>
-        ///
-        /// <returns>   The result of the operation. </returns>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        /// <summary>
+        /// Inequality operator.
+        /// </summary>
+        /// <param name="a">The RegularExpression to process.</param>
+        /// <param name="b">The RegularExpression to process.</param>
+        /// <returns>The result of the operation.</returns>
+        /// <remarks>Lucas Alves, 15/01/2016.</remarks>
+        
 
         public static bool operator !=(RegularExpression a, RegularExpression b)
         {
             return !(a == b);
         }
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Addition operator. </summary>
-        ///
-        /// <remarks>   Lucas Alves, 15/01/2016. </remarks>
-        ///
-        /// <param name="a">    The RegularExpression to process. </param>
-        /// <param name="b">    The RegularExpression to process. </param>
-        ///
-        /// <returns>   The result of the operation. </returns>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        /// <summary>
+        /// Addition operator.
+        /// </summary>
+        /// <param name="a">The RegularExpression to process.</param>
+        /// <param name="b">The RegularExpression to process.</param>
+        /// <returns>The result of the operation.</returns>
+        /// <remarks>Lucas Alves, 15/01/2016.</remarks>
+        
 
         public static RegularExpression operator +(RegularExpression a, RegularExpression b)
         {
             return new Union(a, b);
         }
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
-        /// <summary>   Multiplication operator. </summary>
-        ///
-        /// <remarks>   Lucas Alves, 15/01/2016. </remarks>
-        ///
-        /// <param name="a">    The RegularExpression to process. </param>
-        /// <param name="b">    The RegularExpression to process. </param>
-        ///
-        /// <returns>   The result of the operation. </returns>
-        ////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        /// <summary>
+        /// Multiplication operator.
+        /// </summary>
+        /// <param name="a">The RegularExpression to process.</param>
+        /// <param name="b">The RegularExpression to process.</param>
+        /// <returns>The result of the operation.</returns>
+        /// <remarks>Lucas Alves, 15/01/2016.</remarks>
+        
 
         public static RegularExpression operator *(RegularExpression a, RegularExpression b)
         {
