@@ -48,11 +48,11 @@ namespace UltraDES
         </div>
          
     <script>
-        function example(id, format, engine) {{
+        function example(id) {{
                 var result;
             try {{
                 let src = document.getElementById(id).innerHTML;
-                result = Viz(src, 'svg', engine);               
+                result = Viz(src, {{ format: 'svg', engine: 'dot', scale: undefined, totalMemory: 1024*1024*1024, files: undefined, images: undefined }});               
                 
                 return result;
             }} 
@@ -62,7 +62,7 @@ namespace UltraDES
             }}
 
         function downloadSVG(fileName) {{
-            var content = example('cluster', 'svg');
+            var content = example('cluster');
             var a = document.createElement('a');
             var file = new Blob([content], {{type: 'text/plain'}});
             a.href = URL.createObjectURL(file);
@@ -70,7 +70,7 @@ namespace UltraDES
             a.click();
                 }}
         function downloadPNG(fileName) {{
-            Viz.svgXmlToPngImageElement(example('cluster', 'svg'), undefined, (err, img) => {{
+            Viz.svgXmlToPngImageElement(example('cluster'), undefined, (err, img) => {{
                     const source = img.src;
                     const a = document.createElement('a');
                     document.body.appendChild(a);
