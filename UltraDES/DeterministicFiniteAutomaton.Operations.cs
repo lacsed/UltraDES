@@ -289,7 +289,7 @@ namespace UltraDES
                 }
             }
 
-            invProj.Name = string.Format("InvProjection({0})", Name);
+            invProj.Name = $"InvProjection({Name})";
             return invProj;
         }
 
@@ -463,9 +463,9 @@ namespace UltraDES
                         lock (_lockObject2)
                         {
                             if (frontier.Count == 0) break;
-                            var states = frontier.Pop();
-                            newStatePos = states.Item1;
-                            oldStates = states.Item2;
+                            var (ns, os) = frontier.Pop();
+                            newStatePos = ns;
+                            oldStates = os;
                         }
 
                         var firstTransition = true;
@@ -620,35 +620,34 @@ namespace UltraDES
                     statesMap[i] = currentPosition;
                 }
 
-                for (var e = 0; e < evs.Length; ++e)
+                foreach (var e in evs)
                 {
-                    if (_adjacencyList[0].HasEvent(i, evs[e]))
+                    if (!_adjacencyList[0].HasEvent(i, e)) continue;
+
+                    var next = _adjacencyList[0][i, e];
+                    var newNext = statesMap[next];
+                    if (newNext == -1)
                     {
-                        var next = _adjacencyList[0][i, evs[e]];
-                        var newNext = statesMap[next];
-                        if (newNext == -1)
+                        newStates[currentPosition].Add(next);
+                        statesMap[next] = currentPosition;
+                    }
+                    else if (newNext != currentPosition)
+                    {
+                        if (newStates[currentPosition].Count < newStates[newNext].Count)
                         {
-                            newStates[currentPosition].Add(next);
-                            statesMap[next] = currentPosition;
+                            var aux = newNext;
+                            newNext = currentPosition;
+                            currentPosition = aux;
                         }
-                        else if (newNext != currentPosition)
+
+                        foreach (var st in newStates[newNext])
                         {
-                            if (newStates[currentPosition].Count < newStates[newNext].Count)
-                            {
-                                var aux = newNext;
-                                newNext = currentPosition;
-                                currentPosition = aux;
-                            }
-
-                            foreach (var st in newStates[newNext])
-                            {
-                                newStates[currentPosition].Add(st);
-                                statesMap[st] = currentPosition;
-                            }
-
-                            newStates[newNext] = null;
-                            ++numInvalid;
+                            newStates[currentPosition].Add(st);
+                            statesMap[st] = currentPosition;
                         }
+
+                        newStates[newNext] = null;
+                        ++numInvalid;
                     }
                 }
             }

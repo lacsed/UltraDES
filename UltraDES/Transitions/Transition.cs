@@ -83,40 +83,29 @@ namespace UltraDES
         /// Returns a hash code for this instance.
         /// </summary>
         /// <returns>A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.</returns>
-        public override int GetHashCode()
-        {
-            return Origin.GetHashCode()*2 + Destination.GetHashCode()*7 + Trigger.GetHashCode();
-        }
+        public override int GetHashCode() => Origin.GetHashCode()*2 + Destination.GetHashCode()*7 + Trigger.GetHashCode();
 
 
         /// <summary>
         /// Returns a <see cref="System.String" /> that represents this instance.
         /// </summary>
         /// <returns>A <see cref="System.String" /> that represents this instance.</returns>
-        public override string ToString()
-        {
-            return $"({Origin} --{Trigger}-> {Destination})";
-        }
+        public override string ToString() => $"({Origin} --{Trigger}-> {Destination})";
 
         /// <summary>
         /// Performs an implicit conversion from <see cref="System.ValueTuple{AbstractState, AbstractEvent, AbstractState}"/> to <see cref="Transition"/>.
         /// </summary>
         /// <param name="t">The t.</param>
         /// <returns>The result of the conversion.</returns>
-        public static implicit operator Transition((AbstractState, AbstractEvent, AbstractState) t)
-        {
-            return new Transition(t.Item1, t.Item2, t.Item3);
-        }
+        public static implicit operator Transition((AbstractState, AbstractEvent, AbstractState) t) => new Transition(t.Item1, t.Item2, t.Item3);
 
         /// <summary>
         /// Performs an implicit conversion from <see cref="Transition"/> to <see cref="System.ValueTuple{AbstractState, AbstractEvent, AbstractState}"/>.
         /// </summary>
         /// <param name="t">The t.</param>
         /// <returns>The result of the conversion.</returns>
-        public static implicit operator (AbstractState, AbstractEvent, AbstractState)(Transition t)
-        {
-            return (t.Origin, t.Trigger, t.Destination);
-        }
+        public static implicit operator (AbstractState, AbstractEvent, AbstractState)(Transition t) => (t.Origin, t.Trigger, t.Destination);
+
 
         /// <summary>
         /// Deconstructs the specified origin.
@@ -130,5 +119,6 @@ namespace UltraDES
             trigger = Trigger;
             destination = Destination;
         }
+
     }
 }

@@ -15,8 +15,8 @@
     <NeutralLanguage>en</NeutralLanguage>
     <PackageReleaseNotes>- Implemented Petri Nets data structure</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <AssemblyVersion>2.1.3.1</AssemblyVersion>
-    <FileVersion>2.1.3.1</FileVersion>
+    <AssemblyVersion>2.1.3.2</AssemblyVersion>
+    <FileVersion>2.1.3.2</FileVersion>
     <RepositoryUrl>https://github.com/lacsed/UltraDES</RepositoryUrl>
   </PropertyGroup>
 

@@ -322,10 +322,8 @@ namespace UltraDES
 
                     dot.Append($"\nnode [shape = point ]; Initial\nInitial -> \"{InitialState}\";\n");
 
-                    do
-                    {
-                        addTransitions();
-                    } while (IncrementPosition(pos));
+                    do addTransitions();
+                    while (IncrementPosition(pos));
                 }
 
                 dot.Append("}");
@@ -417,11 +415,9 @@ namespace UltraDES
 
                     for (var i = 0; i < n; ++i)
                     {
-                        if (_eventsList[i][k])
-                        {
-                            pos[i] = _adjacencyList[i][pos[i], k];
-                            if (pos[i] < 0) return None<AbstractState>.Create();
-                        }
+                        if (!_eventsList[i][k]) continue;
+                        pos[i] = _adjacencyList[i][pos[i], k];
+                        if (pos[i] < 0) return None<AbstractState>.Create();
                     }
 
                     if (_validStates != null && !_validStates.ContainsKey(new StatesTuple(pos, _bits, _tupleSize)))
@@ -501,10 +497,7 @@ namespace UltraDES
         /// Clones this instance.
         /// </summary>
         /// <returns>DFA.</returns>
-        public DFA Clone()
-        {
-            return Clone(_statesList.Count());
-        }
+        public DFA Clone() => Clone(_statesList.Count());
 
         /// <summary>
         /// Composes the state.
@@ -562,9 +555,8 @@ namespace UltraDES
             var vNewBadStates = false;
             var vUncontrollableEventsCount = UncontrollableEvents.Count();
             if (checkForBadStates)
-            {
-                vNewBadStates = _validStates.Where(p => !p.Value).Aggregate(false, (current, p) => current | RemoveBadStates(p.Key, vUncontrollableEventsCount, true));
-            }
+                vNewBadStates = _validStates.Where(p => !p.Value).Aggregate(false,
+                    (current, p) => current | RemoveBadStates(p.Key, vUncontrollableEventsCount, true));
 
             foreach (var p in _validStates.Reverse())
                 if (!p.Value) _validStates.Remove(p.Key);
@@ -586,10 +578,7 @@ namespace UltraDES
 
             while (true)
             {
-                lock (_lockObject)
-                {
-                    ++_numberOfRunningThreads;
-                }
+                lock (_lockObject) ++_numberOfRunningThreads;
 
                 while (true)
                 {
@@ -640,19 +629,13 @@ namespace UltraDES
                     }
                 }
 
-                lock (_lockObject)
-                {
-                    --_numberOfRunningThreads;
-                }
+                lock (_lockObject) --_numberOfRunningThreads;
 
                 if (_numberOfRunningThreads > 0) Thread.Sleep(1);
                 else break;
             }
 
-            lock (_lockObject)
-            {
-                Size += (ulong) length;
-            }
+            lock (_lockObject) Size += (ulong) length;
         }
 
         /// <summary>
@@ -662,7 +645,7 @@ namespace UltraDES
         /// <param name="openAfterFinish">if set to <c>true</c> [open after finish].</param>
         public void drawLatexFigure(string fileName = null, bool openAfterFinish = true)
         {
-            if (fileName == null) fileName = Name;
+            fileName ??= Name;
             fileName = fileName.Replace('|', '_');
             Drawing.drawLatexFigure(this, fileName, openAfterFinish);
         }
@@ -674,7 +657,7 @@ namespace UltraDES
         /// <param name="openAfterFinish">if set to <c>true</c> [open after finish].</param>
         public void drawSVGFigure(string fileName = null, bool openAfterFinish = true)
         {
-            if (fileName == null) fileName = Name;
+            fileName ??= Name;
             fileName = fileName.Replace('|', '_');
             Drawing.drawSVG(this, fileName, openAfterFinish);
         }
@@ -695,10 +678,7 @@ namespace UltraDES
 
             while (true)
             {
-                lock (_lockObject)
-                {
-                    ++_numberOfRunningThreads;
-                }
+                lock (_lockObject) ++_numberOfRunningThreads;
 
                 while (true)
                 {
@@ -832,10 +812,7 @@ namespace UltraDES
                     }
                 }
 
-                lock (_lockObject)
-                {
-                    --_numberOfRunningThreads;
-                }
+                lock (_lockObject) --_numberOfRunningThreads;
 
                 if (_numberOfRunningThreads > 0) Thread.Sleep(1);
                 else break;
@@ -1054,10 +1031,7 @@ namespace UltraDES
         /// Determines whether this instance is empty.
         /// </summary>
         /// <returns><c>true</c> if this instance is empty; otherwise, <c>false</c>.</returns>
-        private bool IsEmpty()
-        {
-            return Size == 0;
-        }
+        private bool IsEmpty() => Size == 0;
 
         /// <summary>
         /// Determines whether [is market state] [the specified p position].
@@ -1495,12 +1469,12 @@ namespace UltraDES
         {
             var newStates = new AbstractState[Size];
             var newAdjacencyMatrix = new AdjacencyMatrix((int) Size, _eventsUnion.Length, true);
-            int id, n = _statesList.Count();
+            int n = _statesList.Count();
             var positionNewStates = new Dictionary<StatesTuple, int>(StatesTupleComparator.GetInstance());
 
             if (_validStates == null && n == 1) return;
 
-            id = 0;
+            var id = 0;
             var pos0 = new int[n];
 
             if (_validStates != null)

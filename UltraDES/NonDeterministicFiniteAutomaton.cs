@@ -91,11 +91,7 @@ namespace UltraDES
 
                 dot.Append($"\nnode [shape = point ]; Initial\nInitial -> \"{InitialState}\";\n");
 
-                foreach (
-                    var group in Transitions.GroupBy(t => new
-                    {
-                        t.Origin, t.Destination
-                    }))
+                foreach (var group in Transitions.GroupBy(t => new {t.Origin, t.Destination}))
                 {
                     dot.Append($"\"{@group.Key.Origin}\" -> \"{@group.Key.Destination}\" [ label = \"{@group.Aggregate("", (acc, t) => $"{acc}{t.Trigger},") .Trim(' ', ',')}\" ];\n");
                 }

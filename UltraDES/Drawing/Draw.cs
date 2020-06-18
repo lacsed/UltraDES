@@ -21,14 +21,14 @@ namespace UltraDES
     internal static class Draw
     {
         /// <summary>
-        /// Shows the dot code.
+        /// Shows the dot code (GraphViz).
         /// </summary>
         /// <param name="dot">The dot.</param>
         /// <param name="name">The name.</param>
         public static void ShowDotCode(string dot, string name = "image")
         {
             name = Path.GetInvalidFileNameChars().Aggregate(name, (current, c) => current.Replace(c, '_'));
-            string path = $"{name}.html";
+            var path = $"{name}.html";
             path = path.Replace("||", "-");
 
             var source = $@"
@@ -59,7 +59,7 @@ namespace UltraDES
             catch(e) {{
                 console.log(e);
             }}
-            }}
+        }}
 
         function downloadSVG(fileName) {{
             var content = example('cluster');
@@ -68,7 +68,8 @@ namespace UltraDES
             a.href = URL.createObjectURL(file);
             a.download = fileName;
             a.click();
-                }}
+        }}
+
         function downloadPNG(fileName) {{
             Viz.svgXmlToPngImageElement(example('cluster'), undefined, (err, img) => {{
                     const source = img.src;
@@ -80,7 +81,7 @@ namespace UltraDES
                     a.download = fileName;
                     a.click();
                 }}); 
-                }}
+         }}
 
         document.body.innerHTML += example(""cluster"", ""svg"");
     </script>
