@@ -258,6 +258,93 @@ namespace UltraDES
             }
         }
 
+        public string ToFormattedDotCode(IEnumerable<(AbstractState q, SVGColors c)> stateColor = null, IEnumerable<(Transition t, SVGColors c, GraphVizStyle s)> transitionStyle = null)
+        {
+            stateColor ??= new (AbstractState q, SVGColors c)[0];
+            transitionStyle ??= new (Transition t, SVGColors c, GraphVizStyle s)[0];
+
+            var styleState = stateColor.ToDictionary(s => s.q, s => s.c);
+            var styleTrans = transitionStyle.ToDictionary(s => s.t, s => (s.c, s.s));
+
+            var transitions = Transitions.ToArray();
+            var states = States.ToArray();
+
+            var dot = new StringBuilder("digraph {\n\trankdir=TB;", (int) Size * InitialState.ToString().Length);
+
+
+            foreach (var q in states)
+            {
+                var style = styleState.ContainsKey(q) ? $" style = filled fillcolor = {styleState[q]}" : "";
+                dot.Append($"\n\t\"{q}\" [shape = {(q.IsMarked ? "doublecircle" : "circle")}{style}];");
+            }
+            
+            dot.Append($"\n\tInitial [shape = point]; \n\tInitial -> \"{InitialState}\";\n");
+
+            foreach (var group in transitions.GroupBy(t => (t.Origin, t.Destination)))
+            {
+                var events1 = group.Where(t => !styleTrans.ContainsKey(t))
+                                         .Aggregate("", (acc, t) => acc + "," + t.Trigger)
+                                         .Trim(',');
+                
+                dot.Append($"\n\t\"{group.Key.Origin}\" -> \"{group.Key.Destination}\" [label = \"{events1}\"]");
+
+                foreach (var groupStyle in group.Where(t => styleTrans.ContainsKey(t)).GroupBy(t => styleTrans[t]))
+                {
+                    var events2 = groupStyle.Aggregate("", (acc, t) => acc + "," + t.Trigger).Trim(',');
+                    var style = $"style = {groupStyle.Key.s} color = {groupStyle.Key.c} fontcolor = {groupStyle.Key.c}";
+                    
+                    dot.Append($"\n\t\"{group.Key.Origin}\" -> \"{group.Key.Destination}\" [label = \"{events2}\" {style}]");
+                }
+            }
+            
+            dot.Append("\n}");
+
+            return dot.ToString();
+        }
+
+        public string ToFormattedDotCode(IEnumerable<(AbstractState q, SVGColors c)> stateColor = null, IEnumerable<(AbstractEvent e, SVGColors c)> transitionStyle = null)
+        {
+            stateColor ??= new (AbstractState q, SVGColors c)[0];
+            transitionStyle ??= new (AbstractEvent e, SVGColors c)[0];
+
+            var styleState = stateColor.ToDictionary(s => s.q, s => s.c);
+            var styleTrans = transitionStyle.ToDictionary(s => s.e, s => s.c);
+
+            var transitions = Transitions.ToArray();
+            var states = States.ToArray();
+
+            var dot = new StringBuilder("digraph {\n\trankdir=TB;", (int)Size * InitialState.ToString().Length);
+
+
+            foreach (var q in states)
+            {
+                var style = styleState.ContainsKey(q) ? $" style = filled fillcolor = {styleState[q]}" : "";
+                dot.Append($"\n\t\"{q}\" [shape = {(q.IsMarked ? "doublecircle" : "circle")}{style}];");
+            }
+
+            dot.Append($"\n\tInitial [shape = point]; \n\tInitial -> \"{InitialState}\";\n");
+
+            foreach (var group in transitions.GroupBy(t => (t.Origin, t.Destination)))
+            {
+                var events1 = group.Where(t => !styleTrans.ContainsKey(t.Trigger))
+                                         .Aggregate("", (acc, t) => acc + "," + t.Trigger)
+                                         .Trim(',');
+
+                dot.Append($"\n\t\"{group.Key.Origin}\" -> \"{group.Key.Destination}\" [label = \"{events1}\"]");
+
+                foreach (var groupStyle in group.Where(t => styleTrans.ContainsKey(t.Trigger)).GroupBy(t => styleTrans[t.Trigger]))
+                {
+                    var events2 = groupStyle.Aggregate("", (acc, t) => acc + "," + t.Trigger).Trim(',');
+                    var style = $"color = {groupStyle.Key} fontcolor = {groupStyle.Key}";
+
+                    dot.Append($"\n\t\"{group.Key.Origin}\" -> \"{group.Key.Destination}\" [label = \"{events2}\" {style}]");
+                }
+            }
+
+            dot.Append("\n}");
+
+            return dot.ToString();
+        }
 
         /// <summary>
         /// Converts to dotcode.
@@ -1460,6 +1547,18 @@ namespace UltraDES
         {
             if (name == "") name = Name;
             Draw.ShowDotCode(ToDotCode, name);
+        }
+
+        public void ShowFormattedAutomaton(IEnumerable<(AbstractState q, SVGColors c)> stateStyle = null, IEnumerable<(Transition t, SVGColors c, GraphVizStyle s)> TransitionStyle = null, string name = "")
+        {
+            if (name == "") name = Name;
+            Draw.ShowDotCode(ToFormattedDotCode(stateStyle, TransitionStyle), name);
+        }
+
+        public void ShowFormattedAutomaton(IEnumerable<(AbstractState q, SVGColors c)> stateStyle = null, IEnumerable<(AbstractEvent e, SVGColors c)> EventStyle = null, string name = "")
+        {
+            if (name == "") name = Name;
+            Draw.ShowDotCode(ToFormattedDotCode(stateStyle, EventStyle), name);
         }
 
         /// <summary>

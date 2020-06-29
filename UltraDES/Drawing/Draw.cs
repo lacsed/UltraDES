@@ -42,7 +42,7 @@ namespace UltraDES
     <script type=""text/vnd.graphviz"" id=""cluster"">
 {dot}
     </script>
-        <div style=""height: 50px; width: 100 %; "">
+        <div style=""height: 50px; width: 100%;"">
             <button type = ""button"" onclick = ""downloadSVG('{name}.svg')"" > Save as SVG</button>
             <button type = ""button"" onclick = ""downloadPNG('{name}.png')"" > Save as PNG</button>
         </div>

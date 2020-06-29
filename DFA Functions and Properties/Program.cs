@@ -217,16 +217,13 @@ namespace DFAFunctionsAndProperties
 
             Console.WriteLine("\nEvents: {0}", G.Events.Count());
             foreach (var e in G.Events) // iterates over all event
-                if (e.IsControllable)
-                    Console.WriteLine("\tEvent: {0} (controllable)", e); // prints event's name.
-                else
-                    Console.WriteLine("\tEvent: {0} (uncontrollable)", e); // prints event's name.
+                Console.WriteLine(e.IsControllable ? $"\tEvent: {e} (controllable)" : $"\tEvent: {e} (uncontrollable)");
 
-            Console.WriteLine("\nTransitions: {0}", G.Transitions.Count());
+            Console.WriteLine($"\nTransitions: {G.Transitions.Count()}");
 
             foreach (var t in G.Transitions) // iterates over all transictions
                 // you can use t.Origin, t.Trigger and t.Destination to get information about the transiction
-                Console.WriteLine("\tTransition: {0}", t); // prints '{Origin} --{event}-> {Destination}'
+                Console.WriteLine($"\tTransition: {t}"); // prints '{Origin} --{event}-> {Destination}'
 
             Console.WriteLine("\nUncontrollable Events: {0}", G.UncontrollableEvents.Count());
             foreach (var e in G.UncontrollableEvents) Console.WriteLine("\tUncontrollable event: {0}", e);
