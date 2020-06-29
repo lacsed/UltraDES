@@ -292,8 +292,8 @@ namespace UltraDES
                 {
                     var events2 = groupStyle.Aggregate("", (acc, t) => acc + "," + t.Trigger).Trim(',');
                     var style = $"style = {groupStyle.Key.s} color = {groupStyle.Key.c} fontcolor = {groupStyle.Key.c}";
-                    
-                    dot.Append($"\n\t\"{group.Key.Origin}\" -> \"{group.Key.Destination}\" [label = \"{events2}\" {style}]");
+
+                    if (events1 != "") dot.Append($"\n\t\"{group.Key.Origin}\" -> \"{group.Key.Destination}\" [label = \"{events2}\" {style}]");
                 }
             }
             
@@ -330,7 +330,7 @@ namespace UltraDES
                                          .Aggregate("", (acc, t) => acc + "," + t.Trigger)
                                          .Trim(',');
 
-                dot.Append($"\n\t\"{group.Key.Origin}\" -> \"{group.Key.Destination}\" [label = \"{events1}\"]");
+                if(events1 != "") dot.Append($"\n\t\"{group.Key.Origin}\" -> \"{group.Key.Destination}\" [label = \"{events1}\"]");
 
                 foreach (var groupStyle in group.Where(t => styleTrans.ContainsKey(t.Trigger)).GroupBy(t => styleTrans[t.Trigger]))
                 {
