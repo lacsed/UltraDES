@@ -806,6 +806,22 @@
             </summary>
             <param name="name">The name.</param>
         </member>
+        <member name="M:UltraDES.DeterministicFiniteAutomaton.ShowFormattedAutomaton(System.Collections.Generic.IEnumerable{System.ValueTuple{UltraDES.AbstractState,UltraDES.SVGColors}},System.Collections.Generic.IEnumerable{System.ValueTuple{UltraDES.Transition,UltraDES.SVGColors,UltraDES.GraphVizStyle}},System.String)">
+            <summary>
+            
+            </summary>
+            <param name="stateStyle"></param>
+            <param name="TransitionStyle"></param>
+            <param name="name"></param>
+        </member>
+        <member name="M:UltraDES.DeterministicFiniteAutomaton.ShowFormattedAutomaton(System.Collections.Generic.IEnumerable{System.ValueTuple{UltraDES.AbstractState,UltraDES.SVGColors}},System.Collections.Generic.IEnumerable{System.ValueTuple{UltraDES.AbstractEvent,UltraDES.SVGColors}},System.String)">
+            <summary>
+            
+            </summary>
+            <param name="stateStyle"></param>
+            <param name="eventStyle"></param>
+            <param name="name"></param>
+        </member>
         <member name="M:UltraDES.DeterministicFiniteAutomaton.Simplify">
             <summary>
             Simplifies this instance.

@@ -258,7 +258,7 @@ namespace UltraDES
             }
         }
 
-        public string ToFormattedDotCode(IEnumerable<(AbstractState q, SVGColors c)> stateColor = null, IEnumerable<(Transition t, SVGColors c, GraphVizStyle s)> transitionStyle = null)
+        public string ToFormattedDotCode(IEnumerable<(AbstractState q, SVGColors c)> stateColor, IEnumerable<(Transition t, SVGColors c, GraphVizStyle s)> transitionStyle = null)
         {
             stateColor ??= new (AbstractState q, SVGColors c)[0];
             transitionStyle ??= new (Transition t, SVGColors c, GraphVizStyle s)[0];
@@ -285,15 +285,15 @@ namespace UltraDES
                 var events1 = group.Where(t => !styleTrans.ContainsKey(t))
                                          .Aggregate("", (acc, t) => acc + "," + t.Trigger)
                                          .Trim(',');
-                
-                dot.Append($"\n\t\"{group.Key.Origin}\" -> \"{group.Key.Destination}\" [label = \"{events1}\"]");
+
+                if (events1 != "") dot.Append($"\n\t\"{group.Key.Origin}\" -> \"{group.Key.Destination}\" [label = \"{events1}\"]");
 
                 foreach (var groupStyle in group.Where(t => styleTrans.ContainsKey(t)).GroupBy(t => styleTrans[t]))
                 {
                     var events2 = groupStyle.Aggregate("", (acc, t) => acc + "," + t.Trigger).Trim(',');
                     var style = $"style = {groupStyle.Key.s} color = {groupStyle.Key.c} fontcolor = {groupStyle.Key.c}";
 
-                    if (events1 != "") dot.Append($"\n\t\"{group.Key.Origin}\" -> \"{group.Key.Destination}\" [label = \"{events2}\" {style}]");
+                     dot.Append($"\n\t\"{group.Key.Origin}\" -> \"{group.Key.Destination}\" [label = \"{events2}\" {style}]");
                 }
             }
             
@@ -302,13 +302,13 @@ namespace UltraDES
             return dot.ToString();
         }
 
-        public string ToFormattedDotCode(IEnumerable<(AbstractState q, SVGColors c)> stateColor = null, IEnumerable<(AbstractEvent e, SVGColors c)> transitionStyle = null)
+        public string ToFormattedDotCode(IEnumerable<(AbstractState q, SVGColors c)> stateColor, IEnumerable<(AbstractEvent e, SVGColors c)> eventStyle = null)
         {
             stateColor ??= new (AbstractState q, SVGColors c)[0];
-            transitionStyle ??= new (AbstractEvent e, SVGColors c)[0];
+            eventStyle ??= new (AbstractEvent e, SVGColors c)[0];
 
             var styleState = stateColor.ToDictionary(s => s.q, s => s.c);
-            var styleTrans = transitionStyle.ToDictionary(s => s.e, s => s.c);
+            var styleTrans = eventStyle.ToDictionary(s => s.e, s => s.c);
 
             var transitions = Transitions.ToArray();
             var states = States.ToArray();
@@ -1549,16 +1549,28 @@ namespace UltraDES
             Draw.ShowDotCode(ToDotCode, name);
         }
 
-        public void ShowFormattedAutomaton(IEnumerable<(AbstractState q, SVGColors c)> stateStyle = null, IEnumerable<(Transition t, SVGColors c, GraphVizStyle s)> TransitionStyle = null, string name = "")
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="stateStyle"></param>
+        /// <param name="TransitionStyle"></param>
+        /// <param name="name"></param>
+        public void ShowFormattedAutomaton(IEnumerable<(AbstractState q, SVGColors c)> stateStyle, IEnumerable<(Transition t, SVGColors c, GraphVizStyle s)> TransitionStyle = null, string name = "")
         {
             if (name == "") name = Name;
             Draw.ShowDotCode(ToFormattedDotCode(stateStyle, TransitionStyle), name);
         }
 
-        public void ShowFormattedAutomaton(IEnumerable<(AbstractState q, SVGColors c)> stateStyle = null, IEnumerable<(AbstractEvent e, SVGColors c)> EventStyle = null, string name = "")
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="stateStyle"></param>
+        /// <param name="eventStyle"></param>
+        /// <param name="name"></param>
+        public void ShowFormattedAutomaton(IEnumerable<(AbstractState q, SVGColors c)> stateStyle, IEnumerable<(AbstractEvent e, SVGColors c)> eventStyle, string name = "")
         {
             if (name == "") name = Name;
-            Draw.ShowDotCode(ToFormattedDotCode(stateStyle, EventStyle), name);
+            Draw.ShowDotCode(ToFormattedDotCode(stateStyle, eventStyle), name);
         }
 
         /// <summary>
