@@ -489,6 +489,60 @@
             <param name="checkForBadStates">if set to <c>true</c> [check for bad states].</param>
             <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         </member>
+        <member name="M:UltraDES.DeterministicFiniteAutomaton.ReduceSupervisor(UltraDES.DeterministicFiniteAutomaton,UltraDES.DeterministicFiniteAutomaton,System.Int64)">
+            <summary>
+            [Experimental]
+            </summary>
+            <param name="plant"></param>
+            <param name="supervisor"></param>
+            <returns></returns>
+        </member>
+        <member name="M:UltraDES.DeterministicFiniteAutomaton.LocalizeSupervisor(UltraDES.DeterministicFiniteAutomaton,UltraDES.DeterministicFiniteAutomaton,System.Collections.Generic.IEnumerable{UltraDES.DeterministicFiniteAutomaton},System.Int64)">
+            <summary>
+            [Experimental]
+            </summary>
+            <param name="globalPlant"></param>
+            <param name="supervisor"></param>
+            <param name="agents"></param>
+            <param name="maxIt"></param>
+            <returns></returns>
+        </member>
+        <member name="M:UltraDES.DeterministicFiniteAutomaton.MonolithicLocalizedSupervisor(System.Collections.Generic.IEnumerable{UltraDES.DeterministicFiniteAutomaton},System.Collections.Generic.IEnumerable{UltraDES.DeterministicFiniteAutomaton},System.Int64)">
+            <summary>
+            [Experimental]
+            </summary>
+            <param name="plants"></param>
+            <param name="specifications"></param>
+            <param name="maxIt"></param>
+            <returns></returns>
+        </member>
+        <member name="M:UltraDES.DeterministicFiniteAutomaton.MonolithicReducedSupervisor(System.Collections.Generic.IEnumerable{UltraDES.DeterministicFiniteAutomaton},System.Collections.Generic.IEnumerable{UltraDES.DeterministicFiniteAutomaton},System.Int64)">
+            <summary>
+            [Experimental]
+            </summary>
+            <param name="plants"></param>
+            <param name="specifications"></param>
+            <param name="maxIt"></param>
+            <returns></returns>
+        </member>
+        <member name="M:UltraDES.DeterministicFiniteAutomaton.LocalModularLocalizedSupervisor(System.Collections.Generic.IEnumerable{UltraDES.DeterministicFiniteAutomaton},System.Collections.Generic.IEnumerable{UltraDES.DeterministicFiniteAutomaton},System.Int64)">
+            <summary>
+            [Experimental]
+            </summary>
+            <param name="plants"></param>
+            <param name="specifications"></param>
+            <param name="maxIt"></param>
+            <returns></returns>
+        </member>
+        <member name="M:UltraDES.DeterministicFiniteAutomaton.LocalModularReducedSupervisor(System.Collections.Generic.IEnumerable{UltraDES.DeterministicFiniteAutomaton},System.Collections.Generic.IEnumerable{UltraDES.DeterministicFiniteAutomaton},System.Int64)">
+            <summary>
+            [Experimental]
+            </summary>
+            <param name="plants"></param>
+            <param name="specifications"></param>
+            <param name="maxIt"></param>
+            <returns></returns>
+        </member>
         <member name="F:UltraDES.DeterministicFiniteAutomaton.NumberOfThreads">
             <summary>
             The number of threads
@@ -1772,6 +1826,14 @@
             <param name="list">The list to act on.</param>
             <returns>An enumerator that allows foreach to be used to process only some in this collection.</returns>
             <remarks>Lucas Alves, 18/01/2016.</remarks>
+        </member>
+        <member name="M:UltraDES.Extensions.ToSet``1(System.Collections.Generic.IEnumerable{``0})">
+            <summary>
+            
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="list"></param>
+            <returns></returns>
         </member>
         <member name="T:UltraDES.Graph">
             <summary>

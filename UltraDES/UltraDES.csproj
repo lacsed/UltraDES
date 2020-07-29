@@ -14,7 +14,7 @@
     <PackageTags>linqpad-samples</PackageTags>
     <NeutralLanguage>en</NeutralLanguage>
     <PackageReleaseNotes>- Included Supervisor Reduction and Localization (Experimental)</PackageReleaseNotes>
-    <PackageLicenseFile>README.md</PackageLicenseFile>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <AssemblyVersion>2.1.4.1</AssemblyVersion>
     <FileVersion>2.1.4.1</FileVersion>
     <RepositoryUrl>https://github.com/lacsed/UltraDES</RepositoryUrl>
@@ -38,7 +38,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\README.md">
+    <None Include="..\LICENSE">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
