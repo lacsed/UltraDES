@@ -9,6 +9,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace UltraDES
@@ -31,8 +32,7 @@ namespace UltraDES
         /// <param name="eG">The e g.</param>
         /// <param name="eS">The e s.</param>
         /// <returns>Tuple&lt;System.Boolean, System.Boolean, System.Int32[], System.Int32[]&gt;.</returns>
-        private Tuple<bool, bool, int[], int[]> CheckState(DFA G, int nG, int nS, int[] posG, int[] posS, int eG,
-            int eS)
+        private Tuple<bool, bool, int[], int[]> CheckState(DFA G, int nG, int nS, int[] posG, int[] posS, int eG, int eS)
         {
             var nextG = new int[nG];
             var nextS = new int[nS];
@@ -93,31 +93,22 @@ namespace UltraDES
         /// </summary>
         /// <param name="plants">The plants.</param>
         /// <returns>Controllability.</returns>
-        public Controllability Controllability(params DFA[] plants)
-        {
-            return Controllability((IEnumerable<DFA>) plants);
-        }
+        public Controllability Controllability(params DFA[] plants) => Controllability((IEnumerable<DFA>) plants);
 
         /// <summary>
         /// Controllabilities the specified plants.
         /// </summary>
         /// <param name="plants">The plants.</param>
         /// <returns>Controllability.</returns>
-        public Controllability Controllability(IEnumerable<DFA> plants)
-        {
-            return ControllabilityAndDisabledEvents(plants, false).Item1;
-        }
+        public Controllability Controllability(IEnumerable<DFA> plants) => ControllabilityAndDisabledEvents(plants, false).Item1;
 
         /// <summary>
         /// Controllabilities the and disabled events.
         /// </summary>
         /// <param name="plants">The plants.</param>
         /// <returns>Tuple&lt;Controllability, Dictionary&lt;AbstractState, List&lt;AbstractEvent&gt;&gt;&gt;.</returns>
-        public Tuple<Controllability, Dictionary<AbstractState, List<AbstractEvent>>> ControllabilityAndDisabledEvents(
-            params DFA[] plants)
-        {
-            return ControllabilityAndDisabledEvents(plants, true);
-        }
+        public Tuple<Controllability, Dictionary<AbstractState, List<AbstractEvent>>> ControllabilityAndDisabledEvents(params DFA[] plants) =>
+            ControllabilityAndDisabledEvents(plants, true);
 
         /// <summary>
         /// Controllabilities the and disabled events.
@@ -148,9 +139,7 @@ namespace UltraDES
             AbstractState currentState = null;
 
             if (!filteredStates)
-            {
                 _validStates = new Dictionary<StatesTuple, bool>((int) Size, StatesTupleComparator.GetInstance());
-            }
 
             for (var e = 0; e < evs.Length; ++e)
             {
@@ -255,20 +244,16 @@ namespace UltraDES
         /// </summary>
         /// <param name="plants">The plants.</param>
         /// <returns>Dictionary&lt;AbstractState, List&lt;AbstractEvent&gt;&gt;.</returns>
-        public Dictionary<AbstractState, List<AbstractEvent>> DisabledEvents(params DFA[] plants)
-        {
-            return DisabledEvents((IEnumerable<DFA>) plants);
-        }
+        public Dictionary<AbstractState, List<AbstractEvent>> DisabledEvents(params DFA[] plants) => 
+            DisabledEvents((IEnumerable<DFA>) plants);
 
         /// <summary>
         /// Disableds the events.
         /// </summary>
         /// <param name="plants">The plants.</param>
         /// <returns>Dictionary&lt;AbstractState, List&lt;AbstractEvent&gt;&gt;.</returns>
-        public Dictionary<AbstractState, List<AbstractEvent>> DisabledEvents(IEnumerable<DFA> plants)
-        {
-            return ControllabilityAndDisabledEvents(plants).Item2;
-        }
+        public Dictionary<AbstractState, List<AbstractEvent>> DisabledEvents(IEnumerable<DFA> plants) => 
+            ControllabilityAndDisabledEvents(plants).Item2;
 
         /// <summary>
         /// Finds the supervisor.
@@ -331,20 +316,16 @@ namespace UltraDES
         /// </summary>
         /// <param name="plants">The plants.</param>
         /// <returns><c>true</c> if the specified plants is controllable; otherwise, <c>false</c>.</returns>
-        public bool IsControllable(params DFA[] plants)
-        {
-            return IsControllable((IEnumerable<DFA>) plants);
-        }
+        public bool IsControllable(params DFA[] plants) => 
+            IsControllable((IEnumerable<DFA>) plants);
 
         /// <summary>
         /// Determines whether the specified plants is controllable.
         /// </summary>
         /// <param name="plants">The plants.</param>
         /// <returns><c>true</c> if the specified plants is controllable; otherwise, <c>false</c>.</returns>
-        public bool IsControllable(IEnumerable<DFA> plants)
-        {
-            return Controllability(plants) == UltraDES.Controllability.Controllable;
-        }
+        public bool IsControllable(IEnumerable<DFA> plants) => 
+            Controllability(plants) == UltraDES.Controllability.Controllable;
 
         /// <summary>
         /// Locals the modular supervisor.
@@ -354,16 +335,11 @@ namespace UltraDES
         /// <param name="conflictResolvingSupervisor">The conflict resolving supervisor.</param>
         /// <returns>IEnumerable&lt;DFA&gt;.</returns>
         /// <exception cref="Exception">conflicting supervisors</exception>
-        public static IEnumerable<DFA> LocalModularSupervisor(IEnumerable<DFA> plants, IEnumerable<DFA> specifications,
-            IEnumerable<DFA> conflictResolvingSupervisor = null)
+        public static IEnumerable<DFA> LocalModularSupervisor(IEnumerable<DFA> plants, IEnumerable<DFA> specifications, IEnumerable<DFA> conflictResolvingSupervisor = null)
         {
-            if (conflictResolvingSupervisor == null) conflictResolvingSupervisor = new DFA[0];
-            ;
-            var supervisors = specifications.Select(e =>
-            {
-                return MonolithicSupervisor(plants.Where(p => p._eventsUnion.Intersect(e._eventsUnion).Any()),
-                    new[] {e});
-            });
+            conflictResolvingSupervisor ??= new DFA[0];
+            
+            var supervisors = specifications.AsParallel().Select(e => MonolithicSupervisor(plants.Where(p => p._eventsUnion.Intersect(e._eventsUnion).Any()), new[] {e})).ToList();
 
             var complete = supervisors.Union(conflictResolvingSupervisor).ToList();
 
@@ -384,15 +360,9 @@ namespace UltraDES
         public static IEnumerable<DFA> LocalModularSupervisor(IEnumerable<DFA> plants, IEnumerable<DFA> specifications,
             out List<DFA> compoundPlants, IEnumerable<DFA> conflictResolvingSupervisor = null)
         {
-            if (conflictResolvingSupervisor == null) conflictResolvingSupervisor = new DFA[0];
+            conflictResolvingSupervisor ??= new DFA[0];
 
-            var dic = specifications.ToDictionary(e =>
-            {
-                return plants.Where(p => p._eventsUnion.Intersect(e._eventsUnion).Any()).Aggregate((a, b) =>
-                {
-                    return a.ParallelCompositionWith(b);
-                });
-            });
+            var dic = specifications.ToDictionary(e => plants.Where(p => p._eventsUnion.Intersect(e._eventsUnion).Any()).Aggregate((a, b) => a.ParallelCompositionWith(b)));
 
             var supervisors = dic.AsParallel()
                 .Select(automata => MonolithicSupervisor(new[] {automata.Key}, new[] {automata.Value})).ToList();
@@ -538,8 +508,7 @@ namespace UltraDES
             return v_newBadStates;
         }
 
-        private static Dictionary<AbstractState, AbstractState> SupervisorPlantState(DeterministicFiniteAutomaton sup,
-            DeterministicFiniteAutomaton plant, HashSet<AbstractState> forbidden)
+        private static Dictionary<AbstractState, AbstractState> SupervisorPlantState(DFA sup, DFA plant, HashSet<AbstractState> forbidden)
         {
             var transG = plant.Transitions.GroupBy(t => t.Origin)
                 .ToDictionary(g => g.Key, g => g.Select(t => (t.Trigger, t.Destination)).ToArray());
@@ -620,6 +589,244 @@ namespace UltraDES
             var nStates = Size;
             RemoveBlockingStates();
             return Size != nStates;
+        }
+
+        /// <summary>
+        /// [Experimental]
+        /// </summary>
+        /// <param name="plant"></param>
+        /// <param name="supervisor"></param>
+        /// <returns></returns>
+        public static DFA ReduceSupervisor(DFA plant, DFA supervisor, long maxIt = long.MaxValue)
+        {
+            var (trans, initial) = Reduction(plant, supervisor, null, maxIt);
+            return new DFA(trans, initial, $"RED({supervisor.Name})");
+        }
+
+        /// <summary>
+        /// [Experimental]
+        /// </summary>
+        /// <param name="globalPlant"></param>
+        /// <param name="supervisor"></param>
+        /// <param name="agents"></param>
+        /// <param name="maxIt"></param>
+        /// <returns></returns>
+        public static IEnumerable<DFA> LocalizeSupervisor(DFA globalPlant, DFA supervisor, IEnumerable<DFA> agents, long maxIt = long.MaxValue)
+        {
+            return agents.AsParallel().Select(Gk =>
+            {
+                var (trans, initial) = Reduction(globalPlant, supervisor, Gk.Events.ToSet(), maxIt);
+                return new DFA(trans, initial, $"LOC({supervisor.Name}, ({Gk.Name}))");
+            }).ToArray();
+        }
+
+        /// <summary>
+        /// [Experimental]
+        /// </summary>
+        /// <param name="plants"></param>
+        /// <param name="specifications"></param>
+        /// <param name="maxIt"></param>
+        /// <returns></returns>
+        public static IEnumerable<DFA> MonolithicLocalizedSupervisor(IEnumerable<DFA> plants, IEnumerable<DFA> specifications, long maxIt = long.MaxValue)
+        {
+            var plant = ParallelComposition(plants);
+            var sup = MonolithicSupervisor(new[] {plant}, specifications, true);
+            return LocalizeSupervisor(plant, sup, plants, maxIt);
+        }
+
+        /// <summary>
+        /// [Experimental]
+        /// </summary>
+        /// <param name="plants"></param>
+        /// <param name="specifications"></param>
+        /// <param name="maxIt"></param>
+        /// <returns></returns>
+        public static DFA MonolithicReducedSupervisor(IEnumerable<DFA> plants, IEnumerable<DFA> specifications, long maxIt = long.MaxValue)
+        {
+            var plant = ParallelComposition(plants);
+            var sup = MonolithicSupervisor(new[] { plant }, specifications, true);
+            return ReduceSupervisor(plant, sup, maxIt);
+        }
+
+        /// <summary>
+        /// [Experimental]
+        /// </summary>
+        /// <param name="plants"></param>
+        /// <param name="specifications"></param>
+        /// <param name="maxIt"></param>
+        /// <returns></returns>
+        public static IEnumerable<DFA> LocalModularLocalizedSupervisor(IEnumerable<DFA> plants, IEnumerable<DFA> specifications, long maxIt = long.MaxValue)
+        {
+            var supervisors = specifications.AsParallel().Select(spec =>
+            {
+                var localPlants = plants.Where(p => p._eventsUnion.Intersect(spec._eventsUnion).Any()).ToArray();
+                var localPlant = ParallelComposition(localPlants);
+                var localSup = MonolithicSupervisor(new[] {localPlant}, new[] {spec}, true);
+                return (localPlant, localSup, localPlants);
+            }).ToList();
+
+            if (IsConflicting(supervisors.Select(t => t.localSup))) throw new Exception("Conflicting Supervisors");
+            GC.Collect();
+            return supervisors.AsParallel().SelectMany(t => LocalizeSupervisor(t.localPlant, t.localSup, t.localPlants, maxIt)).ToArray();
+        }
+
+        /// <summary>
+        /// [Experimental]
+        /// </summary>
+        /// <param name="plants"></param>
+        /// <param name="specifications"></param>
+        /// <param name="maxIt"></param>
+        /// <returns></returns>
+        public static IEnumerable<DFA> LocalModularReducedSupervisor(IEnumerable<DFA> plants, IEnumerable<DFA> specifications, long maxIt = long.MaxValue)
+        {
+            var supervisors = specifications.AsParallel().Select(spec =>
+            {
+                var localPlants = plants.Where(p => p._eventsUnion.Intersect(spec._eventsUnion).Any()).ToArray();
+                var localPlant = ParallelComposition(localPlants);
+                var localSup = MonolithicSupervisor(new[] { localPlant }, new[] { spec }, true);
+                return (localPlant, localSup);
+            }).ToList();
+
+            if (IsConflicting(supervisors.Select(t => t.localSup))) throw new Exception("Conflicting Supervisors");
+            GC.Collect();
+            return supervisors.AsParallel().Select(t => ReduceSupervisor(t.localPlant, t.localSup, maxIt)).ToArray();
+        }
+
+        private static (Transition[] trans, AbstractState initial) Reduction(DFA P, DFA S, HashSet<AbstractEvent> Ek, long maxIt = long.MaxValue)
+        {
+            AbstractEvent[] events;
+            if (Ek == null)
+            {
+                Ek = P.Events.ToSet();
+                events = Ek.Where(e => e.IsControllable).ToArray();
+            }
+            else events = Ek.ToArray();
+
+            var eventsP = P.Events.Except(S.Events).ToArray();
+            var eventsS = S.Events.Except(P.Events).ToArray();
+
+            var transP = P.Transitions.Union(P.States.SelectMany(q => eventsS.Select(e => new Transition(q, e, q)))).GroupBy(t => t.Origin).ToDictionary(g => g.Key, g => g.ToArray());
+            var transS = S.Transitions.Union(S.States.SelectMany(q => eventsP.Select(e => new Transition(q, e, q)))).GroupBy(t => t.Origin).ToDictionary(g => g.Key, g => g.ToArray());
+
+            var pairs = MatchingPairs(P, S, transP, transS);
+
+            var E = transS.ToDictionary(k => k.Key, k => new HashSet<AbstractEvent>(k.Value.Select(t => t.Trigger)));
+            var D = transS.ToDictionary(k => k.Key, k => events.Where(e => k.Value.All(t => t.Trigger != e) && pairs[k.Key].Any(qp => transP[qp].Any(t => t.Trigger == e))).ToSet());
+            var M = transS.ToDictionary(k => k.Key, k => k.Key.IsMarked);
+            var T = pairs.ToDictionary(k => k.Key, k => k.Value.Any(qp => qp.IsMarked));
+
+            bool R(AbstractState q1, AbstractState q2) => !E[q1].Intersect(D[q2]).Any() && !E[q2].Intersect(D[q1]).Any() && (T[q1] != T[q2] || M[q1] == M[q2]);
+
+            var states = S.States.OrderBy(q => D[q].Count).ThenByDescending(q => E[q].Count).ToArray();
+            var stateIdx = Enumerable.Range(0, states.Length).ToDictionary(i => states[i], i => i);
+            var C = Enumerable.Range(0, states.Length).Select(i => new HashSet<int> { i }).ToArray();
+            var waitList = new HashSet<(int, int)>();
+            int cnode, it = 0;
+
+            bool CheckMergibility(int i, int j)
+            {
+                it++;
+                var Xp = waitList.Where(p => p.Item1 == i).Select(p => p.Item2)
+                    .Union(waitList.Where(p => p.Item2 == i).Select(p => p.Item1))
+                    .Aggregate((IEnumerable<int>)C[i], (acc, e) => acc.Union(C[e]));
+
+                foreach (var xp in Xp)
+                {
+                    var Xq = waitList.Where(p => p.Item1 == j).Select(p => p.Item2)
+                        .Union(waitList.Where(p => p.Item2 == j).Select(p => p.Item1))
+                        .Aggregate((IEnumerable<int>)C[j], (acc, e) => acc.Union(C[e]));
+
+                    foreach (var xq in Xq)
+                    {
+                        if (waitList.Contains((xp, xq)) || waitList.Contains((xq, xp))) continue;
+                        if (!R(states[xp], states[xq])) return false;
+                        waitList.Add((xp, xq));
+                        var evs = transS[states[xp]].Select(t => t.Trigger)
+                            .Intersect(transS[states[xq]].Select(t => t.Trigger));
+                        foreach (var ev in evs)
+                        {
+                            var xpd = stateIdx[transS[states[xp]].Single(t => t.Trigger == ev).Destination];
+                            var xqd = stateIdx[transS[states[xq]].Single(t => t.Trigger == ev).Destination];
+
+                            if (xpd == xqd || waitList.Contains((xqd, xpd)) || waitList.Contains((xpd, xqd))) continue;
+                            if (C[xpd].Min() < cnode || C[xqd].Min() < cnode) return false;
+                            if (!CheckMergibility(xpd, xqd)) return false;
+                        }
+                    }
+                }
+
+                return true;
+            }
+
+            for (int i = 0; i < states.Length; i++)
+            {
+                if (i > C[i].Min()) continue;
+                for (int j = i + 1; j < states.Length; j++)
+                {
+                    if (j > C[j].Min()) continue;
+                    waitList.Clear();
+                    cnode = i;
+                    const int stackSize = 10000000;
+                    var flag = false;
+                    var thread = new Thread(() => flag = CheckMergibility(i, j), stackSize);
+                    thread.Start();
+                    thread.Join();
+
+                    if (!flag) continue;
+
+                    foreach (var (x, y) in waitList)
+                    {
+                        var set = C[x];
+                        set.UnionWith(C[y]);
+
+                        foreach (var k in set) C[k] = set;
+                    }
+                }
+            }
+
+            var cover = C.Distinct().ToArray();
+            var snum = 0;
+            var cover2state = cover.OrderBy(x => x.Contains(stateIdx[S.InitialState]) ? 0 : 1).ToDictionary(set => set, set => new State($"{snum++}", set.Any(q => states[q].IsMarked) ? Marking.Marked : Marking.Unmarked));
+
+            var trans = transS.SelectMany(k => k.Value).Select(t => new Transition(cover2state[C[stateIdx[t.Origin]]], t.Trigger, cover2state[C[stateIdx[t.Destination]]])).Distinct().ToArray();
+
+            var Ecom = S.Events.Except(Ek).Where(e => trans.Any(t => t.Origin != t.Destination && t.Trigger == e)).ToArray();
+            var Eloc = Ek.Union(Ecom).ToSet();
+
+            trans = trans.Where(t => Eloc.Contains(t.Trigger)).ToArray();
+
+            var initial = cover2state[cover.Single(x => x.Contains(stateIdx[S.InitialState]))];
+
+            return (trans, initial);
+        }
+        private static Dictionary<AbstractState, AbstractState[]> MatchingPairs(DFA P, DFA S, Dictionary<AbstractState, Transition[]> transP, Dictionary<AbstractState, Transition[]> transS)
+        {
+            var visited = new HashSet<(AbstractState qp, AbstractState qs)>();
+            var front = new HashSet<(AbstractState, AbstractState)> { (P.InitialState, S.InitialState) };
+
+            while (front.Any())
+            {
+                visited.UnionWith(front);
+
+                var nextFront = new HashSet<(AbstractState, AbstractState)>();
+
+                foreach (var (qp, qs) in front)
+                {
+                    var events = transP[qp].Select(t => t.Trigger).Intersect(transS[qs].Select(t => t.Trigger)).ToArray();
+                    foreach (var ev in events)
+                    {
+                        var qpd = transP[qp].Single(t => t.Trigger == ev).Destination;
+                        var qsd = transS[qs].Single(t => t.Trigger == ev).Destination;
+                        var dest = (qpd, qsd);
+
+                        if (!visited.Contains(dest)) nextFront.Add(dest);
+                    }
+                }
+
+                front = nextFront;
+            }
+
+            return visited.GroupBy(p => p.qs).ToDictionary(g => g.Key, g => g.Select(p => p.qp).ToArray());
         }
     }
 }

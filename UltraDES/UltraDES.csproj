@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>8.0</LangVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>2.1.4.1</Version>
+    <Version>2.1.5</Version>
     <Authors>Developers of LACSED</Authors>
     <Company>LACSED | UFMG</Company>
     <Description>UltraDES is a library for modeling, analysis and control of Discrete Event Systems.</Description>
@@ -13,7 +13,7 @@
     <PackageIconUrl>http://lacsed.eng.ufmg.br/wp-content/uploads/2017/05/Logo_UltraDES_PNG_Internet-e1494353854950.png</PackageIconUrl>
     <PackageTags>linqpad-samples</PackageTags>
     <NeutralLanguage>en</NeutralLanguage>
-    <PackageReleaseNotes>- Included generation of color formatted GraphViz Dot Code for automata</PackageReleaseNotes>
+    <PackageReleaseNotes>- Included Supervisor Reduction and Localization (Experimental)</PackageReleaseNotes>
     <PackageLicenseFile>README.md</PackageLicenseFile>
     <AssemblyVersion>2.1.4.1</AssemblyVersion>
     <FileVersion>2.1.4.1</FileVersion>

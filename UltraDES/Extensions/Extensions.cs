@@ -40,5 +40,13 @@ namespace UltraDES
         /// <returns>An enumerator that allows foreach to be used to process only some in this collection.</returns>
         /// <remarks>Lucas Alves, 18/01/2016.</remarks>
         public static IEnumerable<Some<T>> OnlySome<T>(this IEnumerable<Option<T>> list) => list.OfType<Some<T>>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="list"></param>
+        /// <returns></returns>
+        public static HashSet<T> ToSet<T>(this IEnumerable<T> list) => new HashSet<T>(list);
     }
 }

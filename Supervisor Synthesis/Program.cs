@@ -220,7 +220,7 @@ namespace SupervisorSynthesis
 
         // Creates the plants and specifications of FMS problem. 
         // The automata are saved in 'plants' and 'specs'
-        private static void FMS(out List<DeterministicFiniteAutomaton> plants, out List<DeterministicFiniteAutomaton> specs)
+        private static void FMS(out List<DeterministicFiniteAutomaton> plants, out List<DeterministicFiniteAutomaton> specs, bool conflicting = false)
         {
             var s =
                 Enumerable.Range(0, 6)
@@ -421,13 +421,17 @@ namespace SupervisorSynthesis
                 s[0], "E4");
 
             plants = new[] { c1, c2, milling, lathe, robot, mm, c3, mp }.ToList();
-            specs = new[] { e1, e2, e3, e4, e5, e6, e7, e8 }.ToList();
+            specs = conflicting
+                ? new[] {e1, e2, e3, e4, e5, e6, e7, e8}.ToList()
+                : new[] {e1, e2, e3, e4, e5, e6, e7.ParallelCompositionWith(e8)}.ToList();
         }
         static void Main(string[] args)
         {
             ComputingMonolithicSupervisor();
 
             ComputingModularSupervisor();
+
+            ComputingModularReducedSupervisor();
 
             // this is used to prevent the program from closing immediately
             Console.ReadLine();
@@ -436,7 +440,7 @@ namespace SupervisorSynthesis
         private static void ComputingMonolithicSupervisor()
         {
             // Choose one option below
-            ClusterTool(6, out var plants, out var specs);
+            ClusterTool(4, out var plants, out var specs);
 
             Console.WriteLine("Monolithic Supervisor:");
             var timer = new Stopwatch(); // to measure time
@@ -454,13 +458,35 @@ namespace SupervisorSynthesis
         private static void ComputingModularSupervisor()
         {
             // Choose one option below
-            ITL(out var plants, out var specs);
+            FMS(out var plants, out var specs);
 
             Console.WriteLine("Modular Supervisor:");
             var timer = new Stopwatch(); // to measure time
             timer.Start();
             // computes the monolithic supervisor and stores the resulting automaton in 'sup'
             var sups = DeterministicFiniteAutomaton.LocalModularSupervisor(plants, specs);
+            timer.Stop();
+
+            foreach (var s in sups)
+            {
+                Console.WriteLine($"\tSupervisor: {s}");
+                Console.WriteLine($"\t-States: {s.Size}");
+                Console.WriteLine($"\t-Transitions: {s.Transitions.Count()}");
+            }
+            Console.WriteLine($"\tComputation Time: {timer.ElapsedMilliseconds / 1000.0}");
+
+        }
+
+        private static void ComputingModularReducedSupervisor()
+        {
+            // Choose one option below
+            FMS(out var plants, out var specs);
+
+            Console.WriteLine("Modular Reduced Supervisor:");
+            var timer = new Stopwatch(); // to measure time
+            timer.Start();
+            // computes the monolithic supervisor and stores the resulting automaton in 'sup'
+            var sups = DeterministicFiniteAutomaton.LocalModularReducedSupervisor(plants, specs);
             timer.Stop();
 
             foreach (var s in sups)
