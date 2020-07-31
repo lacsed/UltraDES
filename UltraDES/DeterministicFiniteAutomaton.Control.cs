@@ -725,7 +725,8 @@ namespace UltraDES
 
             bool CheckMergibility(int i, int j)
             {
-                it++;
+                if (it++ > maxIt) return false;
+
                 var Xp = waitList.Where(p => p.Item1 == i).Select(p => p.Item2)
                     .Union(waitList.Where(p => p.Item2 == i).Select(p => p.Item1))
                     .Aggregate((IEnumerable<int>)C[i], (acc, e) => acc.Union(C[e]));
