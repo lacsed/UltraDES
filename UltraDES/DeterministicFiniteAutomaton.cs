@@ -1674,6 +1674,7 @@ namespace UltraDES
         /// <param name="newName">The new name.</param>
         /// <param name="simplifyStatesName">if set to <c>true</c> [simplify states name].</param>
         /// <returns>Dictionary&lt;System.String, System.String&gt;.</returns>
+        [Obsolete("This method will soon be deprecated, use \"G = G.SimplifyStatesName();\" instead")]
         public Dictionary<string, string> simplifyName(string newName = null, bool simplifyStatesName = true)
         {
             Simplify();
@@ -1694,6 +1695,28 @@ namespace UltraDES
             return namesMap;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public DFA SimplifyStatesName() => SimplifyStatesName(out _);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="map"></param>
+        /// <returns></returns>
+        public DFA SimplifyStatesName(out Dictionary<AbstractState,AbstractState> map)
+        {
+            var states = States.ToArray();
+            var num = 0;
+            var dic = states.ToDictionary(q => q, q => (AbstractState)new State(Convert.ToString(num++, states.Length > 1000 ? 16 : 10), q.Marking));
+
+            var trans = Transitions.Select(t => new Transition(dic[t.Origin], t.Trigger, dic[t.Destination])).ToArray();
+            map = dic;
+
+            return new DeterministicFiniteAutomaton(trans, dic[InitialState], Name);
+        }
 
         /// <summary>
         /// Returns a <see cref="System.String" /> that represents this instance.

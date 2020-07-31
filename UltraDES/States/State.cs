@@ -8,6 +8,7 @@
 // ***********************************************************************
 
 using System;
+using System.Linq;
 
 namespace UltraDES
 {
@@ -89,7 +90,8 @@ namespace UltraDES
         /// <param name="s2">The s2.</param>
         /// <param name="allMarked">if set to <c>true</c> [all marked].</param>
         /// <returns>AbstractCompoundState.</returns>
-        public override AbstractCompoundState MergeWith(AbstractState s2, bool allMarked) => new CompoundState(new[] { this, s2 }, allMarked);
+        //public override AbstractCompoundState MergeWith(AbstractState s2, bool allMarked) => new CompoundState(new[] { this, s2 }, allMarked);
+        public override AbstractCompoundState MergeWith(AbstractState s2, bool allMarked) => new CompoundState(S.Concat(s2.S).ToArray(), allMarked);
 
 
         /// <summary>

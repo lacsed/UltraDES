@@ -889,6 +889,19 @@
             <param name="simplifyStatesName">if set to <c>true</c> [simplify states name].</param>
             <returns>Dictionary&lt;System.String, System.String&gt;.</returns>
         </member>
+        <member name="M:UltraDES.DeterministicFiniteAutomaton.SimplifyStatesName">
+            <summary>
+            
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:UltraDES.DeterministicFiniteAutomaton.SimplifyStatesName(System.Collections.Generic.Dictionary{UltraDES.AbstractState,UltraDES.AbstractState}@)">
+            <summary>
+            
+            </summary>
+            <param name="map"></param>
+            <returns></returns>
+        </member>
         <member name="M:UltraDES.DeterministicFiniteAutomaton.ToString">
             <summary>
             Returns a <see cref="T:System.String" /> that represents this instance.
