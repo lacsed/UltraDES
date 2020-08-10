@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 
 <head>
@@ -7,19 +7,23 @@
     <title>UltraDES App</title>
     <base href="/UltraDES/" />
 
-    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
-    <link href="css/all.css" rel="stylesheet"/>
-    <link href="css/app.css" rel="stylesheet"/>
+    <link href="css/bulma.min.css" rel="stylesheet" />
+    <link href="css/bulma-pageloader.min.css" rel="stylesheet" />
+    <link href="css/all.css" rel="stylesheet" />
 
     <script src="js/viz.js"></script>
+    <script src="js/util.js"></script>
     <script>
-        window.GraphViz = dot => Viz(dot)
+        window.GraphViz = dot => Viz(dot);
     </script>
 </head>
 
 <body>
-    <app>Loading...</app>
+    <app>
+        <div class="pageloader is-active" style="background: #287ef2"><span class="title">Loading</span></div>
+    </app>
     <script src="_framework/blazor.webassembly.js"></script>
+    <script>navigator.serviceWorker.register('service-worker.js');</script>
 </body>
 
 </html>
