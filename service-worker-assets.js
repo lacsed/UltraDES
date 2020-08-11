@@ -269,5 +269,5 @@
       "url": "_framework\/blazor.boot.json"
     }
   ],
-  "version": "iofUorpo"
-};
+  "version": "9ofUorpo"
+}
