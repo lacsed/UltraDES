@@ -23,7 +23,7 @@ async function onInstall(event) {
 }
 
 async function onActivate(event) {
-    console.info(`Service worker: Activate`);
+    console.info(`Service worker ${cacheName}: Activate`);
 
     // Delete unused caches
     const cacheKeys = await caches.keys();
@@ -46,4 +46,3 @@ async function onFetch(event) {
 
     return cachedResponse || fetch(event.request);
 }
-/* Manifest version: 8hMULamh */
