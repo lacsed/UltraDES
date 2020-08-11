@@ -293,5 +293,5 @@
       "url": "_framework\/blazor.boot.json"
     }
   ],
-  "version": "47DEQpj8"
+  "version": "iofUorpo"
 };
