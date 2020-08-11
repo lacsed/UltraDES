@@ -205,5 +205,5 @@
             "url": "_framework\/blazor.boot.json"
     }
   ],
-  "version": "2.0.0"
+  "version": "8hMULamh"
 };
