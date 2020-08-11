@@ -2,7 +2,7 @@
     const a = document.createElement("a");
     const file = new Blob([content], { type: "text/plain" });
     a.href = URL.createObjectURL(file);
-    a.download = filename.replace(/[^a-zA-Z0-9]/g, '_');
+    a.download = filename.replace(/[^a-zA-Z0-9\.]/g, '_');
     a.click();
 }
 
