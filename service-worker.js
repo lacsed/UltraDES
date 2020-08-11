@@ -9,7 +9,9 @@ self.addEventListener('fetch', event => event.respondWith(onFetch(event)));
 const cacheNamePrefix = 'offline-cache-';
 const cacheName = `${cacheNamePrefix}${self.assetsManifest.version}`;
 const offlineAssetsInclude = [/\.dll$/, /\.pdb$/, /\.wasm/, /\.html/, /\.js$/, /\.json$/, /\.css$/, /\.woff$/, /\.png$/, /\.jpe?g$/, /\.gif$/, /\.ico$/, /\.dat$/ ];
-const offlineAssetsExclude = [ /^service-worker\.js$/ ];
+const offlineAssetsExclude = [/^service-worker\.js$/];
+
+console.log('Cache Name: ' + cacheName);
 
 async function onInstall(event) {
     console.info('Service worker: Install');
@@ -23,7 +25,7 @@ async function onInstall(event) {
 }
 
 async function onActivate(event) {
-    console.info(`Service worker ${cacheName}: Activate`);
+    console.info('Service worker: Activate');
 
     // Delete unused caches
     const cacheKeys = await caches.keys();
@@ -46,3 +48,4 @@ async function onFetch(event) {
 
     return cachedResponse || fetch(event.request);
 }
+/* Manifest version: 2Oo03v4L */
