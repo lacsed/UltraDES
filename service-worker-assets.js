@@ -88,9 +88,6 @@
             "url": "webfonts\/fa-solid-900.woff2"
     },
     {
-            "url": "_framework\/_bin\/Blazored.LocalStorage.dll"
-    },
-    {
             "url": "_framework\/_bin\/Microsoft.AspNetCore.Components.dll"
     },
     {
@@ -205,5 +202,5 @@
             "url": "_framework\/blazor.boot.json"
     }
   ],
-  "version": "XJtg7+xC"
+  "version": "pDQapcVf"
 };
