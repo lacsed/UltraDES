@@ -114,3 +114,19 @@ var Gp = G1.ParallelCompositionWith(G2);
 
 For more examples on how to create more complex automata or how to use the methods, read the other projects. 
 
+## Research
+
+If you use UltraDES in your paper, please cite as:
+
+```
+@article{UltraDES2017,
+  title={UltraDES-A Library for Modeling, Analysis and Control of Discrete Event Systems},
+  author={Alves, Lucas V. R. and Martins, Lucas R. R. and Pena, Patrícia N.},
+  journal = {Proceedings of the 20th World Congress of the International Federation of Automatic Control},
+  volume={50},
+  number={1},
+  pages={5831--5836},
+  year={2017},
+  publisher={Elsevier}
+}
+ ```
