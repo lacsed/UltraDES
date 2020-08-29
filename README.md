@@ -116,7 +116,7 @@ For more examples on how to create more complex automata or how to use the metho
 
 ## Research
 
-If you use UltraDES in your paper, please cite as:
+If you use UltraDES in your paper, please cite using:
 
 ```
 @article{UltraDES2017,
