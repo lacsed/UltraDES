@@ -114,3 +114,20 @@ var Gp = G1.ParallelCompositionWith(G2);
 
 For more examples on how to create more complex automata or how to use the methods, read the other projects. 
 
+## [Python Wrapper](https://github.com/lacsed/UltraDES-Python)
+
+## [Try UltraDES Online](https://lacsed.github.io/UltraDES/)
+
+## Research
+
+If you use UltraDES in your paper, please cite using:
+
+```
+@article{UltraDES2017,
+  title={UltraDES-A Library for Modeling, Analysis and Control of Discrete Event Systems},
+  author={Alves, Lucas V. R. and Martins, Lucas R. R. and Pena, Patrícia N.},
+  journal = {Proceedings of the 20th World Congress of the International Federation of Automatic Control},
+  pages={5831--5836},
+  year={2017},
+}
+ ```
