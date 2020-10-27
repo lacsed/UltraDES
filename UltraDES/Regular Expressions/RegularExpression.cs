@@ -8,6 +8,8 @@
 
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace UltraDES
 {
@@ -21,7 +23,9 @@ namespace UltraDES
     [Serializable]
     public abstract class RegularExpression
     {
-        
+        protected static int stateNumber = 0;
+        private static object obj = new object();
+
         /// <summary>
         /// Gets the step simplify.
         /// </summary>
@@ -145,5 +149,31 @@ namespace UltraDES
         {
             return new Concatenation(a, b);
         }
+
+        public RegularExpression Kleene => new KleeneStar(this);
+
+        protected internal abstract (AbstractState initial, AbstractState final, IEnumerable<Transition> trans) AutomatonTransitions { get; }
+
+        public DeterministicFiniteAutomaton ToDFA
+        {
+            get
+            {
+                lock (obj)
+                {
+                    stateNumber = 0;
+                    var (initial, final, trans) = AutomatonTransitions;
+
+                    var finalm = final.ToMarked;
+                    if (initial == final) initial = finalm;
+
+                    trans = trans.Select(t => new Transition(t.Origin == final ? finalm : t.Origin, t.Trigger,
+                        t.Destination == final ? finalm : t.Destination)).ToArray();
+
+                    return new NondeterministicFiniteAutomaton(trans, initial, $"{ToString()}").Determinize;
+                }
+            }
+        }
+
+
     }
 }

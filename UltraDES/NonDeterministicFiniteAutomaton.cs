@@ -57,15 +57,83 @@ namespace UltraDES
         /// <value>The events.</value>
         public IEnumerable<AbstractEvent> Events => Transitions.Select(t => t.Trigger).Distinct();
 
+        /// <summary>
+        /// 
+        /// </summary>
+        public DeterministicFiniteAutomaton Determinize
+        {
+            get
+            {
+                var transitions = Transitions.ToList();
+                var initial = InitialState;
+                while (transitions.Any(t => t.Trigger == Symbol.Epsilon))
+                {
+                    var transition = transitions.First(t => t.Trigger == Symbol.Epsilon);
+                    var (o, _, d) = transition;
+
+                    transitions.Remove(transition);
+
+                    var merged = transition.Origin.MergeWith(transition.Destination, false);
+                    if (initial == o || initial == d) initial = merged;
+
+                    foreach (var t in transitions.Where(t => t.Origin == d).ToArray())
+                    {
+                        //transitions.Remove(t);
+                        transitions.Add((merged, t.Trigger, t.Destination));
+                    }
+                    foreach (var t in transitions.Where(t => t.Origin == o).ToArray())
+                    {
+                        transitions.Remove(t);
+                        transitions.Add((merged, t.Trigger, t.Destination));
+                    }
+                    foreach (var t in transitions.Where(t => t.Destination == o).ToArray())
+                    {
+                        transitions.Remove(t);
+                        transitions.Add((t.Origin, t.Trigger, merged));
+                    }
+
+
+                }
+
+                var trans = transitions.GroupBy(t => t.Origin).ToDictionary(g => g.Key, g => g.ToList());
+
+                var todo = new HashSet<HashSet<AbstractState>>(HashSet<AbstractState>.CreateSetComparer());
+                todo.Add(new HashSet<AbstractState>(new[] { initial }));
+
+                var done = new HashSet<HashSet<AbstractState>>(HashSet<AbstractState>.CreateSetComparer());
+
+                var nTrans = new List<(HashSet<AbstractState> o, AbstractEvent t, HashSet<AbstractState> d)>();
+
+                while (todo.Any())
+                {
+                    var P = todo.First();
+
+                    foreach (var e in Events.Except(new []{Epsilon.EpsilonEvent }))
+                    {
+                        var Pl = P.Where(q => trans.ContainsKey(q) && trans[q].Any(t => t.Trigger == e))
+                            .SelectMany(q => trans[q].Where(t => t.Trigger == e).Select(t => t.Destination)).ToSet();
+
+                        if (Pl.Count == 0) continue;
+
+                        nTrans.Add((P, e, Pl));
+                        if (!done.Contains(Pl)) todo.Add(Pl);
+                    }
+
+                    todo.Remove(P);
+                    done.Add(P);
+                }
+
+                var map = done.ToDictionary(P => P, P => P.Count > 1 ? P.Aggregate((q1, q2) => q1.MergeWith(q2, false)) : P.Single(), HashSet<AbstractState>.CreateSetComparer());
+
+                return new DeterministicFiniteAutomaton(nTrans.Select(t => new Transition(map[t.o], t.t, map[t.d])), initial, $"P({Name})");
+            }
+        }
 
         /// <summary>
         /// Returns a <see cref="System.String" /> that represents this instance.
         /// </summary>
         /// <returns>A <see cref="System.String" /> that represents this instance.</returns>
-        public override string ToString()
-        {
-            return Name;
-        }
+        public override string ToString() => Name;
 
         /// <summary>
         /// Converts to dotcode.
@@ -107,10 +175,7 @@ namespace UltraDES
         /// </summary>
         /// <param name="name">The name.</param>
         [Obsolete("This method will soon be deprecated. Use ShowAutomaton instead.")]
-        public void showAutomaton(string name = "")
-        {
-           ShowAutomaton(name);
-        }
+        public void showAutomaton(string name = "") => ShowAutomaton(name);
 
         /// <summary>
         /// Shows the automaton.

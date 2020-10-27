@@ -8,6 +8,8 @@
 
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace UltraDES
 {
@@ -105,5 +107,25 @@ namespace UltraDES
             return (union1._a == union2._a && union1._b == union2._b) ||
                    (union1._a == union2._b && union1._b == union2._a);
         }
+
+        protected internal override (AbstractState initial, AbstractState final, IEnumerable<Transition> trans) AutomatonTransitions
+        {
+            get
+            {
+                stateNumber++;
+                var initial = new State($"I_{stateNumber}");
+                var final = new State($"F_{stateNumber}");
+
+                var (initial1, final1, trans1) = _a.AutomatonTransitions;
+                var (initial2, final2, trans2) = _b.AutomatonTransitions;
+                return (initial, final,
+                    trans1.Union(trans2).Concat(new Transition[]
+                    {
+                        (initial, Epsilon.EpsilonEvent, initial1), (initial, Epsilon.EpsilonEvent, initial2),
+                        (final1, Epsilon.EpsilonEvent, final), (final2, Epsilon.EpsilonEvent, final)
+                    }));
+            }
+        }
+
     }
 }

@@ -8,6 +8,8 @@
 
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace UltraDES
 {
@@ -96,5 +98,15 @@ namespace UltraDES
             if (!(obj is KleeneStar)) return false;
             return _a == ((KleeneStar) obj)._a;
         }
+
+        protected internal override (AbstractState initial, AbstractState final, IEnumerable<Transition> trans) AutomatonTransitions
+        {
+            get
+            {
+                var (initial, final, trans) = _a.AutomatonTransitions;
+                return (initial, initial, trans.Append((final, Epsilon.EpsilonEvent, initial)));
+            }
+        }
+
     }
 }

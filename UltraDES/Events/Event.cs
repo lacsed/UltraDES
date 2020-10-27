@@ -7,6 +7,7 @@
 // Last Modified On : 04-20-2020
 
 using System;
+using System.Collections.Generic;
 
 namespace UltraDES
 {
@@ -32,8 +33,6 @@ namespace UltraDES
         /// <param name="alias">The alias.</param>
         /// <param name="controllability">The controllability.</param>
         /// <remarks>Lucas Alves, 11/01/2016.</remarks>
-        
-
         public Event(string alias, Controllability controllability)
         {
             Alias = alias;
@@ -41,16 +40,12 @@ namespace UltraDES
             _hashcode = Alias.GetHashCode();
         }
 
-        
         /// <summary>
         /// Gets the alias.
         /// </summary>
         /// <value>The alias.</value>
-        
-
         public string Alias { get; private set; }
 
-        
         /// <summary>
         /// Determines whether the specified object is equal to the current object.
         /// </summary>
@@ -58,7 +53,6 @@ namespace UltraDES
         /// <returns>true if the specified object  is equal to the current object; otherwise, false.</returns>
         /// <remarks>Lucas Alves, 15/01/2016.</remarks>
         
-
         public override bool Equals(object obj)
         {
             if (ReferenceEquals(this, obj)) return true;
@@ -71,30 +65,21 @@ namespace UltraDES
             return Alias == p.Alias && Controllability == p.Controllability;
         }
 
-        
         /// <summary>
         /// Serves as the default hash function.
         /// </summary>
         /// <returns>A hash code for the current object.</returns>
         /// <remarks>Lucas Alves, 15/01/2016.</remarks>
         
+        public override int GetHashCode() => _hashcode;
 
-        public override int GetHashCode()
-        {
-            return _hashcode;
-        }
-
-        
         /// <summary>
         /// Returns a string that represents the current object.
         /// </summary>
         /// <returns>A string that represents the current object.</returns>
         /// <remarks>Lucas Alves, 11/01/2016.</remarks>
-        
+        public override string ToString() => Alias;
 
-        public override string ToString()
-        {
-            return Alias;
-        }
+        public static implicit operator Event(int d) => new Event(d.ToString(), d % 2 == 0 ? Controllability.Uncontrollable : Controllability.Controllable);
     }
 }

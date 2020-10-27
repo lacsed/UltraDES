@@ -8,6 +8,8 @@
 
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace UltraDES
 {
@@ -90,12 +92,9 @@ namespace UltraDES
         /// <remarks>Lucas Alves, 15/01/2016.</remarks>
         
 
-        public override string ToString()
-        {
-            return string.Format("{0}.{1}", _a, _b);
-        }
+        public override string ToString() => $"{_a}.{_b}";
 
-        
+
         /// <summary>
         /// Determines whether the specified object is equal to the current object.
         /// </summary>
@@ -112,5 +111,16 @@ namespace UltraDES
 
             return concat1._a == concat2._a && concat1._b == concat2._b;
         }
+
+        protected internal override (AbstractState initial, AbstractState final, IEnumerable<Transition> trans) AutomatonTransitions
+        {
+            get
+            {
+                var (initial1, final1, trans1) = _a.AutomatonTransitions;
+                var (initial2, final2, trans2) = _b.AutomatonTransitions;
+                return (initial1, final2, trans1.Union(trans2).Append((final1, Epsilon.EpsilonEvent, initial2)));
+            }
+        }
+
     }
 }

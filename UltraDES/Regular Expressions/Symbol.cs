@@ -8,6 +8,7 @@
 
 
 using System;
+using System.Collections.Generic;
 
 namespace UltraDES
 {
@@ -78,5 +79,24 @@ namespace UltraDES
         
 
         public abstract override bool Equals(object obj);
+
+        public static implicit operator Symbol(char d) => new Event(d.ToString(), Controllability.Controllable);
+
+        protected internal override (AbstractState initial, AbstractState final, IEnumerable<Transition> trans) AutomatonTransitions
+        {
+            get
+            {
+                stateNumber++;
+                var initial = new State($"I_{stateNumber}");
+                var final = new State($"F_{stateNumber}");
+
+                var e = this is AbstractEvent ev
+                    ? ev
+                    : new Event(ToString(), Controllability.Controllable);
+
+                return (initial, final, new Transition[] {(initial, e, final)});
+            }
+        }
+
     }
 }

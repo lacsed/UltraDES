@@ -7,12 +7,11 @@ namespace DFAFunctionsAndProperties
 {
     class Program
     {
-        private static void FSM(out List<DeterministicFiniteAutomaton> plants,
-           out List<DeterministicFiniteAutomaton> specs)
+        private static void FSM(out List<DeterministicFiniteAutomaton> plants, out List<DeterministicFiniteAutomaton> specs)
         {
             var s = new List<State>(); // or State[] s = new State[6];
             for (var i = 0; i < 6; i++)
-                s.Add(i == 0 ? new State(i.ToString(), Marking.Marked) : new State(i.ToString(), Marking.Unmarked));
+                s.Add(i == 0 ? new State(i.ToString(), Marking.Marked) : new State(i.ToString()));
 
             // Creating Events (0 to 100)
             var e = new List<Event>(); // or Event[] e = new Event[100];
@@ -297,20 +296,19 @@ namespace DFAFunctionsAndProperties
             // Computes the supervisor using the global plant and specification
             var S = DeterministicFiniteAutomaton.MonolithicSupervisor(
                 new[] { Plant }, // global plant
-                new[] { Specification }, // global specification
-                true
+                new[] { Specification }
             );
 
             Console.WriteLine($"\tSupervisor: {S.Size} states");
 
             // Computes the supervisor using all plants and specifications.
-            S = DeterministicFiniteAutomaton.MonolithicSupervisor(plants, specs, true);
+            S = DeterministicFiniteAutomaton.MonolithicSupervisor(plants, specs);
             Console.WriteLine($"\tSupervisor (method 2): {S.Size} states");
 
             var proj = S.Projection(S.UncontrollableEvents);
             Console.WriteLine($"\tProjection: {proj.Size} states");
 
-            S.simplifyName("S");
+            S = S.SimplifyStatesName();
             Console.WriteLine("\tDisabled Events (first 5):");
             ShowDisablement(S, Plant, 5);
 
@@ -376,7 +374,8 @@ namespace DFAFunctionsAndProperties
             // If you wish view some automaton you can use:
             plants.ForEach(g => g.drawSVGFigure(null, false));
         }
-        static void Main(string[] args)
+
+        static void Main()
         {
             Properties();
             IteratingOverProperties();
