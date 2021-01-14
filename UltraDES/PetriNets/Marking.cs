@@ -43,6 +43,15 @@ namespace UltraDES.PetriNets
         /// Initializes a new instance of the <see cref="Marking"/> class.
         /// </summary>
         /// <param name="marking">The marking.</param>
+        public Marking(IEnumerable<KeyValuePair<Place,uint>> marking)
+        {
+            _dic = marking.ToDictionary(m => m.Key, m => (uint?)m.Value);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Marking"/> class.
+        /// </summary>
+        /// <param name="marking">The marking.</param>
         public Marking(IEnumerable<(Place place, uint? val)> marking)
         {
             _dic = marking.ToDictionary(m => m.place, m => m.val);
@@ -51,7 +60,7 @@ namespace UltraDES.PetriNets
         /// Initializes a new instance of the <see cref="Marking"/> class.
         /// </summary>
         /// <param name="dic">The dic.</param>
-        private Marking(Dictionary<Place, uint?> dic)
+        public Marking(Dictionary<Place, uint?> dic)
         {
             _dic = dic;
         }

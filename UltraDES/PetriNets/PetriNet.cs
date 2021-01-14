@@ -86,6 +86,13 @@ namespace UltraDES.PetriNets
             }
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PetriNet"/> class.
+        /// </summary>
+        /// <param name="arcs">The arcs.</param>
+        /// <param name="name">The name.</param>
+        public PetriNet(IEnumerable<Arc> arcs, string name) : this(arcs.Select(a => (a.N1, a.N2, a.Weight)), name) { }
+
         public PetriNet(IEnumerable<(Node x, Node y)> arcs, string name)
         {
             Name = name;

@@ -1920,6 +1920,11 @@
             </summary>
             <value>The events.</value>
         </member>
+        <member name="P:UltraDES.NondeterministicFiniteAutomaton.Determinize">
+            <summary>
+            
+            </summary>
+        </member>
         <member name="M:UltraDES.NondeterministicFiniteAutomaton.ToString">
             <summary>
             Returns a <see cref="T:System.String" /> that represents this instance.
@@ -1971,6 +1976,12 @@
             <value>The values.</value>
         </member>
         <member name="M:UltraDES.PetriNets.Marking.#ctor(System.Collections.Generic.IEnumerable{System.ValueTuple{UltraDES.PetriNets.Place,System.UInt32}})">
+            <summary>
+            Initializes a new instance of the <see cref="T:UltraDES.PetriNets.Marking"/> class.
+            </summary>
+            <param name="marking">The marking.</param>
+        </member>
+        <member name="M:UltraDES.PetriNets.Marking.#ctor(System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{UltraDES.PetriNets.Place,System.UInt32}})">
             <summary>
             Initializes a new instance of the <see cref="T:UltraDES.PetriNets.Marking"/> class.
             </summary>
@@ -2144,6 +2155,13 @@
             <param name="name">The name.</param>
         </member>
         <member name="M:UltraDES.PetriNets.PetriNet.#ctor(System.Collections.Generic.IEnumerable{System.ValueTuple{UltraDES.PetriNets.Node,UltraDES.PetriNets.Node,System.UInt32}},System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:UltraDES.PetriNets.PetriNet"/> class.
+            </summary>
+            <param name="arcs">The arcs.</param>
+            <param name="name">The name.</param>
+        </member>
+        <member name="M:UltraDES.PetriNets.PetriNet.#ctor(System.Collections.Generic.IEnumerable{UltraDES.PetriNets.Arc},System.String)">
             <summary>
             Initializes a new instance of the <see cref="T:UltraDES.PetriNets.PetriNet"/> class.
             </summary>
