@@ -18,11 +18,14 @@ jobs:
     steps:
       # uses GitHub's checkout action to checkout code form the master branch
       - uses: actions/checkout@v2
+        with:
+          repository: 'lacsed/UltraDES'
+          ref: 'ultrades-web'
       # sets up .NET Core SDK 3.1
       - name: Setup .NET Core SDK
         uses: aactions/setup-dotnet@v1.7.2
         with:
-          dotnet-version: 5
+          dotnet-version: 3.x
       # publishes Blazor project to the release-folder
       - name: Publish .NET Core Project
         run: dotnet publish UltraDESWeb.csproj -c Release -o release --nologo
