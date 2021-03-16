@@ -77,4 +77,4 @@ self.addEventListener('fetch', evt => {
     fromNetwork(evt.request, 10000).catch(() => fromCache(evt.request))
   );
   evt.waitUntil(update(evt.request));
-});/* Manifest version: 3GyXusUU */
+});/* Manifest version: f12Q2vF5 */
