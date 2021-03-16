@@ -2,9 +2,9 @@ name: UltraDES App
 
 on:
   push:
-    branches: [ ultrades-web ]
+    branches: [ 'ultrades-web' ]
   pull_request:
-    branches: [ ultrades-web ]
+    branches: [ 'ultrades-web' ]
 
 jobs:
   build:
