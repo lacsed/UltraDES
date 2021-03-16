@@ -3,7 +3,8 @@ name: Deploy to GitHub Pages
 # Run workflow on every push to the master branch
 on:
   push:
-    branches: [ ultrades-web ]
+    branches: 
+      - ultrades-web
 jobs:
   deploy-to-github-pages:
     # use ubuntu-latest image to run steps on
