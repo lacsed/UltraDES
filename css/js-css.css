@@ -1,0 +1,11 @@
+.content-button{
+    font-size: smaller;
+}
+
+#state-components{
+    display: none;
+}
+
+#event-components{
+    display: none;
+}

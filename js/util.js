@@ -25,5 +25,31 @@ async function readFile(name) {
     });
 }
 
+function downloadSVG(fileName, dot) {
+    const content = Viz(dot, { format: 'svg', engine: 'dot', scale: undefined, totalMemory: 1024 * 1024 * 1024, files: undefined, images: undefined });
+    const a = document.createElement('a');
+    const file = new Blob([content], { type: 'text/plain' });
+    a.href = URL.createObjectURL(file);
+    a.download = fileName;
+    a.click();
+}
+
+function downloadPNG(fileName, dot) {
+    const content = Viz(dot, { format: 'svg', engine: 'dot', scale: undefined, totalMemory: 1024 * 1024 * 1024, files: undefined, images: undefined });
+    Viz.svgXmlToPngImageElement(content, undefined, (err, img) => {
+        const source = img.src;
+        const a = document.createElement('a');
+        document.body.appendChild(a);
+
+        a.href = source;
+        a.target = '_self';
+        a.download = fileName;
+        a.click();
+    });
+}
+
 window.saveFile = saveFile;
 window.readFile = readFile;
+window.GraphViz = dot => Viz(dot);
+window.downloadPNG = downloadPNG;
+window.downloadSVG = downloadSVG;
