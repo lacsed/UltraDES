@@ -81,7 +81,7 @@
       "url": "img\/logo_lacsed.png"
     },
     {
-      "hash": "sha256-kDVXbnzlk838mwfMZCCDmlzdg2\/57xU9lYiwpIYOaKU=",
+      "hash": "sha256-v\/UFsVFzNC3d9okbmCrfHOgjQMtUtEngfp79hpjHUEs=",
       "url": "index.html"
     },
     {
@@ -433,5 +433,5 @@
       "url": "_framework\/blazor.webassembly.js"
     }
   ],
-  "version": "f12Q2vF5"
+  "version": "wWFnFnRV"
 };
