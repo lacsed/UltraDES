@@ -66,7 +66,6 @@ namespace UltraDESWeb
             var tw = new StringWriter();
             formatter.Serialize(tw, obj);
             var str = tw.ToString();
-            //Console.WriteLine(str);
             ls.SetItem(name, str);
         }
 
