@@ -10,7 +10,7 @@ using UltraDES;
 namespace UltraDESWeb
 {
     public static class Util
-    {
+    { 
         public static async void Alert(this IJSRuntime js, string msg) =>
             await js.InvokeVoidAsync("alert", msg);
 
