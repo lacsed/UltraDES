@@ -1,9 +1,7 @@
 name: UltraDES App
 
 on:
-  push:
-    branches: [ 'ultrades-web' ]
-  pull_request:
+  workflow_dispatch:
     branches: [ 'ultrades-web' ]
 
 jobs:
