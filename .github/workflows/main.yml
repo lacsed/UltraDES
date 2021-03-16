@@ -5,6 +5,12 @@ on:
   push:
     branches: 
       - ultrades-web
+  pull_request:
+    branches:
+      - ultrades-web
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    - cron:  '*/2 * * * *'
 jobs:
   deploy-to-github-pages:
     # use ubuntu-latest image to run steps on
