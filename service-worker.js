@@ -8,8 +8,10 @@ self.addEventListener('fetch', event => event.respondWith(onFetch(event)));
 
 const cacheNamePrefix = 'offline-cache-';
 const cacheName = `${cacheNamePrefix}${self.assetsManifest.version}`;
-const offlineAssetsInclude = [ /\.dll$/, /\.pdb$/, /\.wasm/, /\.html/, /\.js$/, /\.json$/, /\.css$/, /\.woff$/, /\.png$/, /\.jpe?g$/, /\.gif$/, /\.ico$/, /\.blat$/, /\.dat$/ ];
-const offlineAssetsExclude = [ /^service-worker\.js$/ ];
+const offlineAssetsInclude = [/\.dll$/, /\.pdb$/, /\.wasm/, /\.html/, /\.js$/, /\.json$/, /\.css$/, /\.woff$/, /\.png$/, /\.jpe?g$/, /\.gif$/, /\.ico$/, /\.dat$/ ];
+const offlineAssetsExclude = [/^service-worker\.js$/];
+
+console.log('Cache Name: ' + cacheName);
 
 async function onInstall(event) {
     console.info('Service worker: Install');
@@ -19,7 +21,9 @@ async function onInstall(event) {
         .filter(asset => offlineAssetsInclude.some(pattern => pattern.test(asset.url)))
         .filter(asset => !offlineAssetsExclude.some(pattern => pattern.test(asset.url)))
         .map(asset => new Request(asset.url));
-    await caches.open(cacheName).then(cache => cache.addAll(assetsRequests));
+        //.map(asset => new Request(asset.url, { integrity: asset.hash }));
+    const cache = await caches.open(cacheName);//.then(cache => cache.addAll(assetsRequests)).catch(err => console.log(err));
+    cache.addAll(assetsRequests);
 }
 
 async function onActivate(event) {
@@ -46,4 +50,4 @@ async function onFetch(event) {
 
     return cachedResponse || fetch(event.request);
 }
-/* Manifest version: yixrf5nI */
+/* Manifest version: pDQapcVf */
