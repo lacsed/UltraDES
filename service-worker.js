@@ -12,8 +12,6 @@ const offlineAssetsExclude = [ /^service-worker\.js$/ ];
 const CACHE_VERSION = 10;
 const CURRENT_CACHE = `main-${CACHE_VERSION}`;
 
-self.assetsManifest.assets = self.assetsManifest.assets.map(asset => {url: "UltraDES\/" + asset.url})
-
 // on activation we clean up the previously registered service workers
 self.addEventListener('activate', evt =>
   evt.waitUntil(
@@ -36,6 +34,7 @@ self.addEventListener('install', evt =>
         const assetsRequests = self.assetsManifest.assets
             .filter(asset => offlineAssetsInclude.some(pattern => pattern.test(asset.url)))
             .filter(asset => !offlineAssetsExclude.some(pattern => pattern.test(asset.url)))
+            .map(asset => {url: "UltraDES\/" + asset.url})
             .map(asset => new Request(asset.url));
         return cache.addAll(assetsRequests);
     })
