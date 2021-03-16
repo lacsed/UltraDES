@@ -1,0 +1,111 @@
+﻿@using UltraDES
+@inject IJSRuntime JsRuntime;
+
+@if (!computing)
+{
+    <div>
+        <article class="message is-dark">
+            <div class="message-header">
+                <span>Plants</span>
+            </div>
+            <div style="max-height: 250px; overflow: auto;" class="message-body">
+                @foreach (var g in plants)
+                {
+                    var key = g.Key;
+                    <div class="field">
+                        <label class="label">
+                            <input type="checkbox" @bind="plants[key]"> Automaton @key
+                        </label>
+                    </div>
+                }
+            </div>
+        </article>
+
+        <article class="message is-dark">
+            <div class="message-header">
+                <span>Specification</span>
+            </div>
+            <div style="max-height: 250px; overflow: auto;" class="message-body">
+                @foreach (var g in specs)
+                {
+                    var key = g.Key;
+                    <div class="field">
+                        <label class="label">
+                            <input type="checkbox" @bind="specs[key]"> Automaton @key
+                        </label>
+                    </div>
+                }
+            </div>
+        </article>
+
+        <div class="field">
+            <label class="label" for="op">Operation</label>
+            <div class="select">
+                <select id="op" @bind="@op">
+                    <option value=""></option>
+                    <option value="mon">Monolithic Supervisor</option>
+                    <option value="monred">Monolithic Reduced Supervisor</option>
+                    <option value="loc">Localized Supervisors</option>
+                    <option value="local">Local Modular Supervisors</option>
+                    <option value="localred">Local Modular Reduced Supervisors</option>
+                </select>
+            </div>
+        </div>
+        <div class="buttons">
+            <button class="button is-success" @onclick="Create">Create Supervisor</button>
+            <button class="button is-danger" @onclick="OnCancel">Cancel</button>
+        </div>
+    </div>
+}
+else
+{
+<div class="pageloader is-active" style="background: #287ef0"><span class="title">Computing</span></div>
+}
+
+@code {
+    [Parameter] public Action<IEnumerable<DeterministicFiniteAutomaton>> OnSuccess { get; set; }
+    [Parameter] public Action OnCancel { get; set; }
+    [Parameter] public Dictionary<string, DeterministicFiniteAutomaton> Automata { get; set; }
+
+    private Dictionary<string, bool> plants;
+    private Dictionary<string, bool> specs;
+    private string op = "";
+    private bool computing = false;
+
+    protected override void OnInitialized()
+    {
+        plants = Automata.ToDictionary(kvp => kvp.Key, kvp => false);
+        specs = Automata.ToDictionary(kvp => kvp.Key, kvp => false);
+    }
+
+    private async void Create()
+    {
+        var p = plants.Where(kvp => kvp.Value).Select(kvp => Automata[kvp.Key]).ToArray();
+        var e = specs.Where(kvp => kvp.Value).Select(kvp => Automata[kvp.Key]).ToArray();
+
+        try
+        {
+            computing = true;
+            await Task.Delay(1);
+            var S = op switch
+            {
+                "mon" => new[] {DeterministicFiniteAutomaton.MonolithicSupervisor(p, e)},
+                "monred" => new[] {DeterministicFiniteAutomaton.MonolithicReducedSupervisor(p, e, 1000)},
+                "loc" => DeterministicFiniteAutomaton.MonolithicLocalizedSupervisor(p, e, 1000),
+                "local" => DeterministicFiniteAutomaton.LocalModularSupervisor(p, e),
+                "localred" => DeterministicFiniteAutomaton.LocalModularReducedSupervisor(p, e, 1000),
+                _ => new DeterministicFiniteAutomaton[0]
+            };
+
+            OnSuccess(S);
+        }
+        catch (Exception ex)
+        {
+            computing = false;
+            await Task.Delay(1);
+            JsRuntime.Alert($"Error: {ex.Message}");
+            OnCancel();
+        }
+
+    }
+}

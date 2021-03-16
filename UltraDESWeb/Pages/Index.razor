@@ -1,0 +1,462 @@
+﻿@page "/"
+@using global::UltraDES
+@inject IJSRuntime JsRuntime;
+
+<nav class="navbar has-shadow has-background-light grid-header" role="navigation" aria-label="main navigation" style="align-items: stretch; display: flex;">
+    <div class="navbar-brand">
+        <a class="navbar-item" href="https://github.com/lacsed/UltraDES">
+            <img src="/UltraDES/img/logo.png" alt="UltraDES" width="112" height="50">
+        </a>
+    </div>
+    <div class="navbar-end" style="vertical-align: middle;">
+        <div class="dropdown is-hoverable is-hidden-mobile">
+            <button class="button" aria-haspopup="true" aria-controls="create">
+                <span>Create <i class="fas fa-angle-down"></i></span>
+            </button>
+            <div class="dropdown-menu" id="create" role="menu">
+                <div class="dropdown-content">
+                    <a @onclick="ev => page = Page.CreateState" class="is-mobile dropdown-item">Create State</a>
+                    <a @onclick="ev => page = Page.CreateEvent" class="is-mobile dropdown-item">Create Event</a>
+                    <a @onclick="ev => page = Page.CreateAutomaton" class="is-mobile dropdown-item">Create Automaton</a>
+                </div>
+            </div>
+        </div>
+        <div class="dropdown is-hoverable is-hidden-mobile">
+            <button class="button" aria-haspopup="true" aria-controls="operations">
+                <span>Operations <i class="fas fa-angle-down"></i></span>
+            </button>
+            <div class="dropdown-menu" id="operations" role="menu">
+                <div class="dropdown-content">
+                    <a @onclick="ev => page = Page.CreateAutomaton" class="is-mobile dropdown-item">Create Automaton</a>
+                    <a @onclick="ev => page = Page.UnaryOperations" class="is-mobile dropdown-item">Apply Unary Operation</a>
+                    <a @onclick="ev => page = Page.BinaryOperations" class="is-mobile dropdown-item">Apply Binary Operation</a>
+                    <a @onclick="ev => page = Page.CreateSupervisor" class="is-mobile dropdown-item">Supervisor Synthesis</a>
+                    <hr class="dropdown-divider">
+                    <label class="is-mobile dropdown-item"><input type="file" style="display: none" id="loadjson" @onchange="@(() => LoadJsonAutomaton("loadjson"))"><a>Upload Json Automata</a></label>
+                    <label class="is-mobile dropdown-item"><input type="file" style="display: none" id="loadwmod" @onchange="@(() => LoadWmodAutomaton("loadwmod"))"><a>Upload Wmod Automata</a></label>
+                    <label class="is-mobile dropdown-item"><input type="file" style="display: none" id="loadads" @onchange="@(() => LoadAdsAutomaton("loadads"))"><a>Upload Ads Automaton</a></label>
+                    <label class="is-mobile dropdown-item"><input type="file" style="display: none" id="loadxml" @onchange="@(() => LoadXmlAutomaton("loadxml"))"><a>Upload XML Automaton</a></label>
+                </div>
+            </div>
+        </div>
+        <div class="dropdown is-hoverable is-hidden-mobile">
+            <button class="button" aria-haspopup="true" aria-controls="examples">
+                <span>Examples <i class="fas fa-angle-down"></i></span>
+            </button>
+            <div class="dropdown-menu" id="examples" role="menu">
+                <div class="dropdown-content">
+                    <a @onclick="LoadSmallFactory" class="is-mobile dropdown-item">Small Factory</a>
+                    <a @onclick="LoadFlexibleManufacturingSystem" class="is-mobile dropdown-item">FMS</a>
+                </div>
+            </div>
+        </div>
+        <div class="dropdown is-hoverable is-hidden-tablet">
+            <button class="button" aria-haspopup="true" aria-controls="mobile">
+                <span>Options <i class="fas fa-angle-down"></i></span>
+            </button>
+            <div class="dropdown-menu" id="mobile" role="menu">
+                <div class="dropdown-content">
+                    <p class="menu-label dropdown-item">Create</p>
+                    <a @onclick="ev => page = Page.CreateState" class="is-mobile dropdown-item">Create State</a>
+                    <a @onclick="ev => page = Page.CreateEvent" class="is-mobile dropdown-item">Create Event</a>
+                    <a @onclick="ev => page = Page.CreateAutomaton" class="is-mobile dropdown-item">Create Automaton</a>
+                    <hr class="dropdown-divider">
+                    <p class="menu-label dropdown-item">Operations</p>
+                    <a @onclick="ev => page = Page.CreateAutomaton" class="is-mobile dropdown-item">Create Automaton</a>
+                    <a @onclick="ev => page = Page.UnaryOperations" class="is-mobile dropdown-item">Apply Unary Operation</a>
+                    <a @onclick="ev => page = Page.BinaryOperations" class="is-mobile dropdown-item">Apply Binary Operation</a>
+                    <a @onclick="ev => page = Page.CreateSupervisor" class="is-mobile dropdown-item">Supervisor Synthesis</a>
+                    <hr class="dropdown-divider">
+                    <p class="menu-label dropdown-item">Import</p>
+                    <label class="is-mobile dropdown-item"><input type="file" style="display: none" id="loadjson_m" @onchange="@(() => LoadJsonAutomaton("loadjson_m"))"><a>Upload Json Automata</a></label>
+                    <label class="is-mobile dropdown-item"><input type="file" style="display: none" id="loadwmod_m" @onchange="@(() => LoadWmodAutomaton("loadwmod_m"))"><a>Upload Wmod Automata</a></label>
+                    <label class="is-mobile dropdown-item"><input type="file" style="display: none" id="loadads_m" @onchange="@(() => LoadAdsAutomaton("loadads_m"))"><a>Upload Ads Automaton</a></label>
+                    <label class="is-mobile dropdown-item"><input type="file" style="display: none" id="loadxml_m" @onchange="@(() => LoadXmlAutomaton("loadxml_m"))"><a>Upload XML Automaton</a></label>
+                    <hr class="dropdown-divider">
+                    <p class="menu-label dropdown-item">Examples</p>
+                    <a @onclick="LoadSmallFactory" class="is-mobile dropdown-item">Small Factory</a>
+                    <a @onclick="LoadFlexibleManufacturingSystem" class="is-mobile dropdown-item">FMS</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<main class="grid-content">
+    <div class="section" style="width: 300px; height: 100%; background-color: whitesmoke">
+        <p class="menu-label">States (<a class="content-button" @onclick="() => ShowStates = !ShowStates">@((ShowStates) ? "- Hide": "+ Show")</a>)</p>
+        <ul class="menu-list">
+            @if (ShowStates)
+            {
+                @foreach (var q in states)
+                {
+                    <li class="level is-mobile">
+                        <div class="level-left">State @q.Key</div>
+                        <div class="level-right">
+                            @if (q.Value.IsMarked)
+                            {
+                                <span class="icon" title="Marked">
+                                    <span class="fa-stack" style="font-size: 0.5em;">
+                                        <i class="far fa-circle fa-stack-2x has-text-black" style="vertical-align: middle;"></i>
+                                        <i class="far fa-circle fa-stack-1x has-text-black" style="vertical-align: middle;"></i>
+                                    </span>
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="icon" title="Unmarked">
+                                    <i class="far fa-circle has-text-black"></i>
+                                </span>
+                            }
+                            <a @onclick="() => RemoveState(q.Key)" title="Delete" class="px-2" style="all: unset"><i class="fas fa-trash has-text-danger"></i></a>
+                        </div>
+
+                    </li>
+                }
+            }
+        </ul>
+
+        <p class="menu-label">Events (<a class="content-button" @onclick="() => ShowEvents = !ShowEvents">@((ShowEvents) ? "- Hide": "+ Show")</a>)</p>
+        <ul class="menu-list">
+
+            @if (ShowEvents)
+            {
+                @foreach (var e in events)
+                {
+                    <li class="level is-mobile">
+                        <div class="level-left">Event @e.Key</div>
+                        <div class="level-right" id="createdAutomatons">
+                            @if (!e.Value.IsControllable)
+                            {
+                                <span class="icon" title="Uncontrollable">
+                                    <i class="fas fa-long-arrow-alt-right has-text-black"></i>
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="icon" title="Controllable">
+                                    <span class="fa-stack" style="font-size: 0.5em;">
+                                        <i class="fas fa-long-arrow-alt-right fa-stack-2x has-text-black" style="vertical-align: middle;"></i>
+                                        <i class="fas fa-plus fa-stack-1x has-text-black"></i>
+                                    </span>
+                                </span>
+                            }
+                            <a @onclick="() => RemoveEvent(e.Key)" title="Delete" class="px-2" style="all: unset"><i class="fas fa-trash has-text-danger"></i></a>
+                        </div>
+                    </li>
+                }
+            }
+
+        </ul>
+
+
+        <p class="menu-label">Automata (<a class="content-button" @onclick="() => ShowAutomata = !ShowAutomata">@((ShowAutomata) ? "- Hide": "+ Show")</a>)</p>
+        <ul class="menu-list">
+            @if (ShowAutomata)
+            {
+                @foreach (var G in automata)
+                {
+                    <li class="level is-mobile">
+
+                        <div class="dropdown is-hoverable" style="width: 100%">
+                            <div aria-haspopup="true" aria-controls="@(G.Key)" style="width: 100%">
+                                <div class="level is-mobile">
+                                    <div class="level-left" title="@(G.Key)"><span>Aut. @(G.Key.MaxLength(20))</span></div>
+                                    <div class="level-right"><span><i class="fas fa-angle-down"></i></span></div>
+                                </div>
+                            </div>
+
+                            <div class="dropdown-menu" id="@(G.Key)">
+                                <div class="dropdown-content">
+                                    <a @onclick="() => SummaryAutomaton(G.Value)">
+                                        <div class="level is-mobile">
+                                            <div class="level-left"><span>Summary</span></div>
+                                            <div class="level-right"><span><i class="fas fa-list has-text-black"></i></span></div>
+                                        </div>
+                                    </a>
+                                    <a @onclick="() => ShowAutomaton(G.Value)">
+                                        <div class="level is-mobile">
+                                            <div class="level-left"><span>Show</span></div>
+                                            <div class="level-right"><span><i class="fas fa-project-diagram has-text-info"></i></span></div>
+                                        </div>
+                                    </a>
+                                    <a @onclick="() => SaveAutomaton(G.Value)">
+                                        <div class="level is-mobile">
+                                            <div class="level-left"><span>Download</span></div>
+                                            <div class="level-right"><span><i class="fas fa-save has-text-info"></i></span></div>
+                                        </div>
+                                    </a>
+                                    <a @onclick="() => RemoveAutomaton(G.Key)">
+                                        <div class="level is-mobile">
+                                            <div class="level-left"><span>Delete</span></div>
+                                            <div class="level-right"><span><i class="fas fa-trash has-text-danger"></i></span></div>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                }
+            }
+        </ul>
+    </div>
+
+    <div class="container">
+        @switch (page)
+        {
+            case Page.CreateState:
+                <Modal Title="Create a State" OnClose="@Clear"><CreateState OnSuccess="q => AddState(q)" OnCancel="@Clear"></CreateState></Modal>
+                break;
+            case Page.CreateEvent:
+                <Modal Title="Create an Event" OnClose="@Clear"><CreateEvent OnSuccess="e => AddEvent(e)" OnCancel="@Clear"></CreateEvent></Modal>
+                break;
+            case Page.CreateAutomaton:
+                <Modal Title="Create an Automaton" OnClose="@Clear"><CreateAutomaton OnSuccess="G => AddAutomaton(new[]{G})" OnCancel="@Clear" Events="events" States="states"></CreateAutomaton></Modal>
+                break;
+            case Page.ShowAutomaton:
+                <Modal Title="@automaton.Name" OnClose="@Clear">
+                    <GraphViz DotCode="@automaton.ToDotCode" OnCancel="@Clear"></GraphViz>
+                </Modal>
+                break;
+            case Page.AutomatonSummary:
+                <Modal Title="@automaton.Name" OnClose="@Clear"><AutomatonSummary Automaton="@automaton" OnCancel="@Clear"></AutomatonSummary></Modal>
+                break;
+            case Page.CreateSupervisor:
+                <Modal Title="Create a Supervisor" OnClose="@Clear"><CreateSupervisor Automata="automata" OnSuccess="S => AddAutomaton(S) " OnCancel="@Clear"></CreateSupervisor></Modal>
+                break;
+            case Page.BinaryOperations:
+                <Modal Title="Apply a Binary Operation" OnClose="@Clear"><ApplyBinaryOperation Automata="automata" OnSuccess="G => AddAutomaton(new[]{G}) " OnCancel="@Clear"></ApplyBinaryOperation></Modal>
+                break;
+            case Page.UnaryOperations:
+                <Modal Title="Apply an unary Operation" OnClose="@Clear"><ApplyUnaryOperation Automata="automata" OnSuccess="G => AddAutomaton(new[]{G}) " OnCancel="@Clear"></ApplyUnaryOperation></Modal>
+                break;
+            case Page.Empty:
+            default:
+                break;
+        }
+    </div>
+</main>
+
+<footer class="footer has-text-centered">
+    <div style="display: inline-block;">
+        <div style="float: left;"><p><strong>UltraDES</strong> by </p></div>
+        <div style="float: left;"><a href="https://lacsed.eng.ufmg.br"><img src="/UltraDES/img/logo_lacsed.png" alt="LACSED" width="90" height="40"></a></div>
+        <div style="float: right;"><p> | <a href="https://www.ufmg.br">UFMG</a>.</p></div>
+    </div>
+</footer>
+
+@code
+{
+    enum Page
+    {
+        Empty,
+        CreateState,
+        CreateEvent,
+        CreateAutomaton,
+        ShowAutomaton,
+        AutomatonSummary,
+        CreateSupervisor,
+        BinaryOperations,
+        UnaryOperations
+    }
+
+    private readonly Dictionary<string, AbstractState> states = new Dictionary<string, AbstractState>();
+    private readonly Dictionary<string, AbstractEvent> events = new Dictionary<string, AbstractEvent>();
+    private readonly Dictionary<string, DeterministicFiniteAutomaton> automata = new Dictionary<string, DeterministicFiniteAutomaton>();
+    private Page page = Page.Empty;
+    private DeterministicFiniteAutomaton automaton = null;
+    private bool ShowStates = false;
+    private bool ShowEvents = false;
+    private bool ShowAutomata = false;
+    private void Clear()
+    {
+        page = Page.Empty;
+        StateHasChanged();
+    }
+
+    private void AddState(AbstractState q)
+    {
+        page = Page.Empty;
+
+        Console.WriteLine(q);
+        if (!states.ContainsKey(q.ToString()))
+            states.Add(q.ToString(), q);
+
+        StateHasChanged();
+    }
+
+    private async void RemoveState(string state)
+    {
+        if (!await JsRuntime.Confirm($"Delete State {state}?")) return;
+        states.Remove(state);
+
+        StateHasChanged();
+    }
+
+    private void AddEvent(AbstractEvent e)
+    {
+        page = Page.Empty;
+
+        Console.WriteLine(e);
+        if (!events.ContainsKey(e.ToString())) events.Add(e.ToString(), e);
+
+        StateHasChanged();
+    }
+
+    private async void RemoveEvent(string ev)
+    {
+        if (!await JsRuntime.Confirm($"Delete Event {ev}?")) return;
+        events.Remove(ev);
+        StateHasChanged();
+    }
+
+    private void AddAutomaton(IEnumerable<DeterministicFiniteAutomaton> aut)
+    {
+        page = Page.Empty;
+        foreach (var G in aut)
+            if (!automata.ContainsKey(G.Name)) automata.Add(G.Name, G);
+        StateHasChanged();
+    }
+
+    private async void RemoveAutomaton(string aut)
+    {
+        if (!await JsRuntime.Confirm($"Delete Automaton {aut}?")) return;
+        automata.Remove(aut);
+        StateHasChanged();
+    }
+
+    private void ShowAutomaton(DeterministicFiniteAutomaton G)
+    {
+        page = Page.Empty;
+        StateHasChanged();
+        page = Page.ShowAutomaton;
+        automaton = G;
+        StateHasChanged();
+    }
+
+    private void SummaryAutomaton(DeterministicFiniteAutomaton G)
+    {
+        page = Page.Empty;
+        StateHasChanged();
+        page = Page.AutomatonSummary;
+        automaton = G;
+        StateHasChanged();
+    }
+
+    private void SaveAutomaton(DeterministicFiniteAutomaton G)
+    {
+        JsRuntime.SaveFile($"{G.Name}.json", DeterministicFiniteAutomaton.ToJsonString(G));
+    }
+
+    private async void LoadJsonAutomaton(string name)
+    {
+        var json = await JsRuntime.ReadFile(name);
+        var aut = DeterministicFiniteAutomaton.FromJsonString(json);
+        AddAutomaton(aut);
+        StateHasChanged();
+    }
+
+    private async void LoadWmodAutomaton(string name)
+    {
+        var wmod = await JsRuntime.ReadFile(name);
+        DeterministicFiniteAutomaton.FromWmodString(wmod, out var p, out var e);
+        AddAutomaton(p);
+        AddAutomaton(e);
+        StateHasChanged();
+    }
+
+    private async void LoadAdsAutomaton(string name)
+    {
+        var ads = await JsRuntime.ReadFile(name);
+        var aut = DeterministicFiniteAutomaton.FromAdsString(ads);
+        AddAutomaton(new []{aut});
+        StateHasChanged();
+    }
+
+    private async void LoadXmlAutomaton(string name)
+    {
+        var xml = await JsRuntime.ReadFile(name);
+        var aut = DeterministicFiniteAutomaton.FromXMLString(xml);
+        AddAutomaton(new[] { aut });
+        StateHasChanged();
+    }
+
+    private void LoadSmallFactory()
+    {
+        states.TryAdd("q0", new State("q0", Marking.Marked));
+        states.TryAdd("q1", new State("q1", Marking.Unmarked));
+
+        events.TryAdd("a1", new Event("a1", Controllability.Controllable));
+        events.TryAdd("a2", new Event("a2", Controllability.Controllable));
+        events.TryAdd("b1", new Event("b1", Controllability.Uncontrollable));
+        events.TryAdd("b2", new Event("b2", Controllability.Uncontrollable));
+
+        automata.TryAdd("M1", new DeterministicFiniteAutomaton(new[] { (states["q0"], events["a1"], states["q1"]), (states["q1"], events["b1"], states["q0"]), }, states["q0"], "M1"));
+        automata.TryAdd("M2", new DeterministicFiniteAutomaton(new[] { (states["q0"], events["a2"], states["q1"]), (states["q1"], events["b2"], states["q0"]), }, states["q0"], "M2"));
+        automata.TryAdd("E", new DeterministicFiniteAutomaton(new[] { (states["q0"], events["b1"], states["q1"]), (states["q1"], events["a2"], states["q0"]), }, states["q0"], "E"));
+
+    }
+
+    private void LoadFlexibleManufacturingSystem()
+    {
+        var e = new[] { 11, 12, 21, 22, 41, 42, 51, 52, 53, 54, 31, 32, 33, 34, 35, 36, 37, 38, 39, 30, 61, 63, 65, 64, 66, 71, 72, 73, 74, 81, 82 }.ToDictionary(alias => alias, alias => (AbstractEvent)new Event($"{alias}", alias % 2 == 0 ? Controllability.Uncontrollable : Controllability.Controllable));
+
+        var s = Enumerable.Range(0, 6).ToDictionary(i => i, i => new State($"{i}", i == 0 ? Marking.Marked : Marking.Unmarked));
+
+        // C1
+        var c1 = new DeterministicFiniteAutomaton(new Transition[] { (s[0], e[11], s[1]), (s[1], e[12], s[0]) }, s[0], "C1");
+
+        // C2
+        var c2 = new DeterministicFiniteAutomaton(new Transition[] { (s[0], e[21], s[1]), (s[1], e[22], s[0]) }, s[0], "C2");
+
+        // Lathe
+        var lathe = new DeterministicFiniteAutomaton(new Transition[] { (s[0], e[41], s[1]), (s[1], e[42], s[0]) }, s[0], "Lathe");
+
+        // Paint Device
+        var pd = new DeterministicFiniteAutomaton(new Transition[] { (s[0], e[81], s[1]), (s[1], e[82], s[0]) }, s[0], "PD");
+
+        // Mill
+        var mill = new DeterministicFiniteAutomaton(new Transition[] { (s[0], e[51], s[1]), (s[1], e[52], s[0]), (s[0], e[53], s[2]), (s[2], e[54], s[0]) }, s[0], "Mill");
+
+        // C3
+        var c3 = new DeterministicFiniteAutomaton(new Transition[] { (s[0], e[71], s[1]), (s[1], e[72], s[0]), (s[0], e[73], s[2]), (s[2], e[74], s[0]) }, s[0], "C3");
+
+        // Robot
+        var robot = new DeterministicFiniteAutomaton(new Transition[] { (s[0], e[31], s[1]), (s[1], e[32], s[0]), (s[0], e[33], s[2]), (s[2], e[34], s[0]), (s[0], e[35], s[3]), (s[3], e[36], s[0]), (s[0], e[37], s[4]), (s[4], e[38], s[0]), (s[0], e[39], s[5]), (s[5], e[30], s[0]) }, s[0], "Robot");
+
+        // Assembly Machine
+        var am = new DeterministicFiniteAutomaton(new Transition[] { (s[0], e[61], s[1]), (s[1], e[63], s[2]), (s[1], e[65], s[3]), (s[2], e[64], s[0]), (s[3], e[66], s[0]) }, s[0], "AM");
+
+        // E1
+        var e1 = new DeterministicFiniteAutomaton(new Transition[] { (s[0], e[12], s[1]), (s[1], e[31], s[0]) }, s[0], "E1");
+
+        // E2
+        var e2 = new DeterministicFiniteAutomaton(new Transition[] { (s[0], e[22], s[1]), (s[1], e[33], s[0]) }, s[0], "E2");
+
+        // E5
+        var e5 = new DeterministicFiniteAutomaton(new Transition[] { (s[0], e[36], s[1]), (s[1], e[61], s[0]) }, s[0], "E5");
+
+        // E6
+        var e6 = new DeterministicFiniteAutomaton(new Transition[] { (s[0], e[38], s[1]), (s[1], e[63], s[0]) }, s[0], "E6");
+
+        // E3
+        var e3 = new DeterministicFiniteAutomaton(new Transition[] { (s[0], e[32], s[1]), (s[1], e[41], s[0]), (s[0], e[42], s[2]), (s[2], e[35], s[0]) }, s[0], "E3");
+
+        // E7
+        var e7 = new DeterministicFiniteAutomaton(new Transition[] { (s[0], e[30], s[1]), (s[1], e[71], s[0]), (s[0], e[74], s[2]), (s[2], e[65], s[0]) }, s[0], "E7");
+
+        // E8
+        var e8 = new DeterministicFiniteAutomaton(new Transition[] { (s[0], e[72], s[1]), (s[1], e[81], s[0]), (s[0], e[82], s[2]), (s[2], e[73], s[0]) }, s[0], "E8");
+
+        // E4
+        var e4 = new DeterministicFiniteAutomaton(new Transition[] { (s[0], e[34], s[1]), (s[1], e[51], s[0]), (s[1], e[53], s[0]), (s[0], e[52], s[2]), (s[2], e[37], s[0]), (s[0], e[54], s[3]), (s[3], e[39], s[0]) }, s[0], "E4");
+
+        var aut = new[] { c1, c2, lathe, mill, robot, am, c3, pd, e1, e2, e3, e4, e5, e6, e7, e8 };
+
+        foreach (var g in aut) if (!automata.TryAdd(g.Name, g)) automata[g.Name] = g;
+        foreach (var ev in e.Values.Where(ev => !events.TryAdd(ev.ToString(), ev))) events[ev.ToString()] = ev;
+
+    }
+
+
+}

@@ -1,0 +1,104 @@
+﻿@using UltraDES
+
+<div>
+    <article class="message is-dark">
+        <div class="message-header">
+            <span>States</span>
+        </div>
+        <div style="padding-right: 5%; overflow: auto;" class="message-body">
+            Total States: @Automaton.States.Count()  <br />
+            Marked States: @Automaton.States.Where(ev => ev.IsMarked).Count()
+        </div>
+        <br />
+        <button class = "button is-dark" style = @onclick = "() => ShowStates = !ShowStates">
+            @((ShowStates ? " Hide States": "Show States"))
+        </button>
+        @if(ShowStates)
+        {
+            <div class="notification">
+                Initial State: @Automaton.InitialState.ToString()
+            </div>
+            <div style="max-height: 200px; overflow: auto;" class="message-body">
+                @foreach (var q in Automaton.States)
+                {
+                    <p>@q.ToString()</p>
+                }
+            </div>
+        }
+    </article>  
+
+
+    <article class="message is-dark">
+        <div class="message-header">
+            <span>Events</span>
+        </div>
+         <div style="padding-right: 5%; overflow: auto;" class="message-body">            
+            Total Events: @Automaton.Events.Count() <br />
+            Controllable Events: @Automaton.Events.Where(ev => ev.IsControllable).Count()
+        </div>
+        <br />
+        <button class = "button is-dark" @onclick = "() => ShowEvents = !ShowEvents">
+            @((ShowEvents ? " Hide Events": "Show Events"))
+        </button>
+        @if(ShowEvents)
+        {
+            <div style="max-height: 200px; overflow: auto;" class="message-body">
+                @foreach (var e in Automaton.Events)
+                {
+                    <p>@e.ToString()</p>
+                }
+            </div>
+        }
+    </article>
+
+    <article class="message is-dark">
+         <div class="message-header">
+            <span>Transitions</span>
+        </div>
+         <div style="padding-right: 5%; overflow: auto;" class="message-body">            
+            Total Transitions: @Automaton.Transitions.Count()  <br />
+            Controllable Transitions: @Automaton.Transitions.Where(ev => ev.IsControllableTransition).Count()
+        </div>
+        <br />
+        <button class="button is-dark" @onclick = "() => ShowTransitions = !ShowTransitions">
+            @((ShowTransitions ? " Hide Transitions": "Show Transitions"))
+        </button>
+        @if(ShowTransitions)
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Origin State</th>
+                        <th>Event</th>
+                        <th>Destination State</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var (o, e, d) in Automaton.Transitions)
+                    {
+                        <tr>
+                            <th>@o.ToString()</th>
+                            <th>@e.ToString()</th>
+                            <th>@d.ToString()</th>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </article>
+    <article class="message is-dark">
+        <div class="message-header">
+            <span>Dot Code</span>
+        </div>
+        <div style="max-height: 200px; overflow: auto;" class="message-body">
+            @Automaton.ToDotCode
+        </div>
+    </article>
+
+    </div>
+
+    @code {
+        private bool ShowStates, ShowEvents, ShowTransitions = false;
+        [Parameter] public Action OnCancel { get; set; }
+        [Parameter] public DeterministicFiniteAutomaton Automaton { get; set; }
+    }

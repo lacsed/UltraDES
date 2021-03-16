@@ -1,0 +1,101 @@
+﻿@using global::UltraDES
+
+<div>
+    <div class="field is-horizontal">
+        <label class="field-label" for="trans">Transitions</label>
+        <div class="field-body is-grouped">
+            <input type="range" min="1" max="25" style="width: 80%" id="trans" @bind="transitionsNum">
+            <input type="number" class="input" style="width: 20%" id="trans" @bind="transitionsNum">
+        </div>
+    </div>
+    @for (var l = 0; l < transitionsNum; l++)
+    {
+        var i = l;
+<div class="field has-addons-centered">
+    <div class="select">
+        <select class="form-control" id="origin" @bind="@transitions[i, 0]">
+            <option value=""></option>
+            @foreach (var q in States)
+            {
+                <option value="@q.Key"> @q.Key </option>
+            }
+        </select>
+    </div>
+    <div class="select">
+        <select id="trigger" @bind="@transitions[i, 1]">
+            <option value=""></option>
+            @foreach (var e in Events)
+            {
+                <option value="@e.Key"> @e.Key </option>
+            }
+        </select>
+    </div>
+    <div class="select">
+        <select id="destination" @bind="@transitions[i, 2]">
+            <option value=""></option>
+            @foreach (var q in States)
+            {
+                <option value="@q.Key"> @q.Key </option>
+            }
+        </select>
+    </div>
+    </div>
+    }
+<div class="field">
+    <label class="label" for="initial">Initial State</label>
+    <div class="select">
+        <select id="initial" @bind="@initial">
+            <option value=""></option>
+            @foreach (var q in States)
+            {
+                <option value="@q.Key"> @q.Key </option>
+            }
+        </select>
+        </div>
+    </div>
+    <div class="field">
+        <label class="label" for="name">Automaton Name</label>
+        <div class="control">
+            <input type="text" class="input" id="name" @bind="name">
+        </div>
+    </div>
+    <div class="buttons">
+        <button class="button is-success" @onclick="Create">Create Automaton</button>
+        <button class="button is-danger" @onclick="OnCancel">Cancel</button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public Action<DeterministicFiniteAutomaton> OnSuccess { get; set; }
+    [Parameter] public Action OnCancel { get; set; }
+    [Parameter]public Dictionary<string, AbstractState> States { get; set; }
+    [Parameter]public Dictionary<string, AbstractEvent> Events { get; set; }
+
+    private string name = "";
+    private string initial = "";
+    private int transitionsNum = 1;
+    private readonly string[,] transitions = new string[100, 3];
+
+    protected override void OnInitialized()
+    {
+        for (int i = 0; i < transitions.GetLength(0); i++)
+            for (int j = 0; j < transitions.GetLength(1); j++)
+                transitions[i, j] = "";
+    }
+
+    private void Create()
+    {
+        var trans = Enumerable.Range(0, transitionsNum)
+            .Select(i => (transitions[i, 0], transitions[i, 1], transitions[i, 2]))
+            .Where(t => States.ContainsKey(t.Item1) && Events.ContainsKey(t.Item2) && States.ContainsKey(t.Item3))
+            .Select(t => new Transition(States[t.Item1], Events[t.Item2], States[t.Item3]))
+            .ToArray();
+
+        var initialState = States[initial];
+
+        var G = new DeterministicFiniteAutomaton(trans, initialState, name);
+        OnSuccess(G);
+        StateHasChanged();
+    }
+
+}

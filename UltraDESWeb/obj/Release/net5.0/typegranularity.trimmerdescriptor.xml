@@ -1,0 +1,20 @@
+<linker>
+  <assembly fullname="Microsoft.AspNetCore.Authorization">
+    <type fullname="*" required="false" preserve="all" />
+  </assembly>
+  <assembly fullname="Microsoft.AspNetCore.Components.Forms">
+    <type fullname="*" required="false" preserve="all" />
+  </assembly>
+  <assembly fullname="Microsoft.AspNetCore.Components.Web">
+    <type fullname="*" required="false" preserve="all" />
+  </assembly>
+  <assembly fullname="Microsoft.AspNetCore.Components.WebAssembly">
+    <type fullname="*" required="false" preserve="all" />
+  </assembly>
+  <assembly fullname="Microsoft.AspNetCore.Components">
+    <type fullname="*" required="false" preserve="all" />
+  </assembly>
+  <assembly fullname="Microsoft.AspNetCore.Metadata">
+    <type fullname="*" required="false" preserve="all" />
+  </assembly>
+</linker>

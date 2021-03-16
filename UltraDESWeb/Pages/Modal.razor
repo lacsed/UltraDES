@@ -1,0 +1,18 @@
+﻿
+<div class="modal is-active">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+        <header class="modal-card-head">
+            <p class="modal-card-title">@Title</p>
+            <button class="delete" aria-label="close" @onclick="OnClose"></button>
+        </header>
+        <section class="modal-card-body">
+            @ChildContent
+        </section>
+    </div>
+</div>
+@code {
+    [Parameter] public string Title { get; set; }
+    [Parameter] public RenderFragment ChildContent { get; set; }
+    [Parameter] public Action OnClose { get; set; }
+}

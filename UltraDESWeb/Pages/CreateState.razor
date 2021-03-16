@@ -1,0 +1,36 @@
+﻿@using global::UltraDES
+
+<div>
+    <div class="field">
+        <label class="label" for="name">State Name</label>
+        <input type="text" class="input" id="name" @bind="name">
+        <p>Type the states separated by ' ; ' and tick if they are marked</p>
+    </div>
+    <div class="field">
+        <label class="label"><input type="checkbox" @bind="opt"> Marked</label>
+    </div>
+    <div class="buttons">
+        <button class="button is-success" @onclick="Create">Create State</button>
+        <button class="button is-danger" @onclick="OnCancel">Cancel</button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public Action<AbstractState> OnSuccess { get; set; }
+    [Parameter] public Action OnCancel { get; set; }
+
+    private string name = "";
+    private bool opt = false;
+
+    private void Create()
+    {
+        string[] SubStates = name.Split(";"); 
+        foreach(var sub in SubStates)
+        {
+            var q = new State(sub, opt ? Marking.Marked : Marking.Unmarked);
+            OnSuccess(q);
+            StateHasChanged();
+        }
+    }
+
+}

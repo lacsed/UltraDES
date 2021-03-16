@@ -1,0 +1,26 @@
+﻿html,
+body {
+    height: 100%;
+}
+
+.grid-container {
+    grid-template-rows: 52px 1fr auto;
+    grid-template-areas:
+        'header'
+        'content'
+        'footer';
+    display: grid;
+    height: 100vh;
+}
+
+.grid-header {
+    grid-area: header;
+}
+
+.grid-content {
+    grid-area: content;
+}
+
+footer {
+    grid-area: footer;
+}

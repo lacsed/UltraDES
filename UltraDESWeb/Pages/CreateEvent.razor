@@ -1,0 +1,37 @@
+﻿@using global::UltraDES
+
+<div>
+    <div class="field">
+        <label class="label" for="name">Event Name</label>
+        <input type="text" class="input" id="name" @bind="name">
+        <p>Type the events separated by ' ; ' and tick if they are uncontrollable</p>
+    </div>
+    <div class="field">
+        <label class="label"><input type="checkbox" @bind="opt"> Uncontrollable</label>
+    </div>
+    <div class="buttons">
+        <button class="button is-success" @onclick="Create">Create Event</button>
+        <button class="button is-danger" @onclick="OnCancel">Cancel</button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public Action<AbstractEvent> OnSuccess { get; set; }
+    [Parameter] public Action OnCancel { get; set; }
+
+    private string name = "";
+    private bool opt = false;
+
+    private void Create()
+    {
+        string[] SubsEvents = name.Split(';');
+        foreach(var sub in SubsEvents)
+        {
+            var e = new Event(sub, !opt ? Controllability.Controllable : Controllability.Uncontrollable);
+            OnSuccess(e);
+            StateHasChanged();
+        }
+        
+    }
+
+}

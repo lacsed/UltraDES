@@ -1,0 +1,78 @@
+﻿@using global::UltraDES
+@inject IJSRuntime JsRuntime;
+
+@if (!computing)
+{
+    <div>
+        <div class="field">
+            <label class="label" for="G1">Automaton 1 (G1)</label>
+            <div class="select">
+                <select id="G1" @bind="@G1">
+                    <option value=""></option>
+                    @foreach (var G in Automata)
+                    {
+                        <option value="@G.Key"> @G.Key </option>
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="field">
+            <label class="label" for="G2">Automaton 2 (G2)</label>
+            <div class="select">
+                <select class="form-control" id="G2" @bind="@G2">
+                    <option value=""></option>
+                    @foreach (var G in Automata)
+                    {
+                        <option value="@G.Key"> @G.Key </option>
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="field">
+            <label class="label" for="op">Operation</label>
+            <div class="select">
+                <select class="form-control" id="op" @bind="@op">
+                    <option value=""></option>
+                    <option value="pc">Parallel Composition (G1 || G2)</option>
+                    <option value="pd">Product (G1 x G2)</option>
+                </select>
+            </div>
+        </div>
+        <div class="buttons">
+            <button class="button is-success" @onclick="Create">Apply Operation</button>
+            <button class="button is-danger" @onclick="OnCancel">Cancel</button>
+        </div>
+    </div>
+}
+else
+{
+    <div class="pageloader is-active" style="background: #287ef2"><span class="title">Computing</span></div>
+}
+@code {
+
+    [Parameter]
+    public Action<DeterministicFiniteAutomaton> OnSuccess { get; set; }
+
+    [Parameter]
+    public Action OnCancel { get; set; }
+
+    [Parameter]
+    public Dictionary<string, DeterministicFiniteAutomaton> Automata { get; set; }
+
+    private string G1, G2;
+    private string op;
+    private bool computing = false;
+
+    public void Create()
+    {
+        var G12 = op switch
+        {
+            "pc" => Automata[G1].ParallelCompositionWith(Automata[G2]),
+            "pd" => Automata[G1].ProductWith(Automata[G2]),
+            _ => null
+            };
+
+        if (G12 != null) OnSuccess(G12);
+    }
+
+}

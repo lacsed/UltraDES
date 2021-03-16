@@ -1,0 +1,87 @@
+﻿@using global::UltraDES
+@inject IJSRuntime JsRuntime;
+
+@if (!computing)
+{
+    <div>
+        <div class="field">
+            <label class="label" for="G1">Automaton (G)</label>
+            <div class="select">
+                <select class="form-control" id="G1" @bind="@G1">
+                    <option value=""></option>
+                    @foreach (var G in Automata)
+                    {
+                        <option value="@G.Key"> @G.Key </option>
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="field">
+            <label class="label" for="op">Operation</label>
+            <div class="select">
+                <select class="form-control" id="op" @bind="@op">
+                    <option value=""></option>
+                    <option value="min">Minimize</option>
+                    <option value="ac">Accessible Part</option>
+                    <option value="coac">Coaccessible Part</option>
+                    <option value="trim">Trim</option>
+                    <option value="simp">Simplify States Name</option>
+                </select>
+            </div>
+        </div>
+        <div class="buttons">
+            <button class="button is-success" @onclick="Create">Apply Operation</button>
+            <button class="button is-danger" @onclick="OnCancel">Cancel</button>
+        </div>
+    </div>
+}
+else
+{
+    <div class="pageloader is-active" style="background: #287ef2"><span class="title">Computing</span></div>
+}
+@code {
+
+    [Parameter]
+    public Action<DeterministicFiniteAutomaton> OnSuccess { get; set; }
+
+    [Parameter]
+    public Action OnCancel { get; set; }
+
+    [Parameter]
+    public Dictionary<string, DeterministicFiniteAutomaton> Automata { get; set; }
+
+    private string G1;
+    private string op;
+    private bool computing = false;
+
+    public async void Create()
+    {
+        try
+        {
+            computing = true;
+            await Task.Delay(1);
+
+            var G2 = op switch
+            {
+                "min" => Automata[G1].Minimal.Rename($"Min({G1})"),
+                "ac" => Automata[G1].AccessiblePart.Rename($"Ac({G1})"),
+                "coac" => Automata[G1].CoaccessiblePart.Rename($"Coac({G1})"),
+                "trim" => Automata[G1].Trim.Rename($"Trim({G1})"),
+                "simp" => Automata[G1].SimplifyStatesName().Rename($"Simp({G1})"),
+                _ => null
+
+            };
+
+            if (G2 != null) OnSuccess(G2);
+        }
+        catch (Exception ex)
+        {
+            computing = false;
+            await Task.Delay(1);
+            JsRuntime.Alert($"Error: {ex.Message}");
+            OnCancel();
+        }
+
+    }
+
+}

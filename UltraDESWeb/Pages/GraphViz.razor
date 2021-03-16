@@ -1,0 +1,43 @@
+﻿@inject IJSRuntime JSRuntime;
+
+@if (!computing)
+{
+<div style="text-align: center">
+    <div class="buttons">
+        <button class="button is-success" @onclick="downloadSVG">Save as SVG</button>
+        <button class="button is-success" @onclick="downloadPNG">Save as PNG</button>
+    </div>
+    <div style="width: 100%">
+        @((MarkupString) svg)
+    </div>
+</div>
+}
+else
+{
+    <div class="pageloader is-active" style="background: #287ef2"><span class="title">Drawing</span></div>
+}
+@code {
+
+    [Parameter]
+    public string DotCode { get; set; }
+
+    [Parameter]
+    public Action OnCancel { get; set; }
+
+    private bool computing = false;
+
+    private string svg = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        computing = true;
+        await Task.Delay(1);
+        svg = await JSRuntime.InvokeAsync<string>("GraphViz", DotCode);
+        computing = false;
+        await Task.Delay(1);
+    }
+
+    public void downloadSVG() => JSRuntime.InvokeVoidAsync("downloadSVG", "G.svg", DotCode);
+    public void downloadPNG() => JSRuntime.InvokeVoidAsync("downloadPNG", "G.png", DotCode);
+
+}
