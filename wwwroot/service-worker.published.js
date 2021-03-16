@@ -2,47 +2,79 @@
 // offline support. See https://aka.ms/blazor-offline-considerations
 
 self.importScripts('./service-worker-assets.js');
-self.addEventListener('install', event => event.waitUntil(onInstall(event)));
-self.addEventListener('activate', event => event.waitUntil(onActivate(event)));
-self.addEventListener('fetch', event => event.respondWith(onFetch(event)));
 
 const cacheNamePrefix = 'offline-cache-';
 const cacheName = `${cacheNamePrefix}${self.assetsManifest.version}`;
 const offlineAssetsInclude = [ /\.dll$/, /\.pdb$/, /\.wasm/, /\.html/, /\.js$/, /\.json$/, /\.css$/, /\.woff$/, /\.png$/, /\.jpe?g$/, /\.gif$/, /\.ico$/, /\.blat$/, /\.dat$/ ];
 const offlineAssetsExclude = [ /^service-worker\.js$/ ];
 
-async function onInstall(event) {
-    console.info('Service worker: Install');
+// the cache version gets updated every time there is a new deployment
+const CACHE_VERSION = 10;
+const CURRENT_CACHE = `main-${CACHE_VERSION}`;
 
-    // Fetch and cache all matching items from the assets manifest
-    const assetsRequests = self.assetsManifest.assets
-        .filter(asset => offlineAssetsInclude.some(pattern => pattern.test(asset.url)))
-        .filter(asset => !offlineAssetsExclude.some(pattern => pattern.test(asset.url)))
-        .map(asset => new Request(asset.url, { integrity: asset.hash }));
-    await caches.open(cacheName).then(cache => cache.addAll(assetsRequests));
-}
 
-async function onActivate(event) {
-    console.info('Service worker: Activate');
+// on activation we clean up the previously registered service workers
+self.addEventListener('activate', evt =>
+  evt.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheName !== CURRENT_CACHE) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  )
+);
 
-    // Delete unused caches
-    const cacheKeys = await caches.keys();
-    await Promise.all(cacheKeys
-        .filter(key => key.startsWith(cacheNamePrefix) && key !== cacheName)
-        .map(key => caches.delete(key)));
-}
+// on install we download the routes we want to cache for offline
+self.addEventListener('install', evt =>
+  evt.waitUntil(
+    caches.open(CURRENT_CACHE).then(cache => {
+        const assetsRequests = self.assetsManifest.assets
+            .filter(asset => offlineAssetsInclude.some(pattern => pattern.test(asset.url)))
+            .filter(asset => !offlineAssetsExclude.some(pattern => pattern.test(asset.url)))
+            .map(asset => new Request(asset.url));
+        return cache.addAll(assetsRequests);
+    })
+  )
+);
 
-async function onFetch(event) {
-    let cachedResponse = null;
-    if (event.request.method === 'GET') {
-        // For all navigation requests, try to serve index.html from cache
-        // If you need some URLs to be server-rendered, edit the following check to exclude those URLs
-        const shouldServeIndexHtml = event.request.mode === 'navigate';
+// fetch the resource from the network
+const fromNetwork = (request, timeout) =>
+  new Promise((fulfill, reject) => {
+    const timeoutId = setTimeout(reject, timeout);
+    fetch(request).then(response => {
+      clearTimeout(timeoutId);
+      fulfill(response);
+      update(request);
+    }, reject);
+  });
 
-        const request = shouldServeIndexHtml ? 'index.html' : event.request;
-        const cache = await caches.open(cacheName);
-        cachedResponse = await cache.match(request);
-    }
+// fetch the resource from the browser cache
+const fromCache = request =>
+  caches
+    .open(CURRENT_CACHE)
+    .then(cache =>
+      cache
+        .match(request)
+        .then(matching => matching || cache.match('/offline/'))
+    );
 
-    return cachedResponse || fetch(event.request);
-}
+// cache the current page to make it available for offline
+const update = request =>
+  caches
+    .open(CURRENT_CACHE)
+    .then(cache =>
+      fetch(request).then(response => cache.put(request, response))
+    );
+
+// general strategy when making a request (eg if online try to fetch it
+// from the network with a timeout, if something fails serve from cache)
+self.addEventListener('fetch', evt => {
+  evt.respondWith(
+    fromNetwork(evt.request, 10000).catch(() => fromCache(evt.request))
+  );
+  evt.waitUntil(update(evt.request));
+});
