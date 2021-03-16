@@ -34,8 +34,7 @@ self.addEventListener('install', evt =>
         const assetsRequests = self.assetsManifest.assets
             .filter(asset => offlineAssetsInclude.some(pattern => pattern.test(asset.url)))
             .filter(asset => !offlineAssetsExclude.some(pattern => pattern.test(asset.url)))
-            .map(asset => {url: "UltraDES\/" + asset.url})
-            .map(asset => new Request(asset.url));
+            .map(asset => new Request("UltraDES\/"+asset.url));
         return cache.addAll(assetsRequests);
     })
   )
