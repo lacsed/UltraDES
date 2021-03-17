@@ -440,7 +440,7 @@ namespace SupervisorSynthesis
         private static void ComputingMonolithicSupervisor()
         {
             // Choose one option below
-            ClusterTool(4, out var plants, out var specs);
+            ClusterTool(2, out var plants, out var specs);
 
             Console.WriteLine("Monolithic Supervisor:");
             var timer = new Stopwatch(); // to measure time
@@ -448,6 +448,7 @@ namespace SupervisorSynthesis
             // computes the monolithic supervisor and stores the resulting automaton in 'sup'
             var sup = DeterministicFiniteAutomaton.MonolithicSupervisor(plants, specs, true);
             timer.Stop();
+
 
             // shows information about supervisor and the elapsed time
             Console.WriteLine($"\tStates: {sup.Size}");

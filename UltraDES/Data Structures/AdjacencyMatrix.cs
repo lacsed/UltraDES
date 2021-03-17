@@ -148,13 +148,14 @@ namespace UltraDES
             return clone;
         }
 
-        
+
         /// <summary>   Trim excess. </summary>
         ///
         /// <remarks>   Lucas Alves, 18/01/2016. </remarks>
-        public void TrimExcess()
-        {
-            Parallel.ForEach(_internal.Where(i => i != null), i => i.TrimExcess());
-        }
+        public void TrimExcess() => _internal
+            .AsParallel()
+            .WithDegreeOfParallelism(DeterministicFiniteAutomaton.Multicore ? Environment.ProcessorCount : 1)
+            .Where(i => i != null)
+            .ForAll(i => i.TrimExcess());
     }
 }

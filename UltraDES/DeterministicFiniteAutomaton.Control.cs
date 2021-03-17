@@ -32,7 +32,7 @@ namespace UltraDES
         /// <param name="eG">The e g.</param>
         /// <param name="eS">The e s.</param>
         /// <returns>Tuple&lt;System.Boolean, System.Boolean, System.Int32[], System.Int32[]&gt;.</returns>
-        private Tuple<bool, bool, int[], int[]> CheckState(DFA G, int nG, int nS, int[] posG, int[] posS, int eG, int eS)
+        private (bool, bool, int[], int[]) CheckState(DFA G, int nG, int nS, int[] posG, int[] posS, int eG, int eS)
         {
             var nextG = new int[nG];
             var nextS = new int[nS];
@@ -85,7 +85,7 @@ namespace UltraDES
                 }
             }
 
-            return new Tuple<bool, bool, int[], int[]>(hasNextG, hasNextS, nextG, nextS);
+            return (hasNextG, hasNextS, nextG, nextS);
         }
 
         /// <summary>
@@ -303,7 +303,7 @@ namespace UltraDES
         /// <returns><c>true</c> if the specified supervisors is conflicting; otherwise, <c>false</c>.</returns>
         public static bool IsConflicting(IEnumerable<DFA> supervisors)
         {
-            Parallel.ForEach(supervisors, s => { s.Simplify(); });
+            Parallel.ForEach(supervisors, new ParallelOptions{MaxDegreeOfParallelism = NumberOfThreads}, s => s.Simplify());
 
             var composition = supervisors.Aggregate((a, b) => a.ParallelCompositionWith(b));
             var oldSize = composition.Size;
@@ -338,12 +338,12 @@ namespace UltraDES
         public static IEnumerable<DFA> LocalModularSupervisor(IEnumerable<DFA> plants, IEnumerable<DFA> specifications, IEnumerable<DFA> conflictResolvingSupervisor = null)
         {
             conflictResolvingSupervisor ??= new DFA[0];
-            
-            var supervisors = specifications.AsParallel().Select(e => MonolithicSupervisor(plants.Where(p => p._eventsUnion.Intersect(e._eventsUnion).Any()), new[] {e})).ToList();
+
+            var supervisors = specifications.AsParallel().WithDegreeOfParallelism(NumberOfThreads).Select(e => MonolithicSupervisor(plants.Where(p => p._eventsUnion.Intersect(e._eventsUnion).Any()), new[] {e})).ToList();
 
             var complete = supervisors.Union(conflictResolvingSupervisor).ToList();
 
-            if (IsConflicting(complete)) throw new Exception("conflicting supervisors");
+            if (IsConflicting(complete)) throw new Exception("Conflicting Supervisors");
             GC.Collect();
             return complete;
         }
@@ -364,12 +364,11 @@ namespace UltraDES
 
             var dic = specifications.ToDictionary(e => plants.Where(p => p._eventsUnion.Intersect(e._eventsUnion).Any()).Aggregate((a, b) => a.ParallelCompositionWith(b)));
 
-            var supervisors = dic.AsParallel()
-                .Select(automata => MonolithicSupervisor(new[] {automata.Key}, new[] {automata.Value})).ToList();
+            var supervisors = dic.AsParallel().WithDegreeOfParallelism(NumberOfThreads).Select(automata => MonolithicSupervisor(new[] {automata.Key}, new[] {automata.Value})).ToList();
 
             var complete = supervisors.Union(conflictResolvingSupervisor).ToList();
 
-            if (IsConflicting(complete)) throw new Exception("conflicting supervisors");
+            if (IsConflicting(complete)) throw new Exception("Conflicting Supervisors");
 
             compoundPlants = dic.Keys.ToList();
             GC.Collect();
@@ -383,16 +382,15 @@ namespace UltraDES
         /// <param name="specifications">The specifications.</param>
         /// <param name="nonBlocking">if set to <c>true</c> [non blocking].</param>
         /// <returns>DFA.</returns>
-        public static DFA MonolithicSupervisor(IEnumerable<DFA> plants, IEnumerable<DFA> specifications,
-            bool nonBlocking = true)
+        public static DFA MonolithicSupervisor(IEnumerable<DFA> plants, IEnumerable<DFA> specifications, bool nonBlocking = true)
         {
             var plant = plants.Aggregate((a, b) => a.ParallelCompositionWith(b, false));
             var specification = specifications.Aggregate((a, b) => a.ParallelCompositionWith(b, false));
             var result = plant.ParallelCompositionWith(specification, false);
-            result.FindSupervisor(plant._statesList.Count(), nonBlocking);
+            result.FindSupervisor(plant._statesList.Count, nonBlocking);
 
             result.Name = $"Sup({result.Name})";
-            result._numberOfPlants = plant._statesList.Count();
+            result._numberOfPlants = plant._statesList.Count;
 
             return result;
         }
@@ -432,7 +430,7 @@ namespace UltraDES
         private bool RemoveBlockingStates(bool checkForBadStates = false)
         {
             MakeReverseTransitions();
-            int n = _statesList.Count(), i;
+            int n = _statesList.Count, i;
             _numberOfRunningThreads = 0;
             var threads = new Task[NumberOfThreads - 1];
 
@@ -573,7 +571,7 @@ namespace UltraDES
             var uncontrollableTrans = sup.Transitions.Where(t => !t.Trigger.IsControllable).ToList();
             while (true)
             {
-                var newForbidden = uncontrollableTrans.AsParallel()
+                var newForbidden = uncontrollableTrans.AsParallel().WithDegreeOfParallelism(NumberOfThreads)
                     .Where(t => forbidden.Contains(t.Destination) && !forbidden.Contains(t.Origin))
                     .Select(t => t.Origin).ToList();
 
@@ -613,11 +611,11 @@ namespace UltraDES
         /// <returns></returns>
         public static IEnumerable<DFA> LocalizeSupervisor(DFA globalPlant, DFA supervisor, IEnumerable<DFA> agents, long maxIt = long.MaxValue)
         {
-            return agents.AsParallel().Select(Gk =>
-            {
-                var (trans, initial) = Reduction(globalPlant, supervisor, Gk.Events.ToSet(), maxIt);
-                return new DFA(trans, initial, $"LOC({supervisor.Name}, ({Gk.Name}))");
-            }).ToArray();
+            return agents.AsParallel().WithDegreeOfParallelism(NumberOfThreads).Select(Gk =>
+                {
+                    var (trans, initial) = Reduction(globalPlant, supervisor, Gk.Events.ToSet(), maxIt);
+                    return new DFA(trans, initial, $"LOC({supervisor.Name}, ({Gk.Name}))");
+                }).ToArray();
         }
 
         /// <summary>
@@ -657,17 +655,17 @@ namespace UltraDES
         /// <returns></returns>
         public static IEnumerable<DFA> LocalModularLocalizedSupervisor(IEnumerable<DFA> plants, IEnumerable<DFA> specifications, long maxIt = long.MaxValue)
         {
-            var supervisors = specifications.AsParallel().Select(spec =>
-            {
-                var localPlants = plants.Where(p => p._eventsUnion.Intersect(spec._eventsUnion).Any()).ToArray();
-                var localPlant = ParallelComposition(localPlants);
-                var localSup = MonolithicSupervisor(new[] {localPlant}, new[] {spec}, true);
-                return (localPlant, localSup, localPlants);
-            }).ToList();
+            var supervisors = specifications.AsParallel().WithDegreeOfParallelism(NumberOfThreads).Select(spec =>
+                {
+                    var localPlants = plants.Where(p => p._eventsUnion.Intersect(spec._eventsUnion).Any()).ToArray();
+                    var localPlant = ParallelComposition(localPlants);
+                    var localSup = MonolithicSupervisor(new[] {localPlant}, new[] {spec}, true);
+                    return (localPlant, localSup, localPlants);
+                }).ToList();
 
             if (IsConflicting(supervisors.Select(t => t.localSup))) throw new Exception("Conflicting Supervisors");
             GC.Collect();
-            return supervisors.AsParallel().SelectMany(t => LocalizeSupervisor(t.localPlant, t.localSup, t.localPlants, maxIt)).ToArray();
+            return supervisors.AsParallel().WithDegreeOfParallelism(NumberOfThreads).SelectMany(t => LocalizeSupervisor(t.localPlant, t.localSup, t.localPlants, maxIt)).ToArray();
         }
 
         /// <summary>
@@ -679,7 +677,7 @@ namespace UltraDES
         /// <returns></returns>
         public static IEnumerable<DFA> LocalModularReducedSupervisor(IEnumerable<DFA> plants, IEnumerable<DFA> specifications, long maxIt = long.MaxValue)
         {
-            var supervisors = specifications.AsParallel().Select(spec =>
+            var supervisors = specifications.AsParallel().WithDegreeOfParallelism(NumberOfThreads).Select(spec =>
             {
                 var localPlants = plants.Where(p => p._eventsUnion.Intersect(spec._eventsUnion).Any()).ToArray();
                 var localPlant = ParallelComposition(localPlants);
@@ -689,7 +687,7 @@ namespace UltraDES
 
             if (IsConflicting(supervisors.Select(t => t.localSup))) throw new Exception("Conflicting Supervisors");
             GC.Collect();
-            return supervisors.AsParallel().Select(t => ReduceSupervisor(t.localPlant, t.localSup, maxIt)).ToArray();
+            return supervisors.AsParallel().WithDegreeOfParallelism(NumberOfThreads).Select(t => ReduceSupervisor(t.localPlant, t.localSup, maxIt)).ToArray();
         }
 
         private static (Transition[] trans, AbstractState initial) Reduction(DFA P, DFA S, HashSet<AbstractEvent> Ek, long maxIt = long.MaxValue)
@@ -769,9 +767,16 @@ namespace UltraDES
                     cnode = i;
                     const int stackSize = 10000000;
                     var flag = false;
-                    var thread = new Thread(() => flag = CheckMergibility(i, j), stackSize);
-                    thread.Start();
-                    thread.Join();
+                    if (Multicore)
+                    {
+                        var thread = new Thread(() => flag = CheckMergibility(i, j), stackSize);
+                        thread.Start();
+                        thread.Join();
+                    }
+                    else
+                    {
+                        CheckMergibility(i, j);
+                    }
 
                     if (!flag) continue;
 

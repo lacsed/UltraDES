@@ -543,7 +543,12 @@
             <param name="maxIt"></param>
             <returns></returns>
         </member>
-        <member name="F:UltraDES.DeterministicFiniteAutomaton.NumberOfThreads">
+        <member name="P:UltraDES.DeterministicFiniteAutomaton.Multicore">
+            <summary>
+            Indicates if UltraDES uses parallel programming
+            </summary>
+        </member>
+        <member name="P:UltraDES.DeterministicFiniteAutomaton.NumberOfThreads">
             <summary>
             The number of threads
             </summary>
@@ -910,7 +915,7 @@
         </member>
         <member name="P:UltraDES.DeterministicFiniteAutomaton.ToXML">
             <summary>
-            Converts to xml.
+            Converts to XML.
             </summary>
             <value>To XML.</value>
         </member>
@@ -923,55 +928,66 @@
         </member>
         <member name="M:UltraDES.DeterministicFiniteAutomaton.FromAdsFile(System.String)">
             <summary>
-            Froms the ads file.
+            Froms the ADS file.
             </summary>
-            <param name="pFilePath">The p file path.</param>
+            <param name="adsStr">The p file path.</param>
             <returns>DFA.</returns>
             <exception cref="T:System.Exception">File is not on ADS Format.</exception>
-            <exception cref="T:System.Exception">File is not on ADS Format.</exception>
+        </member>
+        <member name="M:UltraDES.DeterministicFiniteAutomaton.FromAdsString(System.String)">
+            <summary>
+            Froms the ADS string.
+            </summary>
+            <param name="adsStr">The p file path.</param>
+            <returns>DFA.</returns>
             <exception cref="T:System.Exception">File is not on ADS Format.</exception>
         </member>
         <member name="M:UltraDES.DeterministicFiniteAutomaton.FromFsmFile(System.String)">
             <summary>
-            Froms the FSM file.
+            Read an automaton from a FSM file.
             </summary>
             <param name="fileName">Name of the file.</param>
             <returns>DFA.</returns>
-            <exception cref="T:System.Exception">Filename can not be null.</exception>
-            <exception cref="T:System.Exception">File not found.</exception>
-            <exception cref="T:System.Exception">Invalid Format.</exception>
-            <exception cref="T:System.Exception">Invalid Format.</exception>
-            <exception cref="T:System.Exception">Invalid Format.</exception>
-            <exception cref="T:System.Exception">Invalid Format: Duplicated state.</exception>
-            <exception cref="T:System.Exception">Invalid Format.</exception>
-            <exception cref="T:System.Exception">Invalid transition. Destination state not found.</exception>
+        </member>
+        <member name="M:UltraDES.DeterministicFiniteAutomaton.FromFsmString(System.String,System.String)">
+            <summary>
+            Read an automaton from a FSM string.
+            </summary>
+            <param name="fsmStr"></param>
+            <param name="name"></param>
+            <returns></returns>
         </member>
         <member name="M:UltraDES.DeterministicFiniteAutomaton.FromWmodFile(System.String,System.Collections.Generic.List{UltraDES.DeterministicFiniteAutomaton}@,System.Collections.Generic.List{UltraDES.DeterministicFiniteAutomaton}@)">
             <summary>
             Froms the wmod file.
             </summary>
-            <param name="pFilename">The p filename.</param>
-            <param name="pPlants">The p plants.</param>
-            <param name="pSpecs">The p specs.</param>
-            <exception cref="T:System.Exception">Invalid Format.</exception>
-            <exception cref="T:System.Exception">Invalid Format.</exception>
-            <exception cref="T:System.Exception">Invalid Format.</exception>
-            <exception cref="T:System.Exception">Invalid Format.</exception>
+            <param name="filename">The filename.</param>
+            <param name="plants">The plants.</param>
+            <param name="specs">The specs.</param>
+        </member>
+        <member name="M:UltraDES.DeterministicFiniteAutomaton.FromWmodString(System.String,System.Collections.Generic.List{UltraDES.DeterministicFiniteAutomaton}@,System.Collections.Generic.List{UltraDES.DeterministicFiniteAutomaton}@)">
+            <summary>
+            Froms the wmod string.
+            </summary>
+            <param name="wmodStr">The wmod string.</param>
+            <param name="plants">The plants.</param>
+            <param name="specs">The specs.</param>
         </member>
         <member name="M:UltraDES.DeterministicFiniteAutomaton.FromXMLFile(System.String,System.Boolean)">
             <summary>
             Froms the XML file.
             </summary>
-            <param name="pFilePath">The p file path.</param>
-            <param name="pStateName">if set to <c>true</c> [p state name].</param>
+            <param name="filePath">The p file path.</param>
+            <param name="stateName">if set to <c>true</c> to load state names.</param>
             <returns>DFA.</returns>
         </member>
-        <member name="M:UltraDES.DeterministicFiniteAutomaton.NextValidLine(System.IO.StreamReader)">
+        <member name="M:UltraDES.DeterministicFiniteAutomaton.FromXMLString(System.String,System.Boolean)">
             <summary>
-            Nexts the valid line.
+            Froms the XML file.
             </summary>
-            <param name="file">The file.</param>
-            <returns>System.String.</returns>
+            <param name="xmlStr">The xml string.</param>
+            <param name="stateName">if set to <c>true</c> [p state name].</param>
+            <returns>DFA.</returns>
         </member>
         <member name="M:UltraDES.DeterministicFiniteAutomaton.SerializeAutomaton(System.String)">
             <summary>
@@ -993,9 +1009,15 @@
             </summary>
             <param name="filepath">The filepath.</param>
         </member>
+        <member name="M:UltraDES.DeterministicFiniteAutomaton.ToFmFile(System.String)">
+            <summary>
+            Converts to FM File.
+            </summary>
+            <param name="filepath">The filepath.</param>
+        </member>
         <member name="M:UltraDES.DeterministicFiniteAutomaton.ToAdsFile(System.Collections.Generic.IEnumerable{UltraDES.DeterministicFiniteAutomaton},System.Collections.Generic.IEnumerable{System.String},System.Int32,System.Int32)">
             <summary>
-            Converts to adsfile.
+            Converts to ADS file.
             </summary>
             <param name="automata">The automata.</param>
             <param name="filepaths">The filepaths.</param>
@@ -1004,22 +1026,36 @@
         </member>
         <member name="M:UltraDES.DeterministicFiniteAutomaton.ToFsmFile(System.String)">
             <summary>
-            Converts to fsmfile.
+            Converts to FSM file.
             </summary>
             <param name="fileName">Name of the file.</param>
         </member>
+        <member name="P:UltraDES.DeterministicFiniteAutomaton.ToFsm">
+            <summary>
+            Converts to FSM string.
+            </summary>
+        </member>
         <member name="M:UltraDES.DeterministicFiniteAutomaton.ToWmodFile(System.String,System.Collections.Generic.IEnumerable{UltraDES.DeterministicFiniteAutomaton},System.Collections.Generic.IEnumerable{UltraDES.DeterministicFiniteAutomaton},System.String)">
             <summary>
-            Converts to wmodfile.
+            Converts to Wmod file.
             </summary>
-            <param name="pFilename">The p filename.</param>
-            <param name="pPlants">The p plants.</param>
-            <param name="pSpecifications">The p specifications.</param>
-            <param name="pModuleName">Name of the p module.</param>
+            <param name="filename">The p filename.</param>
+            <param name="plants">The p plants.</param>
+            <param name="specifications">The p specifications.</param>
+            <param name="moduleName">Name of the p module.</param>
+        </member>
+        <member name="M:UltraDES.DeterministicFiniteAutomaton.ToWmodString(System.Collections.Generic.IEnumerable{UltraDES.DeterministicFiniteAutomaton},System.Collections.Generic.IEnumerable{UltraDES.DeterministicFiniteAutomaton},System.String)">
+            <summary>
+            Converts to Wmod string.
+            </summary>
+            <param name="filename">The p filename.</param>
+            <param name="plants">The p plants.</param>
+            <param name="specifications">The p specifications.</param>
+            <param name="moduleName">Name of the p module.</param>
         </member>
         <member name="M:UltraDES.DeterministicFiniteAutomaton.ToXMLFile(System.String)">
             <summary>
-            Converts to xmlfile.
+            Converts to XML file.
             </summary>
             <param name="filepath">The filepath.</param>
         </member>

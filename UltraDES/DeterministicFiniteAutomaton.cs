@@ -25,9 +25,14 @@ namespace UltraDES
     public sealed partial class DeterministicFiniteAutomaton
     {
         /// <summary>
+        /// Indicates if UltraDES uses parallel programming
+        /// </summary>
+        public static bool Multicore { get; set; } = true;
+
+        /// <summary>
         /// The number of threads
         /// </summary>
-        private static readonly int NumberOfThreads = Math.Max(2, Environment.ProcessorCount);
+        private static int NumberOfThreads => Multicore ? Math.Max(2, 2*Environment.ProcessorCount) : 1;
 
         /// <summary>
         /// The adjacency list
@@ -148,15 +153,13 @@ namespace UltraDES
             Size = (ulong) _statesList[0].Length;
 
             _bits[0] = 0;
-            _maxSize[0] = (1 << MinNumOfBits(_statesList[0].Length)) - 1; //(1 << (int) Math.Max(Math.Ceiling(Math.Log(Size, 2)), 1)) - 1;
+            _maxSize[0] = (1 << MinNumOfBits(_statesList[0].Length)) - 1;
             _tupleSize = 1;
 
             for (var i = 0; i < _statesList[0].Length; ++i)
             {
-                _adjacencyList[0].Add(i,
-                    transitionsLocal.AsParallel().Where(t => t.Origin == _statesList[0][i]).Select(t =>
-                        Tuple.Create(Array.IndexOf(_eventsUnion, t.Trigger),
-                            Array.IndexOf(_statesList[0], t.Destination))).ToArray());
+                _adjacencyList[0].Add(i, transitionsLocal.AsParallel().WithDegreeOfParallelism(NumberOfThreads).Where(t => t.Origin == _statesList[0][i]).Select(t =>
+                            Tuple.Create(Array.IndexOf(_eventsUnion, t.Trigger), Array.IndexOf(_statesList[0], t.Destination))).ToArray());
             }
         }
 
@@ -1145,8 +1148,9 @@ namespace UltraDES
             if (_reverseTransitionsList != null)
                 return;
 
-            _reverseTransitionsList = new List<List<int>[]>[_statesList.Count()];
-            Parallel.For(0, _statesList.Count(), i =>
+            _reverseTransitionsList = new List<List<int>[]>[_statesList.Count];
+
+            void Loop(int i)
             {
                 _reverseTransitionsList[i] = new List<List<int>[]>(_statesList[i].Length);
                 for (var state = 0; state < _statesList[i].Length; ++state)
@@ -1174,7 +1178,10 @@ namespace UltraDES
                     foreach (var p in _reverseTransitionsList[i][state])
                         p.TrimExcess();
                 }
-            });
+            }
+
+            Parallel.For(0, _statesList.Count, new ParallelOptions { MaxDegreeOfParallelism = NumberOfThreads }, Loop);
+
         }
 
         /// <summary>
@@ -1608,7 +1615,7 @@ namespace UltraDES
                 } while (IncrementPosition(pos0));
             }
 
-            Parallel.ForEach(positionNewStates, state =>
+            void Loop(KeyValuePair<StatesTuple, int> state)
             {
                 var pos = new int[n];
                 var nextPos = new int[n];
@@ -1638,9 +1645,11 @@ namespace UltraDES
                     if (nextEvent) continue;
 
                     nextTuple.Set(nextPos, _bits);
-                    if (positionNewStates.TryGetValue(nextTuple, out var k)) newAdjacencyMatrix.Add(state.Value, e, k);
+                    if (positionNewStates.TryGetValue(nextTuple, out var k))
+                        newAdjacencyMatrix.Add(state.Value, e, k);
                 }
-            });
+            }
+            Parallel.ForEach(positionNewStates, new ParallelOptions { MaxDegreeOfParallelism = NumberOfThreads }, Loop);
 
             _statesList.Clear();
             _adjacencyList.Clear();
