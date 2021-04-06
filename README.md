@@ -11,6 +11,8 @@
   <br>
   <a href="https://www.nuget.org/packages/UltraDES"><img alt="Nuget (with prereleases)" src="https://img.shields.io/nuget/vpre/UltraDES?color=blue&label=NuGet&logo=nuget&style=flat-square"></a>
   <a href="https://www.nuget.org/packages/UltraDES"><img alt="Nuget" src="https://img.shields.io/nuget/dt/UltraDES?color=darkblue&label=Downloads&style=flat-square"></a>
+  <img alt="Nuget" src="https://img.shields.io/github/license/lacsed/UltraDES?style=flat-square">
+ 
 </p>
 
 ## Before using UltraDES
