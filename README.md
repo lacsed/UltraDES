@@ -1,7 +1,17 @@
-# UltraDES
-UltraDES is a library for modeling, analysis and control of Discrete Event Systems. It has been developed at LACSED | UFMG (http://www.lacsed.eng.ufmg.br).
+<p align="center">
+  <a href="https://github.com/lacsed/UltraDES">
+    <img src="http://lacsed.eng.ufmg.br/wp-content/uploads/2017/05/Logo_UltraDES_PNG_Internet-e1494353854950.png" alt="AngouriMath logo" width="400">
+  </a>
+</p>
 
-![UltraDES](http://lacsed.eng.ufmg.br/wp-content/uploads/2017/05/Logo_UltraDES_PNG_Internet-e1494353854950.png)
+<h2 align="center">UltraDES</h2>
+
+<p align="center">
+  <b>UltraDES is a library for modeling, analysis and control of Discrete Event Systems. It has been developed at LACSED | <a href="http://www.lacsed.eng.ufmg.br">UFMG</a>.</b>
+  <br>
+  <a href="https://www.nuget.org/packages/UltraDES"><img alt="Nuget (with prereleases)" src="https://img.shields.io/nuget/vpre/UltraDES?color=blue&label=NuGet&logo=nuget&style=flat-square"></a>
+  <a href="https://www.nuget.org/packages/UltraDES"><img alt="Nuget" src="https://img.shields.io/nuget/dt/UltraDES?color=darkblue&label=Downloads&style=flat-square"></a>
+</p>
 
 ## Before using UltraDES
 
