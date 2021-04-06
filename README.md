@@ -126,10 +126,11 @@ var Gp = G1.ParallelCompositionWith(G2);
 
 For more examples on how to create more complex automata or how to use the methods, read the other projects. 
 
-## [Python Wrapper](https://github.com/lacsed/UltraDES-Python)
+## Try UltraDES
 
-## [Try UltraDES Online](https://lacsed.github.io/UltraDES/)
-
+<a href="https://github.com/lacsed/UltraDES-Python"><img src="https://img.shields.io/static/v1?label=Go%20to&message=UltraDES%20Python&color=orange&style=for-the-badge"></a>
+</br>
+<a href="https://lacsed.github.io/UltraDES/"><img src="https://img.shields.io/static/v1?label=Go%20to&message=UltraDES%20Online&color=purple&style=for-the-badge"></a>
 ## Research
 
 If you use UltraDES in your paper, please cite using:
