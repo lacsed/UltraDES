@@ -1,32 +1,37 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Lucas\\source\\repos\\UltraDESWeb\\UltraDESWeb\\UltraDESWeb.csproj": {}
+    "C:\\Users\\Lucas\\OneDrive\\Documentos\\GitHub\\UltraDES\\UltraDESWeb.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Lucas\\source\\repos\\UltraDESWeb\\UltraDESWeb\\UltraDESWeb.csproj": {
+    "C:\\Users\\Lucas\\OneDrive\\Documentos\\GitHub\\UltraDES\\UltraDESWeb.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Lucas\\source\\repos\\UltraDESWeb\\UltraDESWeb\\UltraDESWeb.csproj",
+        "projectUniqueName": "C:\\Users\\Lucas\\OneDrive\\Documentos\\GitHub\\UltraDES\\UltraDESWeb.csproj",
         "projectName": "UltraDESWeb",
-        "projectPath": "C:\\Users\\Lucas\\source\\repos\\UltraDESWeb\\UltraDESWeb\\UltraDESWeb.csproj",
+        "projectPath": "C:\\Users\\Lucas\\OneDrive\\Documentos\\GitHub\\UltraDES\\UltraDESWeb.csproj",
         "packagesPath": "C:\\Users\\Lucas\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Lucas\\source\\repos\\UltraDESWeb\\UltraDESWeb\\obj\\",
+        "outputPath": "C:\\Users\\Lucas\\OneDrive\\Documentos\\GitHub\\UltraDES\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
         "configFilePaths": [
           "C:\\Users\\Lucas\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
-          "net5.0"
+          "net6.0"
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
-          "net5.0": {
-            "targetAlias": "net5.0",
+          "net6.0": {
+            "targetAlias": "net6.0",
             "projectReferences": {}
           }
         },
@@ -37,21 +42,21 @@
         }
       },
       "frameworks": {
-        "net5.0": {
-          "targetAlias": "net5.0",
+        "net6.0": {
+          "targetAlias": "net6.0",
           "dependencies": {
             "Microsoft.AspNetCore.Components.WebAssembly": {
               "target": "Package",
-              "version": "[5.0.4, )"
+              "version": "[6.0.14, )"
             },
             "Microsoft.AspNetCore.Components.WebAssembly.DevServer": {
               "suppressParent": "All",
               "target": "Package",
-              "version": "[5.0.4, )"
+              "version": "[6.0.14, )"
             },
             "System.Net.Http.Json": {
               "target": "Package",
-              "version": "[5.0.0, )"
+              "version": "[6.0.0, )"
             },
             "UltraDES": {
               "target": "Package",
@@ -64,14 +69,15 @@
             "net47",
             "net471",
             "net472",
-            "net48"
+            "net48",
+            "net481"
           ],
           "assetTargetFallback": true,
           "warn": true,
           "downloadDependencies": [
             {
-              "name": "Microsoft.NETCore.App.Runtime.browser-wasm",
-              "version": "[5.0.4, 5.0.4]"
+              "name": "Microsoft.NETCore.App.Runtime.Mono.browser-wasm",
+              "version": "[6.0.14, 6.0.14]"
             }
           ],
           "frameworkReferences": {
@@ -79,7 +85,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.201\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.200\\RuntimeIdentifierGraph.json"
         }
       },
       "runtimes": {
