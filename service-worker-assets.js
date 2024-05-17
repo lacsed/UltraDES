@@ -33,7 +33,7 @@
       "url": "_framework\/icudt.dat"
     },
     {
-      "hash": "sha256-A1vy+MNQvAL0UyJMQSIpm\/H0UnFm9HAZFBq3cvbQP7A=",
+      "hash": "sha256-xMrn\/D6CWVwdBwnq8syy\/fgxcNlnGYhKepMM9D7j1I4=",
       "url": "_framework\/blazor.boot.json"
     },
     {
@@ -277,7 +277,7 @@
       "url": "_framework\/UltraDES.dll"
     },
     {
-      "hash": "sha256-bh\/FD4ZEU+PeGYo\/IoiYB2Ww2vALW+XE\/VsYXsUuAPs=",
+      "hash": "sha256-1oYQoCAVqQPLHLQ3LqCk6gWyjPpy8+kgT6GS6LCyj28=",
       "url": "_framework\/UltraDESWeb.dll"
     },
     {
@@ -449,5 +449,5 @@
       "url": "webfonts\/fa-solid-900.woff2"
     }
   ],
-  "version": "ARvwYIwl"
+  "version": "q6z8JQNA"
 };
