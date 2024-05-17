@@ -90,10 +90,10 @@ else
             var S = op switch
             {
                 "mon" => new[] {DeterministicFiniteAutomaton.MonolithicSupervisor(p, e)},
-                "monred" => new[] {DeterministicFiniteAutomaton.MonolithicReducedSupervisor(p, e, 1000)},
-                "loc" => DeterministicFiniteAutomaton.MonolithicLocalizedSupervisor(p, e, 1000),
+                "monred" => new[] {DeterministicFiniteAutomaton.MonolithicReducedSupervisor(p, e, 100000)},
+                "loc" => DeterministicFiniteAutomaton.MonolithicLocalizedSupervisor(p, e, 100000),
                 "local" => DeterministicFiniteAutomaton.LocalModularSupervisor(p, e),
-                "localred" => DeterministicFiniteAutomaton.LocalModularReducedSupervisor(p, e, 1000),
+                "localred" => DeterministicFiniteAutomaton.LocalModularReducedSupervisor(p, e, 100000),
                 _ => new DeterministicFiniteAutomaton[0]
             };
 
