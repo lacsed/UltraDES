@@ -34,6 +34,7 @@
                     <hr class="dropdown-divider">
                     <label class="is-mobile dropdown-item"><input type="file" style="display: none" id="loadjson" @onchange="@(() => LoadJsonAutomaton("loadjson"))"><a>Upload Json Automata</a></label>
                     <label class="is-mobile dropdown-item"><input type="file" style="display: none" id="loadwmod" @onchange="@(() => LoadWmodAutomaton("loadwmod"))"><a>Upload Wmod Automata</a></label>
+                    <label class="is-mobile dropdown-item"><input @onclick="ev => page = Page.ExportWmod" style="display: none"><a>Export Wmod</a></label>
                     <label class="is-mobile dropdown-item"><input type="file" style="display: none" id="loadads" @onchange="@(() => LoadAdsAutomaton("loadads"))"><a>Upload Ads Automaton</a></label>
                     <label class="is-mobile dropdown-item"><input type="file" style="display: none" id="loadxml" @onchange="@(() => LoadXmlAutomaton("loadxml"))"><a>Upload XML Automaton</a></label>
                 </div>
@@ -70,6 +71,7 @@
                     <p class="menu-label dropdown-item">Import</p>
                     <label class="is-mobile dropdown-item"><input type="file" style="display: none" id="loadjson_m" @onchange="@(() => LoadJsonAutomaton("loadjson_m"))"><a>Upload Json Automata</a></label>
                     <label class="is-mobile dropdown-item"><input type="file" style="display: none" id="loadwmod_m" @onchange="@(() => LoadWmodAutomaton("loadwmod_m"))"><a>Upload Wmod Automata</a></label>
+                    <label class="is-mobile dropdown-item"><input style="display: none" @onclick="ev => page = Page.ExportWmod">><a>Export Wmod Automata</a></label>
                     <label class="is-mobile dropdown-item"><input type="file" style="display: none" id="loadads_m" @onchange="@(() => LoadAdsAutomaton("loadads_m"))"><a>Upload Ads Automaton</a></label>
                     <label class="is-mobile dropdown-item"><input type="file" style="display: none" id="loadxml_m" @onchange="@(() => LoadXmlAutomaton("loadxml_m"))"><a>Upload XML Automaton</a></label>
                     <hr class="dropdown-divider">
@@ -230,6 +232,9 @@
             case Page.UnaryOperations:
                 <Modal Title="Apply an unary Operation" OnClose="@Clear"><ApplyUnaryOperation Automata="automata" OnSuccess="G => AddAutomaton(new[]{G}) " OnCancel="@Clear"></ApplyUnaryOperation></Modal>
                 break;
+            case Page.ExportWmod:
+                <Modal Title="Export Wmod" OnClose="@Clear"><ExportWmod Automata="automata" OnSuccess="@Clear" OnCancel="@Clear"></ExportWmod></Modal>
+                break;
             case Page.Empty:
             default:
                 break;
@@ -257,7 +262,8 @@
         AutomatonSummary,
         CreateSupervisor,
         BinaryOperations,
-        UnaryOperations
+        UnaryOperations,
+        ExportWmod
     }
 
     private readonly Dictionary<string, AbstractState> states = new Dictionary<string, AbstractState>();
@@ -267,7 +273,7 @@
     private DeterministicFiniteAutomaton automaton = null;
     private bool ShowStates = false;
     private bool ShowEvents = false;
-    private bool ShowAutomata = false;
+    private bool ShowAutomata = true;
     private void Clear()
     {
         page = Page.Empty;

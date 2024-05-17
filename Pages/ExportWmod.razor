@@ -1,0 +1,78 @@
+﻿@using UltraDES
+@inject IJSRuntime JsRuntime;
+
+
+<div>
+    <article class="message is-dark">
+        <div class="message-header">
+            <span>Plants</span>
+        </div>
+        <div style="max-height: 250px; overflow: auto;" class="message-body">
+            @foreach (var g in plants)
+            {
+                var key = g.Key;
+                <div class="field">
+                    <label class="label">
+                        <input type="checkbox" @bind="plants[key]"> Automaton @key
+                    </label>
+                </div>
+            }
+        </div>
+    </article>
+
+    <article class="message is-dark">
+        <div class="message-header">
+            <span>Specification</span>
+        </div>
+        <div style="max-height: 250px; overflow: auto;" class="message-body">
+            @foreach (var g in specs)
+            {
+                var key = g.Key;
+                <div class="field">
+                    <label class="label">
+                        <input type="checkbox" @bind="specs[key]"> Automaton @key
+                    </label>
+                </div>
+            }
+        </div>
+    </article>
+
+    <div class="buttons">
+        <button class="button is-success" @onclick="Export">Export</button>
+        <button class="button is-danger" @onclick="OnCancel">Cancel</button>
+    </div>
+</div>
+@code {
+    [Parameter] public Action OnSuccess { get; set; }
+    [Parameter] public Action OnCancel { get; set; }
+    [Parameter] public Dictionary<string, DeterministicFiniteAutomaton> Automata { get; set; }
+
+    private Dictionary<string, bool> plants;
+    private Dictionary<string, bool> specs;
+
+    protected override void OnInitialized()
+    {
+        plants = Automata.ToDictionary(kvp => kvp.Key, kvp => false);
+        specs = Automata.ToDictionary(kvp => kvp.Key, kvp => false);
+    }
+
+    private async void Export()
+    {
+        var p = plants.Where(kvp => kvp.Value).Select(kvp => Automata[kvp.Key]).ToArray();
+        var e = specs.Where(kvp => kvp.Value).Select(kvp => Automata[kvp.Key]).ToArray();
+
+        try
+        {
+            await Task.Delay(1);
+            JsRuntime.SaveFile($"system.wmod", DeterministicFiniteAutomaton.ToWmodString(p, e));
+            OnSuccess();
+        }
+        catch (Exception ex)
+        {
+            await Task.Delay(1);
+            JsRuntime.Alert($"Error: {ex.Message}");
+            OnCancel();
+        }
+
+    }
+}
