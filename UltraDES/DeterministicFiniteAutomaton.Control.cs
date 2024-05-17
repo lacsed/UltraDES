@@ -9,7 +9,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace UltraDES
@@ -721,41 +720,88 @@ namespace UltraDES
             var waitList = new HashSet<(int, int)>();
             int cnode, it = 0;
 
+            //bool CheckMergibility(int i, int j)
+            //{
+            //    if (it++ > maxIt) return false;
+
+            //    var Xp = waitList.Where(p => p.Item1 == i).Select(p => p.Item2)
+            //        .Union(waitList.Where(p => p.Item2 == i).Select(p => p.Item1))
+            //        .Aggregate((IEnumerable<int>)C[i], (acc, e) => acc.Union(C[e]));
+
+            //    foreach (var xp in Xp)
+            //    {
+            //        var Xq = waitList.Where(p => p.Item1 == j).Select(p => p.Item2)
+            //            .Union(waitList.Where(p => p.Item2 == j).Select(p => p.Item1))
+            //            .Aggregate((IEnumerable<int>)C[j], (acc, e) => acc.Union(C[e]));
+
+            //        foreach (var xq in Xq)
+            //        {
+            //            if (waitList.Contains((xp, xq)) || waitList.Contains((xq, xp))) continue;
+            //            if (!R(states[xp], states[xq])) return false;
+            //            waitList.Add((xp, xq));
+            //            var evs = transS[states[xp]].Select(t => t.Trigger)
+            //                .Intersect(transS[states[xq]].Select(t => t.Trigger));
+            //            foreach (var ev in evs)
+            //            {
+            //                var xpd = stateIdx[transS[states[xp]].Single(t => t.Trigger == ev).Destination];
+            //                var xqd = stateIdx[transS[states[xq]].Single(t => t.Trigger == ev).Destination];
+
+            //                if (xpd == xqd || waitList.Contains((xqd, xpd)) || waitList.Contains((xpd, xqd))) continue;
+            //                if (C[xpd].Min() < cnode || C[xqd].Min() < cnode) return false;
+            //                if (!CheckMergibility(xpd, xqd)) return false;
+            //            }
+            //        }
+            //    }
+
+            //    return true;
+            //}
+
             bool CheckMergibility(int i, int j)
             {
-                if (it++ > maxIt) return false;
+                var stack = new Stack<Tuple<int, int>>();
+                stack.Push(new Tuple<int, int>(i, j));
 
-                var Xp = waitList.Where(p => p.Item1 == i).Select(p => p.Item2)
-                    .Union(waitList.Where(p => p.Item2 == i).Select(p => p.Item1))
-                    .Aggregate((IEnumerable<int>)C[i], (acc, e) => acc.Union(C[e]));
-
-                foreach (var xp in Xp)
+                while (stack.Count > 0)
                 {
-                    var Xq = waitList.Where(p => p.Item1 == j).Select(p => p.Item2)
-                        .Union(waitList.Where(p => p.Item2 == j).Select(p => p.Item1))
-                        .Aggregate((IEnumerable<int>)C[j], (acc, e) => acc.Union(C[e]));
+                    if (it++ > maxIt) return false;
 
-                    foreach (var xq in Xq)
+                    var pair = stack.Pop();
+                    i = pair.Item1;
+                    j = pair.Item2;
+
+                    var Xp = waitList.Where(p => p.Item1 == i).Select(p => p.Item2)
+                        .Union(waitList.Where(p => p.Item2 == i).Select(p => p.Item1))
+                        .Aggregate((IEnumerable<int>)C[i], (acc, e) => acc.Union(C[e]));
+
+                    foreach (var xp in Xp)
                     {
-                        if (waitList.Contains((xp, xq)) || waitList.Contains((xq, xp))) continue;
-                        if (!R(states[xp], states[xq])) return false;
-                        waitList.Add((xp, xq));
-                        var evs = transS[states[xp]].Select(t => t.Trigger)
-                            .Intersect(transS[states[xq]].Select(t => t.Trigger));
-                        foreach (var ev in evs)
-                        {
-                            var xpd = stateIdx[transS[states[xp]].Single(t => t.Trigger == ev).Destination];
-                            var xqd = stateIdx[transS[states[xq]].Single(t => t.Trigger == ev).Destination];
+                        var Xq = waitList.Where(p => p.Item1 == j).Select(p => p.Item2)
+                            .Union(waitList.Where(p => p.Item2 == j).Select(p => p.Item1))
+                            .Aggregate((IEnumerable<int>)C[j], (acc, e) => acc.Union(C[e]));
 
-                            if (xpd == xqd || waitList.Contains((xqd, xpd)) || waitList.Contains((xpd, xqd))) continue;
-                            if (C[xpd].Min() < cnode || C[xqd].Min() < cnode) return false;
-                            if (!CheckMergibility(xpd, xqd)) return false;
+                        foreach (var xq in Xq)
+                        {
+                            if (waitList.Contains((xp, xq)) || waitList.Contains((xq, xp))) continue;
+                            if (!R(states[xp], states[xq])) return false;
+                            waitList.Add((xp, xq));
+                            var evs = transS[states[xp]].Select(t => t.Trigger)
+                                .Intersect(transS[states[xq]].Select(t => t.Trigger));
+                            foreach (var ev in evs)
+                            {
+                                var xpd = stateIdx[transS[states[xp]].Single(t => t.Trigger == ev).Destination];
+                                var xqd = stateIdx[transS[states[xq]].Single(t => t.Trigger == ev).Destination];
+
+                                if (xpd == xqd || waitList.Contains((xqd, xpd)) || waitList.Contains((xpd, xqd))) continue;
+                                if (C[xpd].Min() < cnode || C[xqd].Min() < cnode) return false;
+                                stack.Push(new Tuple<int, int>(xpd, xqd));
+                            }
                         }
                     }
                 }
 
                 return true;
             }
+
 
             for (int i = 0; i < states.Length; i++)
             {
@@ -767,16 +813,18 @@ namespace UltraDES
                     cnode = i;
                     const int stackSize = 10000000;
                     var flag = false;
-                    if (Multicore)
-                    {
-                        var thread = new Thread(() => flag = CheckMergibility(i, j), stackSize);
-                        thread.Start();
-                        thread.Join();
-                    }
-                    else
-                    {
-                        CheckMergibility(i, j);
-                    }
+
+                    flag = CheckMergibility(i, j);
+                    //if (Multicore)
+                    //{
+                    //    var thread = new Thread(() => flag = CheckMergibility(i, j), stackSize);
+                    //    thread.Start();
+                    //    thread.Join();
+                    //}
+                    //else
+                    //{
+                    //    flag = CheckMergibility(i, j);
+                    //}
 
                     if (!flag) continue;
 
