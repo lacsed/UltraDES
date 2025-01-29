@@ -1,13 +1,4 @@
-﻿// ***********************************************************************
-// Assembly         : UltraDES
-// Author           : Lucas Alves
-// Created          : 04-21-2020
-//
-// Last Modified By : Lucas Alves
-// Last Modified On : 05-20-2020
-// ***********************************************************************
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -120,18 +111,18 @@ splines = FALSE;
 
                 foreach (var w in edges.Where(t => equals(t.Origin, v)).Select(t => t.Destination))
                 {
-                    if (!stateIndex.ContainsKey(w))
+                    if (!stateIndex.TryGetValue(w, out var value))
                     {
                         StrongConnect(w);
                         stateLowlink[v] = (int)Math.Min(stateLowlink[v], stateLowlink[w]);
                     }
                     else if (S.Contains(w))
                     {
-                        stateLowlink[v] = (int)Math.Min(stateLowlink[v], stateIndex[w]);
+                        stateLowlink[v] = (int)Math.Min(stateLowlink[v], value);
                     }
                 }
 
-                if (stateIndex[v] == stateLowlink[v])
+                if (stateIndex[v] != stateLowlink[v]) return;
                 {
                     var component = new List<TNode>();
                     TNode w;

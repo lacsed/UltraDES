@@ -9,6 +9,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace UltraDES
 {
@@ -16,18 +17,18 @@ namespace UltraDES
     /// <summary>
     /// (Serializable)a symbol.
     /// </summary>
-    /// <remarks>Lucas Alves, 15/01/2016.</remarks>
     
-
     [Serializable]
     public abstract class Symbol : RegularExpression
     {
-        
+
+        public override RegularExpression Projection(HashSet<AbstractEvent> unobservableEvents) =>
+            unobservableEvents.Any(uo => uo == this) ? Epsilon : this;
+
         /// <summary>
         /// Gets the step simplify.
         /// </summary>
         /// <value>The step simplify.</value>
-        
 
         public override RegularExpression StepSimplify => this;
 
@@ -54,7 +55,7 @@ namespace UltraDES
         /// Returns a string that represents the current object.
         /// </summary>
         /// <returns>A string that represents the current object.</returns>
-        /// <remarks>Lucas Alves, 15/01/2016.</remarks>
+        
         
 
         public abstract override string ToString();
@@ -64,7 +65,7 @@ namespace UltraDES
         /// Serves as the default hash function.
         /// </summary>
         /// <returns>A hash code for the current object.</returns>
-        /// <remarks>Lucas Alves, 15/01/2016.</remarks>
+        
         
 
         public abstract override int GetHashCode();
@@ -75,7 +76,7 @@ namespace UltraDES
         /// </summary>
         /// <param name="obj">The object to compare with the current object.</param>
         /// <returns>true if the specified object  is equal to the current object; otherwise, false.</returns>
-        /// <remarks>Lucas Alves, 15/01/2016.</remarks>
+        
         
 
         public abstract override bool Equals(object obj);

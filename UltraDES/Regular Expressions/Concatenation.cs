@@ -47,12 +47,16 @@ namespace UltraDES
             _b = b;
         }
 
-        
+        public override RegularExpression Projection(HashSet<AbstractEvent> unobservableEvents) =>
+            new Concatenation(_a.Projection(unobservableEvents), _b.Projection(unobservableEvents));
+
+
+
         /// <summary>
         /// Gets the step simplify.
         /// </summary>
         /// <value>The step simplify.</value>
-        
+
 
         public override RegularExpression StepSimplify
         {

@@ -26,11 +26,13 @@ namespace UltraDES
         protected static int stateNumber = 0;
         private static object obj = new object();
 
+        public abstract RegularExpression Projection(HashSet<AbstractEvent> unobservableEvents);
+
         /// <summary>
         /// Gets the step simplify.
         /// </summary>
         /// <value>The step simplify.</value>
-        
+
 
         public abstract RegularExpression StepSimplify { get; }
 

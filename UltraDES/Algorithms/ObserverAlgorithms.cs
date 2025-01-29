@@ -1,12 +1,4 @@
-﻿// ***********************************************************************
-// Assembly         : UltraDES
-// Author           : Lucas Alves
-// Created          : 04-20-2020
-//
-// Last Modified By : Lucas Alves
-// Last Modified On : 04-20-2020
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -58,12 +50,12 @@ namespace UltraDES
                         : (new[] { q1, q2 }).OrderBy(qq => qq.ToString())
                         .Aggregate((a, b) => a.MergeWith(b));
 
-                    var Enq1 = new HashSet<AbstractEvent>(transitions.ContainsKey(q1)
-                        ? transitions[q1].Select(t => t.Trigger)
-                        : new AbstractEvent[0]).Distinct(); 
-                    var Enq2 = new HashSet<AbstractEvent>(transitions.ContainsKey(q2)
-                        ? transitions[q2].Select(t => t.Trigger)
-                        : new AbstractEvent[0]).Distinct();
+                    var Enq1 = new HashSet<AbstractEvent>(transitions.TryGetValue(q1, out var transition)
+                        ? transition.Select(t => t.Trigger)
+                        : Array.Empty<AbstractEvent>()).Distinct(); 
+                    var Enq2 = new HashSet<AbstractEvent>(transitions.TryGetValue(q2, out var transition1)
+                        ? transition1.Select(t => t.Trigger)
+                        : Array.Empty<AbstractEvent>()).Distinct();
 
                     foreach (var sigma in Enq1.Union(Enq2))
                     {
@@ -245,12 +237,12 @@ namespace UltraDES
 
                     var (q1, q2) = q;
 
-                    var Enq1 = new HashSet<AbstractEvent>(transitions.ContainsKey(q1)
-                        ? transitions[q1].Select(t => t.Trigger)
-                        : new AbstractEvent[0]).Distinct();
-                    var Enq2 = new HashSet<AbstractEvent>(transitions.ContainsKey(q2)
-                        ? transitions[q2].Select(t => t.Trigger)
-                        : new AbstractEvent[0]).Distinct();
+                    var Enq1 = new HashSet<AbstractEvent>(transitions.TryGetValue(q1, out var transition)
+                        ? transition.Select(t => t.Trigger)
+                        : Array.Empty<AbstractEvent>()).Distinct();
+                    var Enq2 = new HashSet<AbstractEvent>(transitions.TryGetValue(q2, out var transition1)
+                        ? transition1.Select(t => t.Trigger)
+                        : Array.Empty<AbstractEvent>()).Distinct();
 
                     foreach (var sigma in Enq1.Union(Enq2))
                     {
@@ -385,7 +377,7 @@ namespace UltraDES
                 }
 
                 // If v is a root node, pop the stack and generate an SCC
-                if (stateIndex[v] == stateLowlink[v])
+                if (stateIndex[v] != stateLowlink[v]) return;
                 {
                     var component = new List<AbstractState>();
                     AbstractState w;
@@ -396,15 +388,12 @@ namespace UltraDES
                     } while (w != v);
                     components.Add(component);
                 }
-                    
+
             }
 
             foreach (var s in states)
             {
-                if (!stateIndex.ContainsKey(s))
-                {
-                    StrongConnect(s);
-                }
+                if (!stateIndex.ContainsKey(s)) StrongConnect(s);
             }
 
             return components;

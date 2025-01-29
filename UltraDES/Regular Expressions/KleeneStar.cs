@@ -28,13 +28,16 @@ namespace UltraDES
         /// </summary>
         private readonly RegularExpression _a;
 
-        
+        public override RegularExpression Projection(HashSet<AbstractEvent> unobservableEvents) =>
+            new KleeneStar(_a.Projection(unobservableEvents));
+
+
         /// <summary>
         /// Constructor.
         /// </summary>
         /// <param name="a">The RegularExpression to process.</param>
         /// <remarks>Lucas Alves, 15/01/2016.</remarks>
-        
+
 
         public KleeneStar(RegularExpression a)
         {
