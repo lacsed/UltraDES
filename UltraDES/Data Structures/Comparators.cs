@@ -1,15 +1,5 @@
-// ***********************************************************************
-// Assembly         : UltraDES
-// Author           : Lucas Alves
-// Created          : 04-20-2020
-//
-// Last Modified By : Lucas Alves
-// Last Modified On : 05-20-2020
-// ***********************************************************************
-
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace UltraDES
 {
@@ -45,6 +35,8 @@ namespace UltraDES
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public bool Equals(StatesTuple a, StatesTuple b)
         {
+            if (a.MData == null || b.MData == null) return false;
+            if (a.MData.Length != b.MData.Length) return false;
             for (var i = a.MData.Length - 1; i >= 0; --i)
             {
                 if (a.MData[i] != b.MData[i])
@@ -60,12 +52,13 @@ namespace UltraDES
         /// <returns>A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.</returns>
         public int GetHashCode(StatesTuple obj)
         {
-            uint p = obj.MData[0];
-            for (int i = obj.MData.Length - 1; i > 0; --i)
+            if (obj.MData == null) return 0;
+            unchecked
             {
-                p = (p << 3) + ~p + (obj.MData[i] << 2) + ~obj.MData[i];
+                int hash = 17;
+                foreach (var x in obj.MData) hash = hash * 31 + (int)x;
+                return hash;
             }
-            return (int)p;
         }
     }
 
@@ -80,7 +73,7 @@ namespace UltraDES
         /// <summary>
         /// The m instance
         /// </summary>
-        private static IntListComparator _mInstance = null;
+        private static IntListComparator _mInstance;
 
         /// <summary>
         /// Prevents a default instance of the <see cref="IntListComparator"/> class from being created.
@@ -91,11 +84,7 @@ namespace UltraDES
         /// Gets the instance.
         /// </summary>
         /// <returns>IntListComparator.</returns>
-        public static IntListComparator getInstance()
-        {
-            if (_mInstance == null) _mInstance = new IntListComparator();
-            return _mInstance;
-        }
+        public static IntListComparator getInstance() => _mInstance ??= new IntListComparator();
 
         /// <summary>
         /// Equalses the specified a.
@@ -106,9 +95,14 @@ namespace UltraDES
         public bool Equals(List<int> a, List<int> b)
         {
             if (ReferenceEquals(a, b)) return true;
+            if (a == null || b == null) return false;
             if (a.Count != b.Count) return false;
-            return !a.Where((t, i) => t != b[i]).Any();
+
+            for (int i = 0; i < a.Count; i++)
+                if (a[i] != b[i]) return false;
+            return true;
         }
+
 
         /// <summary>
         /// Returns a hash code for this instance.
@@ -117,7 +111,12 @@ namespace UltraDES
         /// <returns>A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.</returns>
         public int GetHashCode(List<int> obj)
         {
-            return obj.Aggregate(obj.Count, (current, t) => (current << 3) + ~current + t.GetHashCode());
+            unchecked
+            {
+                int hash = 17;
+                foreach (var x in obj) hash = hash * 31 + x;
+                return hash;
+            }
         }
     }
 }
@@ -144,10 +143,7 @@ public class IntArrayComparator : IEqualityComparer<int[]>
     /// Gets the instance.
     /// </summary>
     /// <returns>IntArrayComparator.</returns>
-    public static IntArrayComparator GetInstance()
-    {
-        return _mInstance ?? (_mInstance = new IntArrayComparator());
-    }
+    public static IntArrayComparator GetInstance() => _mInstance ??= new IntArrayComparator();
 
     /// <summary>
     /// Equalses the specified a.
@@ -158,9 +154,14 @@ public class IntArrayComparator : IEqualityComparer<int[]>
     public bool Equals(int[] a, int[] b)
     {
         if (ReferenceEquals(a, b)) return true;
+        if (a == null || b == null) return false;
         if (a.Length != b.Length) return false;
-        return !a.Where((t, i) => t != b[i]).Any();
+
+        for (int i = 0; i < a.Length; i++)
+            if (a[i] != b[i]) return false;
+        return true;
     }
+
 
     /// <summary>
     /// Returns a hash code for this instance.
@@ -169,6 +170,11 @@ public class IntArrayComparator : IEqualityComparer<int[]>
     /// <returns>A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.</returns>
     public int GetHashCode(int[] obj)
     {
-        return obj.Aggregate(obj.Length, (current, t) => (current << 3) + ~current + t.GetHashCode());
+        unchecked
+        {
+            int hash = 17;
+            foreach (var x in obj) hash = hash * 31 + x;
+            return hash;
+        }
     }
 }

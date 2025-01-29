@@ -6,8 +6,8 @@ using UltraDES;
 
 // Top-level statements
 TestComputingMonolithicSupervisor();
-//TestComputingModularSupervisor();
-//TestComputingModularReducedSupervisor();
+TestComputingModularSupervisor();
+TestComputingModularReducedSupervisor();
 
 // this is used to prevent the program from closing immediately
 Console.ReadLine();

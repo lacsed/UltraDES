@@ -9,6 +9,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace UltraDES
@@ -273,25 +274,21 @@ namespace UltraDES
             _statesStack.Push(initialIndex);
             _removeBadStates.Push(false);
 
-            var vThreads = new Task[NumberOfThreads - 1];
-
-            for (var i = 0; i < NumberOfThreads - 1; ++i) vThreads[i] = Task.Factory.StartNew(() => FindStates(nPlant));
+            var tasks = new Task[NumberOfThreads-1];
+            for (var i = 0; i < NumberOfThreads-1; ++i) tasks[i] = Task.Factory.StartNew(() => FindStates(nPlant));
 
             FindStates(nPlant);
+            Task.WaitAll(tasks);
 
-            for (var i = 0; i < NumberOfThreads - 1; ++i) vThreads[i].Wait();
-
-            foreach (var s in _validStates.Reverse())
-                if (s.Value)
-                    _validStates.Remove(s.Key);
+            foreach (var s in _validStates.Where(s => s.Value)) 
+                _validStates.Remove(s.Key);
 
             bool vNewBadStates;
             do
             {
                 vNewBadStates = DepthFirstSearch(false, true);
-                GC.Collect();
-                if (nonBlocking)
-                    vNewBadStates |= RemoveBlockingStates(true);
+                
+                if (nonBlocking) vNewBadStates |= RemoveBlockingStates(true);
             } while (vNewBadStates);
         }
 
@@ -302,9 +299,9 @@ namespace UltraDES
         /// <returns><c>true</c> if the specified supervisors is conflicting; otherwise, <c>false</c>.</returns>
         public static bool IsConflicting(IEnumerable<DFA> supervisors)
         {
-            Parallel.ForEach(supervisors, new ParallelOptions{MaxDegreeOfParallelism = NumberOfThreads}, s => s.Simplify());
+            //Parallel.ForEach(supervisors, new ParallelOptions{MaxDegreeOfParallelism = NumberOfThreads}, s => s.Simplify());
 
-            var composition = supervisors.Aggregate((a, b) => a.ParallelCompositionWith(b));
+            var composition = ParallelComposition(supervisors);
             var oldSize = composition.Size;
             composition.RemoveBlockingStates();
             return composition.Size != oldSize;
@@ -336,7 +333,7 @@ namespace UltraDES
         /// <exception cref="Exception">conflicting supervisors</exception>
         public static IEnumerable<DFA> LocalModularSupervisor(IEnumerable<DFA> plants, IEnumerable<DFA> specifications, IEnumerable<DFA> conflictResolvingSupervisor = null)
         {
-            conflictResolvingSupervisor ??= new DFA[0];
+            conflictResolvingSupervisor ??= Array.Empty<DFA>();
 
             var supervisors = specifications.AsParallel().WithDegreeOfParallelism(NumberOfThreads).Select(e => MonolithicSupervisor(plants.Where(p => p._eventsUnion.Intersect(e._eventsUnion).Any()), new[] {e})).ToList();
 
@@ -430,8 +427,6 @@ namespace UltraDES
         {
             MakeReverseTransitions();
             int n = _statesList.Count, i;
-            _numberOfRunningThreads = 0;
-            var threads = new Task[NumberOfThreads - 1];
 
             var markedStates = new List<int>[n];
             var pos = new int[n];
@@ -472,37 +467,33 @@ namespace UltraDES
 
             markedStates = null;
             Size = 0;
+            _numberOfRunningThreads = 0;
+            var tasks = new Task[NumberOfThreads - 1];
 
             for (i = 0; i < NumberOfThreads - 1; ++i)
-                threads[i] = Task.Factory.StartNew(() => InverseSearchThread(vNotCheckValidState));
+                tasks[i] = Task.Factory.StartNew(() => InverseSearchThread(vNotCheckValidState));
 
             InverseSearchThread(vNotCheckValidState);
 
-            for (i = 0; i < NumberOfThreads - 1; ++i) threads[i].Wait();
+            Task.WaitAll(tasks);
 
             _statesStack = null;
-            var v_newBadStates = false;
+            var vNewBadStates = false;
             var uncontrollableEventsCount = UncontrollableEvents.Count();
 
             if (checkForBadStates)
             {
-                var removedStates = new List<StatesTuple>();
-                foreach (var p in _validStates)
-                    if (!p.Value)
-                        removedStates.Add(p.Key);
-                foreach (var p in removedStates) v_newBadStates |= RemoveBadStates(p, uncontrollableEventsCount, true);
+                var removedStates = (_validStates.Where(p => !p.Value).Select(p => p.Key)).ToList();
+                vNewBadStates = removedStates.Aggregate(vNewBadStates, (current, p) => current | RemoveBadStates(p, uncontrollableEventsCount, true));
             }
 
             _reverseTransitionsList = null;
 
-            foreach (var p in _validStates.Reverse())
-                if (!p.Value)
-                    _validStates.Remove(p.Key);
-                else
-                    _validStates[p.Key] = false;
+            foreach (var p in _validStates)
+                if (!p.Value) _validStates.Remove(p.Key);
+                else _validStates[p.Key] = false;
 
-            GC.Collect();
-            return v_newBadStates;
+            return vNewBadStates;
         }
 
         private static Dictionary<AbstractState, AbstractState> SupervisorPlantState(DFA sup, DFA plant, HashSet<AbstractState> forbidden)

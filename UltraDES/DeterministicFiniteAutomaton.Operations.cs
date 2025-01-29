@@ -1,17 +1,7 @@
-﻿// ***********************************************************************
-// Assembly         : UltraDES
-// Author           : Lucas Alves
-// Created          : 04-22-2020
-//
-// Last Modified By : Lucas Alves
-// Last Modified On : 05-20-2020
-// ***********************************************************************
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace UltraDES
 {
@@ -147,7 +137,7 @@ namespace UltraDES
                 }
             }
 
-            Size = (ulong) _validStates.Count;
+            Size = _validStates.Count;
         }
 
         /// <summary>
@@ -224,15 +214,17 @@ namespace UltraDES
             return G12;
         }
 
+        static readonly int[] multiplyDeBruijnBitPosition2 =
+        [
+            1,
+            1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8, 31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18,
+            6, 11, 5, 10, 9
+        ];
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int MinNumOfBits(int n)
         {
-            var MultiplyDeBruijnBitPosition2 = new[]
-            {
-                1,
-                1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8, 31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18,
-                6, 11, 5, 10, 9
-            };
+            
 
             var v = (uint) n;
             v--;
@@ -243,7 +235,7 @@ namespace UltraDES
             v |= v >> 16;
             v++;
 
-            return MultiplyDeBruijnBitPosition2[(v * 0x077CB531U) >> 27];
+            return multiplyDeBruijnBitPosition2[(v * 0x077CB531U) >> 27];
         }
 
         /// <summary>
@@ -417,86 +409,7 @@ namespace UltraDES
         /// </summary>
         /// <param name="removeEvents">The remove events.</param>
         /// <returns>DFA.</returns>
-        public DFA Projection(params AbstractEvent[] removeEvents)
-        {
-            return Projection((IEnumerable<AbstractEvent>) removeEvents);
-        }
-
-        /// <summary>
-        /// Projections the states.
-        /// </summary>
-        /// <param name="evs">The evs.</param>
-        /// <param name="statesMap">The states map.</param>
-        /// <param name="newStatesList">The new states list.</param>
-        private void projectionStates(int[] evs, out int[] statesMap, out List<int>[] newStatesList)
-        {
-            var size = (int) Size;
-            var newStates = new List<List<int>>();
-            statesMap = new int[size];
-            var numInvalid = 0;
-
-            for (var i = 0; i < size; ++i) statesMap[i] = -1;
-
-            for (var i = 0; i < size; ++i)
-            {
-                var currentPosition = statesMap[i];
-                if (currentPosition == -1)
-                {
-                    var newGroup = new List<int> {i};
-                    newStates.Add(newGroup);
-                    currentPosition = newStates.Count - 1;
-                    statesMap[i] = currentPosition;
-                }
-
-                foreach (var e in evs)
-                {
-                    if (!_adjacencyList[0].HasEvent(i, e)) continue;
-
-                    var next = _adjacencyList[0][i, e];
-                    var newNext = statesMap[next];
-                    if (newNext == -1)
-                    {
-                        newStates[currentPosition].Add(next);
-                        statesMap[next] = currentPosition;
-                    }
-                    else if (newNext != currentPosition)
-                    {
-                        if (newStates[currentPosition].Count < newStates[newNext].Count)
-                        {
-                            var aux = newNext;
-                            newNext = currentPosition;
-                            currentPosition = aux;
-                        }
-
-                        foreach (var st in newStates[newNext])
-                        {
-                            newStates[currentPosition].Add(st);
-                            statesMap[st] = currentPosition;
-                        }
-
-                        newStates[newNext] = null;
-                        ++numInvalid;
-                    }
-                }
-            }
-
-            newStatesList = new List<int>[newStates.Count - numInvalid];
-
-            var k = -1;
-            var initialPos = statesMap[0];
-            if (initialPos != 0)
-            {
-                newStatesList[++k] = newStates[initialPos];
-                foreach (var st in newStatesList[k]) statesMap[st] = k;
-                newStates[initialPos] = null;
-            }
-
-            foreach (var t in newStates.Where(t => t != null))
-            {
-                newStatesList[++k] = t;
-                foreach (var st in newStatesList[k]) statesMap[st] = k;
-            }
-        }
+        public DFA Projection(params AbstractEvent[] removeEvents) => Projection((IEnumerable<AbstractEvent>) removeEvents);
 
         public static bool Isomorphism(DFA G1, DFA G2)
         {

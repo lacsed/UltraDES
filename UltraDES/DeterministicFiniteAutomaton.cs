@@ -7,9 +7,11 @@
 // Last Modified On : 05-20-2020
 // ***********************************************************************
 using System;
+using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -32,7 +34,7 @@ namespace UltraDES
         /// <summary>
         /// The number of threads
         /// </summary>
-        private static int NumberOfThreads => Multicore ? Math.Max(2, 2*Environment.ProcessorCount) : 1;
+        private static int NumberOfThreads => Multicore ? Math.Max(2, 10 * Environment.ProcessorCount) : 1;
 
         /// <summary>
         /// The adjacency list
@@ -47,17 +49,7 @@ namespace UltraDES
         /// <summary>
         /// The lock object
         /// </summary>
-        private readonly object _lockObject = new object();
-
-        /// <summary>
-        /// The lock object2
-        /// </summary>
-        private readonly object _lockObject2 = new object();
-
-        /// <summary>
-        /// The lock object3
-        /// </summary>
-        private readonly object _lockObject3 = new object();
+        private readonly object _lockObject = new();
 
         /// <summary>
         /// The states list
@@ -73,10 +65,12 @@ namespace UltraDES
         /// The events union
         /// </summary>
         private AbstractEvent[] _eventsUnion;
+
         /// <summary>
         /// The maximum size
         /// </summary>
         private int[] _maxSize;
+
         /// <summary>
         /// The number of plants
         /// </summary>
@@ -101,6 +95,7 @@ namespace UltraDES
         /// The states stack
         /// </summary>
         private Stack<StatesTuple> _statesStack;
+
         /// <summary>
         /// The tuple size
         /// </summary>
@@ -117,31 +112,33 @@ namespace UltraDES
         /// <param name="transitions">The transitions.</param>
         /// <param name="initial">The initial.</param>
         /// <param name="name">The name.</param>
-        public DeterministicFiniteAutomaton(IEnumerable<(AbstractState, AbstractEvent, AbstractState)> transitions, AbstractState initial, string name) : 
+        public DeterministicFiniteAutomaton(IEnumerable<(AbstractState, AbstractEvent, AbstractState)> transitions,
+            AbstractState initial, string name) :
             this(transitions.Select(t => (Transition)t), initial, name)
-        { }
+        {
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="DeterministicFiniteAutomaton"/> class.
         /// </summary>
         /// <param name="transitions">The transitions.</param>
         /// <param name="initial">The initial.</param>
         /// <param name="name">The name.</param>
-        public DeterministicFiniteAutomaton(IEnumerable<Transition> transitions, AbstractState initial, string name) : this(1)
+        public DeterministicFiniteAutomaton(IEnumerable<Transition> transitions, AbstractState initial, string name) :
+            this(1)
         {
             Name = name;
 
             var transitionsLocal = transitions as Transition[] ?? transitions.ToArray();
 
-            _statesList.Add(transitionsLocal.SelectMany(t => new[] {t.Origin, t.Destination}).Union(new[] {initial})
+            _statesList.Add(transitionsLocal.SelectMany(t => new[] { t.Origin, t.Destination }).Union(new[] { initial })
                 .Distinct().ToArray());
             _eventsUnion = transitionsLocal.Select(t => t.Trigger).Distinct().OrderBy(i => i.Controllability).ToArray();
             _adjacencyList.Add(new AdjacencyMatrix(_statesList[0].Length, _eventsUnion.Length));
             var initialIdx = Array.IndexOf(_statesList[0], initial);
             if (initialIdx != 0)
             {
-                var aux = _statesList[0][0];
-                _statesList[0][0] = _statesList[0][initialIdx];
-                _statesList[0][initialIdx] = aux;
+                (_statesList[0][0], _statesList[0][initialIdx]) = (_statesList[0][initialIdx], _statesList[0][0]);
             }
 
             var events = new bool[_eventsUnion.Length];
@@ -150,7 +147,7 @@ namespace UltraDES
                 events[i] = true;
             _eventsList.Add(events);
 
-            Size = (ulong) _statesList[0].Length;
+            Size = _statesList[0].Length;
 
             _bits[0] = 0;
             _maxSize[0] = (1 << MinNumOfBits(_statesList[0].Length)) - 1;
@@ -158,8 +155,11 @@ namespace UltraDES
 
             for (var i = 0; i < _statesList[0].Length; ++i)
             {
-                _adjacencyList[0].Add(i, transitionsLocal.AsParallel().WithDegreeOfParallelism(NumberOfThreads).Where(t => t.Origin == _statesList[0][i]).Select(t =>
-                            Tuple.Create(Array.IndexOf(_eventsUnion, t.Trigger), Array.IndexOf(_statesList[0], t.Destination))).ToArray());
+                _adjacencyList[0].Add(i,
+                    transitionsLocal.AsParallel().WithDegreeOfParallelism(NumberOfThreads)
+                        .Where(t => t.Origin == _statesList[0][i]).Select(t =>
+                            (Array.IndexOf(_eventsUnion, t.Trigger),
+                                Array.IndexOf(_statesList[0], t.Destination))).ToArray());
             }
         }
 
@@ -230,7 +230,13 @@ namespace UltraDES
         /// Gets the size.
         /// </summary>
         /// <value>The size.</value>
-        public ulong Size { get; private set; }
+        public long Size
+        {
+            get => _size;
+            set => _size = value;
+        }
+
+        private long _size = 0;
 
         /// <summary>
         /// Gets the states.
@@ -263,8 +269,8 @@ namespace UltraDES
 
         public string ToFormattedDotCode(IEnumerable<(AbstractState q, SVGColors c)> stateColor, IEnumerable<(Transition t, SVGColors c, GraphVizStyle s)> transitionStyle = null)
         {
-            stateColor ??= new (AbstractState q, SVGColors c)[0];
-            transitionStyle ??= new (Transition t, SVGColors c, GraphVizStyle s)[0];
+            stateColor ??= Array.Empty<(AbstractState q, SVGColors c)>();
+            transitionStyle ??= Array.Empty<(Transition t, SVGColors c, GraphVizStyle s)>();
 
             var styleState = stateColor.ToDictionary(s => s.q, s => s.c);
             var styleTrans = transitionStyle.ToDictionary(s => s.t, s => (s.c, s.s));
@@ -277,7 +283,7 @@ namespace UltraDES
 
             foreach (var q in states)
             {
-                var style = styleState.ContainsKey(q) ? $" style = filled fillcolor = {styleState[q]}" : "";
+                var style = styleState.TryGetValue(q, out var value) ? $" style = filled fillcolor = {value}" : "";
                 dot.Append($"\n\t\"{q}\" [shape = {(q.IsMarked ? "doublecircle" : "circle")}{style}];");
             }
             
@@ -307,8 +313,8 @@ namespace UltraDES
 
         public string ToFormattedDotCode(IEnumerable<(AbstractState q, SVGColors c)> stateColor, IEnumerable<(AbstractEvent e, SVGColors c)> eventStyle = null)
         {
-            stateColor ??= new (AbstractState q, SVGColors c)[0];
-            eventStyle ??= new (AbstractEvent e, SVGColors c)[0];
+            stateColor ??= Array.Empty<(AbstractState q, SVGColors c)>();
+            eventStyle ??= Array.Empty<(AbstractEvent e, SVGColors c)>();
 
             var styleState = stateColor.ToDictionary(s => s.q, s => s.c);
             var styleTrans = eventStyle.ToDictionary(s => s.e, s => s.c);
@@ -321,7 +327,7 @@ namespace UltraDES
 
             foreach (var q in states)
             {
-                var style = styleState.ContainsKey(q) ? $" style = filled fillcolor = {styleState[q]}" : "";
+                var style = styleState.TryGetValue(q, out var value) ? $" style = filled fillcolor = {value}" : "";
                 dot.Append($"\n\t\"{q}\" [shape = {(q.IsMarked ? "doublecircle" : "circle")}{style}];");
             }
 
@@ -367,7 +373,7 @@ namespace UltraDES
                 dot.Append("\nnode [shape = circle];");
 
                 var n = _statesList.Count;
-                var pos = new int[n];
+                int[] pos = new int[n];
 
                 var addTransitions = new Action(() =>
                 {
@@ -488,8 +494,8 @@ namespace UltraDES
                 {
                     if (e == Epsilon.EpsilonEvent) return Some<AbstractState>.Create(s);
                     var p = s as CompoundState;
-                    var S = p != null ? p.S : new[] {s};
-                    if (n == 1 && S.Length > 1) S = new[] {p.Join()};
+                    var S = p != null ? p.S : [s];
+                    if (n == 1 && S.Length > 1) S = [p.Join()];
 
                     if (S.Length != n) return None<AbstractState>.Create();
 
@@ -632,13 +638,13 @@ namespace UltraDES
             _validStates[initialState] = true;
             _statesStack.Push(initialState);
 
-            var threads = new Task[NumberOfThreads - 1];
+            var task = new Task[NumberOfThreads-1];
 
-            for (var i = 0; i < NumberOfThreads - 1; ++i)
-                threads[i] = Task.Factory.StartNew(() => DepthFirstSearchThread(acceptAllStates));
+            for (var i = 0; i < NumberOfThreads-1; ++i)
+                task[i] = Task.Factory.StartNew(() => DepthFirstSearchThread(acceptAllStates));
 
             DepthFirstSearchThread(acceptAllStates);
-            for (var i = 0; i < NumberOfThreads - 1; ++i) threads[i].Wait();
+            Task.WaitAll(task);
 
             _statesStack = null;
 
@@ -668,64 +674,55 @@ namespace UltraDES
 
             while (true)
             {
-                lock (_lockObject) ++_numberOfRunningThreads;
-
-                while (true)
+                StatesTuple tuple;
+                lock (_lockObject)
                 {
-                    StatesTuple tuple;
-                    lock (_lockObject)
+                    if (_statesStack.Count == 0) break;
+                    tuple = _statesStack.Pop();
+                }
+
+                ++length;
+                tuple.Get(pos, _bits, _maxSize);
+
+                int e;
+                for (e = 0; e < _eventsUnion.Length; ++e)
+                {
+                    var nextEvent = false;
+                    int i;
+                    for (i = n - 1; i >= 0; --i)
                     {
-                        if (_statesStack.Count == 0) break;
-                        tuple = _statesStack.Pop();
+                        if (!_eventsList[i][e])
+                            nextPosition[i] = pos[i];
+                        else if (_adjacencyList[i].HasEvent(pos[i], e))
+                            nextPosition[i] = _adjacencyList[i][pos[i], e];
+                        else
+                        {
+                            nextEvent = true;
+                            break;
+                        }
                     }
 
-                    ++length;
-                    tuple.Get(pos, _bits, _maxSize);
-
-                    int e;
-                    for (e = 0; e < _eventsUnion.Length; ++e)
+                    if (nextEvent) continue;
+                    tuple = new StatesTuple(nextPosition, _bits, _tupleSize);
+                    lock (_lockObject)
                     {
-                        var nextEvent = false;
-                        int i;
-                        for (i = n - 1; i >= 0; --i)
+                        if (_validStates.TryGetValue(tuple, out var invalid))
                         {
-                            if (!_eventsList[i][e])
-                                nextPosition[i] = pos[i];
-                            else if (_adjacencyList[i].HasEvent(pos[i], e))
-                                nextPosition[i] = _adjacencyList[i][pos[i], e];
-                            else
-                            {
-                                nextEvent = true;
-                                break;
-                            }
+                            if (invalid) continue;
+                            _validStates[tuple] = true;
+                            _statesStack.Push(tuple);
                         }
-
-                        if (nextEvent) continue;
-                        tuple = new StatesTuple(nextPosition, _bits, _tupleSize);
-                        lock (_lockObject)
+                        else if (acceptAllStates)
                         {
-                            if (_validStates.TryGetValue(tuple, out var invalid))
-                            {
-                                if (invalid) continue;
-                                _validStates[tuple] = true;
-                                _statesStack.Push(tuple);
-                            }
-                            else if (acceptAllStates)
-                            {
-                                _validStates[tuple] = true;
-                                _statesStack.Push(tuple);
-                            }
+                            _validStates[tuple] = true;
+                            _statesStack.Push(tuple);
                         }
                     }
                 }
-
-                lock (_lockObject) --_numberOfRunningThreads;
-
-                if (_numberOfRunningThreads > 0) Thread.Sleep(1);
-                else break;
             }
 
-            lock (_lockObject) Size += (ulong) length;
+            Interlocked.Add(ref _size, length);
+            
         }
 
         /// <summary>
@@ -766,147 +763,135 @@ namespace UltraDES
             var uncontrollableEventsCount = UncontrollableEvents.Count();
             var nextStates = new StatesTuple[uncontrollableEventsCount];
 
+
             while (true)
             {
-                lock (_lockObject) ++_numberOfRunningThreads;
-
-                while (true)
+                var nextState = false;
+                StatesTuple tuple;
+                bool vRemoveBadStates;
+                lock (_lockObject)
                 {
-                    var nextState = false;
-                    StatesTuple tuple;
-                    bool vRemoveBadStates;
-                    lock (_lockObject)
+                    if (_statesStack.Count == 0) break;
+                    tuple = _statesStack.Pop();
+                    vRemoveBadStates = _removeBadStates.Pop();
+                    if (_validStates.ContainsKey(tuple)) continue;
+                    tuple.Get(pos, _bits, _maxSize);
+                }
+
+                var k = 0;
+
+                for (var e = 0; e < uncontrollableEventsCount; ++e)
+                {
+                    var nextEvent = false;
+                    var plantHasEvent = false;
+
+                    for (var i = 0; i < nPlant; ++i)
                     {
-                        if (_statesStack.Count == 0) break;
-                        tuple = _statesStack.Pop();
-                        vRemoveBadStates = _removeBadStates.Pop();
-                        if (_validStates.ContainsKey(tuple)) continue;
-                        tuple.Get(pos, _bits, _maxSize);
+                        if (!_eventsList[i][e])
+                            nextPosition[i] = pos[i];
+                        else if (_adjacencyList[i].HasEvent(pos[i], e))
+                        {
+                            nextPosition[i] = _adjacencyList[i][pos[i], e];
+                            plantHasEvent = true;
+                        }
+                        else
+                        {
+                            nextEvent = true;
+                            break;
+                        }
                     }
 
-                    var k = 0;
+                    if (nextEvent) continue;
 
-                    for (var e = 0; e < uncontrollableEventsCount; ++e)
+                    for (var i = nPlant; i < n; ++i)
                     {
-                        var nextEvent = false;
-                        var plantHasEvent = false;
-
-                        for (var i = 0; i < nPlant; ++i)
+                        if (!_eventsList[i][e])
+                            nextPosition[i] = pos[i];
+                        else if (_adjacencyList[i].HasEvent(pos[i], e))
+                            nextPosition[i] = _adjacencyList[i][pos[i], e];
+                        else
                         {
-                            if (!_eventsList[i][e])
-                                nextPosition[i] = pos[i];
-                            else if (_adjacencyList[i].HasEvent(pos[i], e))
-                            {
-                                nextPosition[i] = _adjacencyList[i][pos[i], e];
-                                plantHasEvent = true;
-                            }
-                            else
+                            if (!plantHasEvent)
                             {
                                 nextEvent = true;
                                 break;
                             }
+
+                            if (vRemoveBadStates) RemoveBadStates(tuple, uncontrollableEventsCount);
+                            nextState = true;
+                            break;
                         }
+                    }
 
-                        if (nextEvent) continue;
+                    if (nextState) break;
+                    if (nextEvent) continue;
 
-                        for (var i = nPlant; i < n; ++i)
+                    nextStates[k++] = new StatesTuple(nextPosition, _bits, _tupleSize);
+                }
+
+                if (nextState) continue;
+
+                lock (_lockObject)
+                {
+                    if (_validStates.ContainsKey(tuple)) continue;
+
+                    var j = 0;
+                    for (var i = 0; i < k; ++i)
+                    {
+                        if (!_validStates.TryGetValue(nextStates[i], out var vValue))
                         {
-                            if (!_eventsList[i][e])
-                                nextPosition[i] = pos[i];
-                            else if (_adjacencyList[i].HasEvent(pos[i], e))
-                                nextPosition[i] = _adjacencyList[i][pos[i], e];
-                            else
-                            {
-                                if (!plantHasEvent)
-                                {
-                                    nextEvent = true;
-                                    break;
-                                }
-
-                                if (vRemoveBadStates) RemoveBadStates(tuple, uncontrollableEventsCount);
-                                nextState = true;
-                                break;
-                            }
+                            _statesStack.Push(nextStates[i]);
+                            _removeBadStates.Push(true);
+                            ++j;
                         }
+                        else if (vValue)
+                        {
+                            while (--j >= 0)
+                            {
+                                _statesStack.Pop();
+                                _removeBadStates.Pop();
+                            }
 
-                        if (nextState) break;
-
-                        if (nextEvent) continue;
-
-                        nextStates[k++] = new StatesTuple(nextPosition, _bits, _tupleSize);
+                            _validStates.Add(tuple, true);
+                            RemoveBadStates(tuple, uncontrollableEventsCount);
+                            nextState = true;
+                            break;
+                        }
                     }
 
                     if (nextState) continue;
 
-                    lock (_lockObject)
-                    {
-                        if (_validStates.ContainsKey(tuple))
-                            continue;
-
-                        var j = 0;
-                        for (var i = 0; i < k; ++i)
-                        {
-                            if (!_validStates.TryGetValue(nextStates[i], out var vValue))
-                            {
-                                _statesStack.Push(nextStates[i]);
-                                _removeBadStates.Push(true);
-                                ++j;
-                            }
-                            else if (vValue)
-                            {
-                                while (--j >= 0)
-                                {
-                                    _statesStack.Pop();
-                                    _removeBadStates.Pop();
-                                }
-
-                                _validStates.Add(tuple, true);
-                                RemoveBadStates(tuple, uncontrollableEventsCount);
-                                nextState = true;
-                                break;
-                            }
-                        }
-
-                        if (nextState) continue;
-
-                        _validStates.Add(tuple, false);
-                    }
-
-                    for (var e = uncontrollableEventsCount; e < _eventsUnion.Length; ++e)
-                    {
-                        var nextEvent = false;
-                        for (var i = 0; i < n; ++i)
-                        {
-                            if (!_eventsList[i][e])
-                                nextPosition[i] = pos[i];
-                            else if (_adjacencyList[i].HasEvent(pos[i], e))
-                                nextPosition[i] = _adjacencyList[i][pos[i], e];
-                            else
-                            {
-                                nextEvent = true;
-                                break;
-                            }
-                        }
-
-                        if (nextEvent) continue;
-                        var nextTuple = new StatesTuple(nextPosition, _bits, _tupleSize);
-
-                        lock (_lockObject)
-                        {
-                            if (!_validStates.ContainsKey(nextTuple))
-                            {
-                                _statesStack.Push(nextTuple);
-                                _removeBadStates.Push(false);
-                            }
-                        }
-                    }
+                    _validStates.Add(tuple, false);
                 }
 
-                lock (_lockObject) --_numberOfRunningThreads;
+                for (var e = uncontrollableEventsCount; e < _eventsUnion.Length; ++e)
+                {
+                    var nextEvent = false;
+                    for (var i = 0; i < n; ++i)
+                    {
+                        if (!_eventsList[i][e])
+                            nextPosition[i] = pos[i];
+                        else if (_adjacencyList[i].HasEvent(pos[i], e))
+                            nextPosition[i] = _adjacencyList[i][pos[i], e];
+                        else
+                        {
+                            nextEvent = true;
+                            break;
+                        }
+                    }
 
-                if (_numberOfRunningThreads > 0) Thread.Sleep(1);
-                else break;
+                    if (nextEvent) continue;
+                    var nextTuple = new StatesTuple(nextPosition, _bits, _tupleSize);
+
+                    lock (_lockObject)
+                    {
+                        if (_validStates.ContainsKey(nextTuple)) continue;
+                        _statesStack.Push(nextTuple);
+                        _removeBadStates.Push(false);
+                    }
+                }
             }
+
         }
 
 
@@ -1009,6 +994,7 @@ namespace UltraDES
             }
         }
 
+       
         /// <summary>
         /// Increments the position.
         /// </summary>
@@ -1028,6 +1014,7 @@ namespace UltraDES
             return false;
         }
 
+        
         /// <summary>
         /// Inverses the search thread.
         /// </summary>
@@ -1044,76 +1031,58 @@ namespace UltraDES
 
             while (true)
             {
+                StatesTuple tuple;
                 lock (_lockObject)
                 {
-                    ++_numberOfRunningThreads;
+                    if (_statesStack.Count == 0) break;
+                    tuple = _statesStack.Pop();
+                    
                 }
+                tuple.Get(pos, _bits, _maxSize);
 
-                while (true)
+                ++length;
+
+                for (var e = 0; e < _eventsUnion.Length; ++e)
                 {
-                    StatesTuple tuple;
-                    lock (_lockObject)
+                    var nextEvent = false;
+                    int i;
+                    for (i = 0; i < n; ++i)
                     {
-                        if (_statesStack.Count == 0) break;
-                        tuple = _statesStack.Pop();
-                        tuple.Get(pos, _bits, _maxSize);
+                        if (_reverseTransitionsList[i][pos[i]][e].Any()) continue;
+                        nextEvent = true;
+                        break;
                     }
 
-                    ++length;
+                    if (nextEvent) continue;
 
-                    for (var e = 0; e < _eventsUnion.Length; ++e)
+                    for (i = 0; i < n - 1; ++i) nextPos[i] = _reverseTransitionsList[i][pos[i]][e][movs[i]];
+                    movs[n - 1] = -1;
+                    while (true)
                     {
-                        var nextEvent = false;
-                        int i;
-                        for (i = 0; i < n; ++i)
+                        for (i = n - 1; i >= 0; --i)
                         {
-                            if (_reverseTransitionsList[i][pos[i]][e].Any()) continue;
-                            nextEvent = true;
-                            break;
+                            ++movs[i];
+                            if (movs[i] < _reverseTransitionsList[i][pos[i]][e].Count()) break;
+                            movs[i] = 0;
+                            nextPos[i] = _reverseTransitionsList[i][pos[i]][e][0];
                         }
 
-                        if (nextEvent) continue;
+                        if (i < 0) break;
 
-                        for (i = 0; i < n - 1; ++i) nextPos[i] = _reverseTransitionsList[i][pos[i]][e][movs[i]];
-                        movs[n - 1] = -1;
-                        while (true)
+                        nextPos[i] = _reverseTransitionsList[i][pos[i]][e][movs[i]];
+
+                        tuple = new StatesTuple(nextPos, _bits, _tupleSize);
+                        lock (_lockObject)
                         {
-                            for (i = n - 1; i >= 0; --i)
-                            {
-                                ++movs[i];
-                                if (movs[i] < _reverseTransitionsList[i][pos[i]][e].Count()) break;
-                                movs[i] = 0;
-                                nextPos[i] = _reverseTransitionsList[i][pos[i]][e][0];
-                            }
-
-                            if (i < 0) break;
-
-                            nextPos[i] = _reverseTransitionsList[i][pos[i]][e][movs[i]];
-
-                            tuple = new StatesTuple(nextPos, _bits, _tupleSize);
-                            lock (_lockObject)
-                            {
-                                if ((!_validStates.TryGetValue(tuple, out var value) && !vNotCheckValidState) || value) continue;
-                                _validStates[tuple] = true;
-                                _statesStack.Push(tuple);
-                            }
+                            if ((!_validStates.TryGetValue(tuple, out var value) && !vNotCheckValidState) || value) continue;
+                            _validStates[tuple] = true;
+                            _statesStack.Push(tuple);
                         }
                     }
                 }
-
-                lock (_lockObject)
-                {
-                    --_numberOfRunningThreads;
-                }
-
-                if (_numberOfRunningThreads > 0) Thread.Sleep(1);
-                else break;
             }
 
-            lock (_lockObject)
-            {
-                Size += (ulong) length;
-            }
+            Interlocked.Add(ref _size, length);
         }
 
 
@@ -1132,10 +1101,8 @@ namespace UltraDES
         {
             var n = _statesList.Count;
             for (var i = 0; i < n; ++i)
-            {
                 if (!_statesList[i][pPos[i]].IsMarked)
                     return false;
-            }
 
             return true;
         }
@@ -1304,12 +1271,7 @@ namespace UltraDES
                 }
             }
 
-            if (initial != 0)
-            {
-                var aux = newStates[0];
-                newStates[0] = newStates[initial];
-                newStates[initial] = aux;
-            }
+            if (initial != 0) (newStates[0], newStates[initial]) = (newStates[initial], newStates[0]);
 
             for (var i = 0; i < numStatesOld; ++i)
             {
@@ -1327,52 +1289,90 @@ namespace UltraDES
             _statesList[0] = newStates;
             _adjacencyList[0] = newTransitions;
             _maxSize[0] = (1 << MinNumOfBits(newStates.Length)) - 1;//(1 << (int) Math.Max(Math.Ceiling(Math.Log(newStates.Length, 2)), 1)) - 1;
-            Size = (ulong) newStates.Length;
+            Size = newStates.Length;
             Name = "Min(" + Name + ")";
         }
 
 
-        /// <summary>
-        /// Radixes the sort.
-        /// </summary>
-        /// <param name="map">The map.</param>
-        /// <param name="positions">The positions.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void RadixSort(int[] map, int[] positions)
         {
-            var n = positions.Length;
-            var b = new int[n];
-            var bucket = new int[n + 1];
-            int i, k;
+            int n = positions.Length;
 
-            for (i = 0; i < n; ++i) ++bucket[_statesList[0][positions[i]].IsMarked ? 1 : 0];
+            // For less repetition of calls:
+            var states = _statesList[0];
+            var adjacency = _adjacencyList[0];
+            var events = _eventsUnion;
+
+            // Auxiliary vector (same size as 'positions').
+            var b = new int[n];
+            // Bucket with size n+1 (to use 'n' as a pseudo extra "bucket").
+            var bucket = new int[n + 1];
+
+            // -------- 1) First sort (by IsMarked) --------
+            // Counting
+            for (int i = 0; i < n; i++)
+                // If 'IsMarked' == true, count at index 1, otherwise at 0
+                bucket[states[positions[i]].IsMarked ? 1 : 0]++;
+
+            // Prefix sums
             bucket[1] += bucket[0];
-            for (i = n - 1; i >= 0; --i)
+
+            // Stable distribution
+            for (int i = n - 1; i >= 0; i--)
             {
-                k = positions[i];
-                b[--bucket[_statesList[0][k].IsMarked ? 1 : 0]] = k;
+                int pos = positions[i];
+                bool marked = states[pos].IsMarked;
+                b[--bucket[marked ? 1 : 0]] = pos;
             }
 
-            Array.Copy(b, positions, n);
+            // Instead of Array.Copy(b, positions, n), we swap the references
+            // to avoid copying n elements.
+            // Now 'b' becomes the "buffer" and 'positions' is the sorted array.
+            var temp = positions;
+            positions = b;
+            b = temp;
 
-            for (var e = 0; e < _eventsUnion.Length; ++e)
+            // Clears only the used buckets (0 and 1)
+            bucket[0] = bucket[1] = 0;
+
+            // -------- 2) Subsequent sort (for each event) --------
+            int eventCount = events.Length;
+            for (int e = 0; e < eventCount; e++)
             {
-                Array.Clear(bucket, 0, bucket.Length);
-                for (i = 0; i < n; ++i)
+                // Resets the bucket (0..n) to zero
+                Array.Clear(bucket, 0, n + 1);
+
+                // Counting
+                for (int i = 0; i < n; i++)
                 {
-                    k = _adjacencyList[0].HasEvent(positions[i], e) ? map[_adjacencyList[0][positions[i], e]] : n;
-                    ++bucket[k];
+                    int pos = positions[i];
+                    // If it has an event, get map[...]; otherwise, send to "bucket" n
+                    int dest = adjacency.HasEvent(pos, e) ? map[adjacency[pos, e]] : n;
+                    bucket[dest]++;
                 }
 
-                for (i = 1; i <= n; ++i) bucket[i] += bucket[i - 1];
-                for (i = n - 1; i >= 0; --i)
+                // Prefix sums
+                for (int i = 1; i <= n; i++)
                 {
-                    k = _adjacencyList[0].HasEvent(positions[i], e) ? map[_adjacencyList[0][positions[i], e]] : n;
-                    b[--bucket[k]] = positions[i];
+                    bucket[i] += bucket[i - 1];
                 }
 
-                Array.Copy(b, positions, n);
+                // Stable distribution
+                for (int i = n - 1; i >= 0; i--)
+                {
+                    int pos = positions[i];
+                    int dest = adjacency.HasEvent(pos, e) ? map[adjacency[pos, e]] : n;
+                    b[--bucket[dest]] = pos;
+                }
+
+                // Again, swap references instead of Array.Copy
+                temp = positions;
+                positions = b;
+                b = temp;
             }
         }
+
 
         /// <summary>
         /// Removes the bad states.
@@ -1452,8 +1452,7 @@ namespace UltraDES
                 _validStates = new Dictionary<StatesTuple, bool>(StatesTupleComparator.GetInstance());
                 DepthFirstSearch(true);
             }
-            else
-                DepthFirstSearch(false);
+            else DepthFirstSearch(false);
         }
 
         /// <summary>
@@ -1587,7 +1586,7 @@ namespace UltraDES
         {
             var newStates = new AbstractState[Size];
             var newAdjacencyMatrix = new AdjacencyMatrix((int) Size, _eventsUnion.Length, true);
-            int n = _statesList.Count();
+            var n = _statesList.Count();
             var positionNewStates = new Dictionary<StatesTuple, int>(StatesTupleComparator.GetInstance());
 
             if (_validStates == null && n == 1) return;
@@ -1617,8 +1616,8 @@ namespace UltraDES
 
             void Loop(KeyValuePair<StatesTuple, int> state)
             {
-                var pos = new int[n];
-                var nextPos = new int[n];
+                var pos = ArrayPool<int>.Shared.Rent(n);
+                var nextPos = ArrayPool<int>.Shared.Rent(n);
                 var nextTuple = new StatesTuple(_tupleSize);
 
                 state.Key.Get(pos, _bits, _maxSize);
@@ -1724,7 +1723,7 @@ namespace UltraDES
             var trans = Transitions.Select(t => new Transition(dic[t.Origin], t.Trigger, dic[t.Destination])).ToArray();
             map = dic;
 
-            return new DeterministicFiniteAutomaton(trans, dic[InitialState], Name);
+            return new DFA(trans, dic[InitialState], Name);
         }
 
         /// <summary>
