@@ -1,0 +1,177 @@
+﻿@using global::UltraDES
+@using global::UltraDES.Opacity
+@using global::UltraDES.Diagnosability
+@inject IJSRuntime JsRuntime;
+
+@if (!computing)
+{
+    <div>
+        <div class="field">
+            <label class="label" for="op">Operation</label>
+            <div class="select">
+                <select class="form-control" id="op" @bind="@op">
+                    <option value=""></option>
+                    <option value="iso">Verify Initial State Opacity</option>
+                    <option value="cso">Verify Current State Opacity</option>
+                    <option value="ifso">Verify Initial-Final State Opacity</option>
+                    <option value="kso">Verify K-Step Opacity</option>
+                    <option value="diag">Verify Diagnosticability</option>
+                </select>
+            </div>
+        </div>
+
+        <article class="message is-dark">
+            <div class="message-header">
+                <span>Unobservable Events</span>
+            </div>
+            <div style="max-height: 250px; overflow: auto;" class="message-body">
+                @foreach (var g in evs)
+                {
+                    var key = g.Key;
+                    <div class="field">
+                        <label class="label">
+                            <input type="checkbox" @bind="evs[key]"> @key
+                        </label>
+                    </div>
+                }
+            </div>
+        </article>
+
+        @if (op != "diag")
+        {
+            @if (op != "ifso")
+            {
+                <article class="message is-dark">
+                    <div class="message-header">
+                        <span>Secret States</span>
+                    </div>
+                    <div style="max-height: 250px; overflow: auto;" class="message-body">
+                        @foreach (var g in states)
+                        {
+                            var key = g.Key;
+                            <div class="field">
+                                <label class="label">
+                                    <input type="checkbox" @bind="states[key]"> @key
+                                </label>
+                            </div>
+                        }
+                    </div>
+                </article>
+            }
+            else
+            {
+                <article class="message is-dark">
+                    <div class="message-header">
+                        <span>Secret States</span>
+                    </div>
+                    <div style="max-height: 250px; overflow: auto;" class="message-body">
+                        @foreach (var g in statePairs)
+                        {
+                            var key = g.Key;
+                            <div class="field">
+                                <label class="label">
+                                    <input type="checkbox" @bind="statePairs[key]"> (@key.Item1, @key.Item2)
+                                </label>
+                            </div>
+                        }
+                    </div>
+                </article>
+            }
+        }
+
+        @if (op == "kso")
+        {
+            <label class="field-label" for="trans">K</label>
+            <div class="field-body is-grouped">
+                <input type="range" min="1" max="10" style="width: 80%" id="trans" @bind="k">
+                <input type="number" class="input" style="width: 20%" id="trans" @bind="k">
+            </div>
+        }
+
+        <div class="buttons">
+                <button class="button is-success" @onclick="Create">Apply Operation</button>
+                <button class="button is-danger" @onclick="OnCancel">Cancel</button>
+            </div>
+        
+    </div>
+
+}
+else
+{
+    <div class="pageloader is-active" style="background: #287ef2"><span class="title">Computing</span></div>
+}
+@code {
+
+    [Parameter]
+    public Action<DeterministicFiniteAutomaton> OnSuccess { get; set; }
+
+    [Parameter]
+    public Action OnCancel { get; set; }
+
+    [Parameter]
+    public DeterministicFiniteAutomaton Automaton { get; set; }
+
+    private Dictionary<AbstractEvent, bool> evs;
+    private Dictionary<AbstractState,bool> states;
+    private Dictionary<(AbstractState,AbstractState), bool> statePairs;
+    private string op;
+    private bool computing = false;
+    private int k = 1;
+
+    protected override void OnInitialized()
+    {
+        evs = Automaton.Events.ToDictionary(ev => ev, ev => false);
+        states = Automaton.States.ToDictionary(st => st, st => false);
+        statePairs = Automaton.States.SelectMany(st1 => Automaton.States.Select(st2 => (st1, st2))).ToDictionary(st => st, st => false);
+    }
+
+    public async void Create()
+    {
+        try
+        {
+            computing = true;
+            await Task.Delay(1);
+
+            var unobservableEvents = evs.Where(kvp => kvp.Value).Select(kvp => kvp.Key).ToHashSet();
+            var secretStates = states.Where(kvp => kvp.Value).Select(kvp => kvp.Key).ToHashSet();
+            var secretStatePairs = statePairs.Where(kvp => kvp.Value).Select(kvp => kvp.Key).ToHashSet();
+
+            DeterministicFiniteAutomaton result = null;
+
+            bool Diagnostic(DeterministicFiniteAutomaton a, HashSet<AbstractEvent> ue, out DeterministicFiniteAutomaton observer)
+            {
+                observer = DiagnosticsAlgoritms.CreateObserver(a, ue);
+                return DiagnosticsAlgoritms.IsDiagnosable(observer);
+            }
+
+            var isOpaque = op switch
+            {
+                "iso" => OpacityAlgorithms.InitialStateOpacity(Automaton, unobservableEvents, secretStates, out result),
+                "cso" => OpacityAlgorithms.CurrentStepOpacity(Automaton, unobservableEvents, secretStates, out result),
+                "ifso" => OpacityAlgorithms.InitialFinalStateOpacity(Automaton, unobservableEvents, secretStatePairs, out result),
+                "ksp" => OpacityAlgorithms.KStepsOpacity(Automaton, unobservableEvents, secretStates, k, out result),
+                "diag" => Diagnostic(Automaton, unobservableEvents, out result),
+                _ => false
+
+            };
+
+            if (result != null) 
+                result = new DeterministicFiniteAutomaton(result.Transitions, result.InitialState, $"{op.ToUpper()}({Automaton.Name})");
+
+            
+            if(op != "diag") JsRuntime.Alert(isOpaque ? $"The automaton is opaque" : $"The automaton is not opaque");
+            else JsRuntime.Alert(isOpaque ? $"The automaton is diagnosable" : $"The automaton is not diagnosable");
+
+            OnSuccess(result);
+        }
+        catch (Exception ex)
+        {
+            computing = false;
+            await Task.Delay(1);
+            JsRuntime.Alert($"Error: {ex.Message}");
+            OnCancel();
+        }
+
+    }
+
+}

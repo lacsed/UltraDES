@@ -32,8 +32,8 @@
                     <a @onclick="ev => page = Page.BinaryOperations" class="is-mobile dropdown-item">Apply Binary Operation</a>
                     <a @onclick="ev => page = Page.CreateSupervisor" class="is-mobile dropdown-item">Supervisor Synthesis</a>
                     <hr class="dropdown-divider">
-                    <label class="is-mobile dropdown-item"><input type="file" style="display: none" id="loadjson" @onchange="@(() => LoadJsonAutomaton("loadjson"))"><a>Upload Json Automata</a></label>
-                    <label class="is-mobile dropdown-item"><input type="file" style="display: none" id="loadwmod" @onchange="@(() => LoadWmodAutomaton("loadwmod"))"><a>Upload Wmod Automata</a></label>
+                    <label class="is-mobile dropdown-item"><input type="file" style="display: none" id="loadjson" @onchange="@(() => LoadJsonAutomaton("loadjson"))"><a>Upload Json Automaton</a></label>
+                    <label class="is-mobile dropdown-item"><input type="file" style="display: none" id="loadwmod" @onchange="@(() => LoadWmodAutomaton("loadwmod"))"><a>Upload Wmod Automaton</a></label>
                     <label class="is-mobile dropdown-item"><input @onclick="ev => page = Page.ExportWmod" style="display: none"><a>Export Wmod</a></label>
                     <label class="is-mobile dropdown-item"><input type="file" style="display: none" id="loadads" @onchange="@(() => LoadAdsAutomaton("loadads"))"><a>Upload Ads Automaton</a></label>
                     <label class="is-mobile dropdown-item"><input type="file" style="display: none" id="loadxml" @onchange="@(() => LoadXmlAutomaton("loadxml"))"><a>Upload XML Automaton</a></label>
@@ -69,9 +69,9 @@
                     <a @onclick="ev => page = Page.CreateSupervisor" class="is-mobile dropdown-item">Supervisor Synthesis</a>
                     <hr class="dropdown-divider">
                     <p class="menu-label dropdown-item">Import</p>
-                    <label class="is-mobile dropdown-item"><input type="file" style="display: none" id="loadjson_m" @onchange="@(() => LoadJsonAutomaton("loadjson_m"))"><a>Upload Json Automata</a></label>
-                    <label class="is-mobile dropdown-item"><input type="file" style="display: none" id="loadwmod_m" @onchange="@(() => LoadWmodAutomaton("loadwmod_m"))"><a>Upload Wmod Automata</a></label>
-                    <label class="is-mobile dropdown-item"><input style="display: none" @onclick="ev => page = Page.ExportWmod">><a>Export Wmod Automata</a></label>
+                    <label class="is-mobile dropdown-item"><input type="file" style="display: none" id="loadjson_m" @onchange="@(() => LoadJsonAutomaton("loadjson_m"))"><a>Upload Json Automaton</a></label>
+                    <label class="is-mobile dropdown-item"><input type="file" style="display: none" id="loadwmod_m" @onchange="@(() => LoadWmodAutomaton("loadwmod_m"))"><a>Upload Wmod Automaton</a></label>
+                    <label class="is-mobile dropdown-item"><input style="display: none" @onclick="ev => page = Page.ExportWmod">><a>Export Wmod Automaton</a></label>
                     <label class="is-mobile dropdown-item"><input type="file" style="display: none" id="loadads_m" @onchange="@(() => LoadAdsAutomaton("loadads_m"))"><a>Upload Ads Automaton</a></label>
                     <label class="is-mobile dropdown-item"><input type="file" style="display: none" id="loadxml_m" @onchange="@(() => LoadXmlAutomaton("loadxml_m"))"><a>Upload XML Automaton</a></label>
                     <hr class="dropdown-divider">
@@ -152,7 +152,7 @@
         </ul>
 
 
-        <p class="menu-label">Automata (<a class="content-button" @onclick="() => ShowAutomata = !ShowAutomata">@((ShowAutomata) ? "- Hide": "+ Show")</a>)</p>
+        <p class="menu-label">Automaton (<a class="content-button" @onclick="() => ShowAutomata = !ShowAutomata">@((ShowAutomata) ? "- Hide": "+ Show")</a>)</p>
         <ul class="menu-list">
             @if (ShowAutomata)
             {
@@ -180,6 +180,12 @@
                                         <div class="level is-mobile">
                                             <div class="level-left"><span>Show</span></div>
                                             <div class="level-right"><span><i class="fas fa-project-diagram has-text-info"></i></span></div>
+                                        </div>
+                                    </a>
+                                    <a @onclick="() => VerifyOpacityAutomaton(G.Value)">
+                                        <div class="level is-mobile">
+                                            <div class="level-left"><span>Opacity/Diagnostic</span></div>
+                                            <div class="level-right"><span><i class="fas fa-eye-slash has-text-info"></i></span></div>
                                         </div>
                                     </a>
                                     <a @onclick="() => SaveAutomaton(G.Value)">
@@ -218,6 +224,11 @@
             case Page.ShowAutomaton:
                 <Modal Title="@automaton.Name" OnClose="@Clear">
                     <GraphViz DotCode="@automaton.ToDotCode" OnCancel="@Clear"></GraphViz>
+                </Modal>
+                break;
+            case Page.VerifyOpacityAutomaton:
+                <Modal Title="@automaton.Name" OnClose="@Clear">
+                    <VerifyOpacity Automaton="@automaton" OnCancel="@Clear" OnSuccess="G => AddAutomaton(new[]{G})"></VerifyOpacity>
                 </Modal>
                 break;
             case Page.AutomatonSummary:
@@ -259,6 +270,7 @@
         CreateEvent,
         CreateAutomaton,
         ShowAutomaton,
+        VerifyOpacityAutomaton,
         AutomatonSummary,
         CreateSupervisor,
         BinaryOperations,
@@ -336,6 +348,15 @@
         page = Page.Empty;
         StateHasChanged();
         page = Page.ShowAutomaton;
+        automaton = G;
+        StateHasChanged();
+    }
+
+    private void VerifyOpacityAutomaton(DeterministicFiniteAutomaton G)
+    {
+        page = Page.Empty;
+        StateHasChanged();
+        page = Page.VerifyOpacityAutomaton;
         automaton = G;
         StateHasChanged();
     }
