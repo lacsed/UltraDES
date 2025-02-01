@@ -15,8 +15,8 @@
     <NeutralLanguage>en</NeutralLanguage>
     <PackageReleaseNotes>- Implementation of algorithms for diagnosticability and opacity of discrete event systems</PackageReleaseNotes>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <AssemblyVersion>2.2.5.0</AssemblyVersion>
-    <FileVersion>2.2.5.0</FileVersion>
+    <AssemblyVersion>2.2.5.1</AssemblyVersion>
+    <FileVersion>2.2.5.1</FileVersion>
     <RepositoryUrl>https://github.com/lacsed/UltraDES</RepositoryUrl>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
