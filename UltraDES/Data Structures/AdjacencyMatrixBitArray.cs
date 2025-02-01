@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
-namespace UltraDES.Data_Structures
+namespace UltraDES
 {
     internal sealed class AdjacencyMatrixBitArrayImpl : IAdjacencyMatrixImplementation
     {
@@ -30,8 +31,7 @@ namespace UltraDES.Data_Structures
         public int this[int s, int e]
             => HasEvent(s, e) ? _internal[s][e] : -1;
 
-        public SortedList<int, int> this[int s]
-            => _internal[s] ??= new SortedList<int, int>();
+        public List<(int, int)> this[int s] => _internal[s].Select(kvp => (kvp.Key, kvp.Value)).ToList();
 
         public bool HasEvent(int s, int e)
         {

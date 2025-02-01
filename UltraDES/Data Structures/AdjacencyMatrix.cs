@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using UltraDES.Data_Structures;
+using UltraDES;
 
 namespace UltraDES
 {
@@ -23,17 +23,17 @@ namespace UltraDES
         {
             _impl = eventsNum switch
             {
+                <= 16 => new AdjacencyMatrixUShortImpl(states, eventsNum, preAllocate),
                 <= 32 => new AdjacencyMatrixUIntImpl(states, eventsNum, preAllocate),
                 <= 64 => new AdjacencyMatrixBitMask(states, eventsNum, preAllocate),
-                _ => new AdjacencyMatrixBitArrayImpl(states, eventsNum, preAllocate)
+                _ => new AdjacencyMatrixBDDImpl(states, eventsNum, preAllocate)
             };
+            //_impl = new AdjacencyMatrixBDDImpl(states, eventsNum, preAllocate);
+            //_impl = new AdjacencyMatrixBitArrayImpl(states, eventsNum, preAllocate);
         }
 
         // Construtor usado internamente para clone:
-        private AdjacencyMatrix(IAdjacencyMatrixImplementation impl)
-        {
-            _impl = impl;
-        }
+        private AdjacencyMatrix(IAdjacencyMatrixImplementation impl) => _impl = impl;
 
         /// <summary>
         /// Retorna a quantidade de estados.
@@ -49,7 +49,7 @@ namespace UltraDES
         /// Indexador: retorna a SortedList de transições (evento -> destino) para o estado 's'.
         /// Se não existir, cria e retorna.
         /// </summary>
-        public SortedList<int, int> this[int s] => _impl[s];
+        public List<(int e, int s)> this[int s] => _impl[s];
 
         /// <summary>
         /// Verifica se o estado 's' tem o evento 'e'.

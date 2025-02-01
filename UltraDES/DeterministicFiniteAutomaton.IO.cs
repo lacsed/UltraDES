@@ -554,7 +554,7 @@ namespace UltraDES
 
                 for (var s = 0; s < g._statesList[0].Length; ++s)
                     foreach (var t in g._adjacencyList[0][s])
-                        file.WriteLine($"{s,-5} {vEventsMaps[t.Key],-3} {t.Value,-5}");
+                        file.WriteLine($"{s,-5} {vEventsMaps[t.e],-3} {t.s,-5}");
 
                 file.Close();
             }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace UltraDES
 {
@@ -40,8 +41,7 @@ namespace UltraDES
         /// <summary>
         /// Indexador [s]: retorna a SortedList<evento, destino> para o estado 's' (criando se for null)
         /// </summary>
-        public SortedList<int, int> this[int s]
-            => _internal[s] ??= new SortedList<int, int>();
+        public List<(int, int)> this[int s] => _internal[s].Select(kvp => (kvp.Key, kvp.Value)).ToList();
 
         /// <summary>
         /// Verifica se existe o evento 'e' no estado 's'

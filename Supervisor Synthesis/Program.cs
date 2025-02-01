@@ -429,12 +429,11 @@ void TestComputingMonolithicSupervisor()
     timer.Start();
     // computes the monolithic supervisor and stores the resulting automaton in 'sup'
     var sup = DeterministicFiniteAutomaton.MonolithicSupervisor(plants, specs, true);
-    timer.Stop();
-
-
+    
     // shows information about supervisor and the elapsed time
     Console.WriteLine($"\tStates: {sup.Size}");
     Console.WriteLine($"\tTransitions: {sup.Transitions.Count()}");
+    timer.Stop();
     Console.WriteLine($"\tComputation Time: {timer.ElapsedMilliseconds / 1000.0}");
 }
 

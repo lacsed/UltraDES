@@ -188,8 +188,7 @@ namespace UltraDES
                 for (var j = 0; j < G1._statesList[i].Length; ++j)
                 {
                     foreach (var p in G1._adjacencyList[i][j])
-                        G12._adjacencyList[i].Add(j, Array.IndexOf(G12._eventsUnion, G1._eventsUnion[p.Key]),
-                            p.Value);
+                        G12._adjacencyList[i].Add(j, Array.IndexOf(G12._eventsUnion, G1._eventsUnion[p.e]), p.s);
                 }
             }
 
@@ -206,8 +205,7 @@ namespace UltraDES
                 for (var j = 0; j < G12._statesList[i].Length; ++j)
                 {
                     foreach (var q in G2._adjacencyList[i - G1._adjacencyList.Count][j])
-                        G12._adjacencyList[i].Add(j, Array.IndexOf(G12._eventsUnion, G2._eventsUnion[q.Key]),
-                            q.Value);
+                        G12._adjacencyList[i].Add(j, Array.IndexOf(G12._eventsUnion, G2._eventsUnion[q.e]), q.s);
                 }
             }
 

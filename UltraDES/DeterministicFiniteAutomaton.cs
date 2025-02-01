@@ -7,7 +7,6 @@
 // Last Modified On : 05-20-2020
 // ***********************************************************************
 using System;
-using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -77,11 +76,6 @@ namespace UltraDES
         private int _numberOfPlants;
 
         /// <summary>
-        /// The number of running threads
-        /// </summary>
-        private int _numberOfRunningThreads;
-
-        /// <summary>
         /// The remove bad states
         /// </summary>
         private Stack<bool> _removeBadStates;
@@ -131,15 +125,12 @@ namespace UltraDES
 
             var transitionsLocal = transitions as Transition[] ?? transitions.ToArray();
 
-            _statesList.Add(transitionsLocal.SelectMany(t => new[] { t.Origin, t.Destination }).Union(new[] { initial })
+            _statesList.Add(transitionsLocal.SelectMany(t => new[] { t.Origin, t.Destination }).Union([initial])
                 .Distinct().ToArray());
             _eventsUnion = transitionsLocal.Select(t => t.Trigger).Distinct().OrderBy(i => i.Controllability).ToArray();
             _adjacencyList.Add(new AdjacencyMatrix(_statesList[0].Length, _eventsUnion.Length));
             var initialIdx = Array.IndexOf(_statesList[0], initial);
-            if (initialIdx != 0)
-            {
-                (_statesList[0][0], _statesList[0][initialIdx]) = (_statesList[0][initialIdx], _statesList[0][0]);
-            }
+            if (initialIdx != 0) (_statesList[0][0], _statesList[0][initialIdx]) = (_statesList[0][initialIdx], _statesList[0][0]);
 
             var events = new bool[_eventsUnion.Length];
 
@@ -626,39 +617,59 @@ namespace UltraDES
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private bool DepthFirstSearch(bool acceptAllStates, bool checkForBadStates = false)
         {
+            // Initialize the stack and reset the size counter.
             _statesStack = new Stack<StatesTuple>();
             Size = 0;
-            _numberOfRunningThreads = 0;
 
+            // Create the initial state based on the count of _statesList.
             var initialState = new StatesTuple(new int[_statesList.Count], _bits, _tupleSize);
 
+            // If not accepting all states and the initial state is not valid, exit early.
             if (!acceptAllStates && !_validStates.ContainsKey(initialState))
                 return false;
 
             _validStates[initialState] = true;
             _statesStack.Push(initialState);
 
-            var task = new Task[NumberOfThreads-1];
-
-            for (var i = 0; i < NumberOfThreads-1; ++i)
-                task[i] = Task.Factory.StartNew(() => DepthFirstSearchThread(acceptAllStates));
-
+            // Create tasks for NumberOfThreads - 1 threads using Task.Run.
+            var tasks = new List<Task>();
+            for (int i = 0; i < NumberOfThreads - 1; i++)
+            {
+                tasks.Add(Task.Run(() => DepthFirstSearchThread(acceptAllStates)));
+            }
+            // Execute the DFS on the current thread.
             DepthFirstSearchThread(acceptAllStates);
-            Task.WaitAll(task);
+            Task.WaitAll(tasks.ToArray());
 
+            // Release the reference to the stack.
             _statesStack = null;
 
-            var vNewBadStates = false;
-            var vUncontrollableEventsCount = UncontrollableEvents.Count();
-            if (checkForBadStates)
-                vNewBadStates = _validStates.Where(p => !p.Value).Aggregate(false,
-                    (current, p) => current | RemoveBadStates(p.Key, vUncontrollableEventsCount, true));
+            bool newBadStates = false;
+            int uncontrollableEventsCount = UncontrollableEvents.Count();
 
-            foreach (var p in _validStates.Reverse())
-                if (!p.Value) _validStates.Remove(p.Key);
-                else _validStates[p.Key] = false;
-            return vNewBadStates;
+            // If checking for bad states is enabled, process each invalid state.
+            if (checkForBadStates)
+            {
+                // Use ToList() to iterate over a copy of the entries.
+                foreach (var kvp in _validStates.Where(kvp => !kvp.Value).ToList())
+                {
+                    newBadStates |= RemoveBadStates(kvp.Key, uncontrollableEventsCount, true);
+                }
+            }
+
+            // Update the _validStates dictionary:
+            // Remove entries with false value and reset remaining entries to false.
+            foreach (var key in _validStates.Keys.ToList())
+            {
+                if (!_validStates[key])
+                    _validStates.Remove(key);
+                else
+                    _validStates[key] = false;
+            }
+
+            return newBadStates;
         }
+
 
         /// <summary>
         /// Depthes the first search thread.
@@ -1124,13 +1135,13 @@ namespace UltraDES
                 {
                     _reverseTransitionsList[i].Add(new List<int>[_eventsUnion.Count()]);
                     for (var e = 0; e < _eventsUnion.Count(); ++e)
-                        _reverseTransitionsList[i][state][e] = new List<int>();
+                        _reverseTransitionsList[i][state][e] = [];
                 }
 
                 for (var state = 0; state < _statesList[i].Length; ++state)
                 {
                     foreach (var tr in _adjacencyList[i][state])
-                        _reverseTransitionsList[i][tr.Value][tr.Key].Add(state);
+                        _reverseTransitionsList[i][tr.s][tr.e].Add(state);
                 }
 
                 for (var e = 0; e < _eventsUnion.Count(); ++e)
@@ -1616,8 +1627,8 @@ namespace UltraDES
 
             void Loop(KeyValuePair<StatesTuple, int> state)
             {
-                var pos = ArrayPool<int>.Shared.Rent(n);
-                var nextPos = ArrayPool<int>.Shared.Rent(n);
+                var pos = new int[n];
+                var nextPos = new int[n];
                 var nextTuple = new StatesTuple(_tupleSize);
 
                 state.Key.Get(pos, _bits, _maxSize);

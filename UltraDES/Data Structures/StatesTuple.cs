@@ -8,6 +8,7 @@ namespace UltraDES
     [Serializable]
     public struct StatesTuple
     {
+
         /// <summary>
         /// Gets the m data.
         /// </summary>
@@ -30,10 +31,7 @@ namespace UltraDES
         /// Initializes a new instance of the <see cref="StatesTuple"/> struct.
         /// </summary>
         /// <param name="k">The k.</param>
-        public StatesTuple(int k) : this()
-        {
-            MData = new uint[k];
-        }
+        public StatesTuple(int k) : this() => MData = new uint[k];
 
         /// <summary>
         /// Sets the specified states.

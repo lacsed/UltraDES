@@ -12,7 +12,7 @@ namespace UltraDES
         int this[int s, int e] { get; }
 
         // Indexador [s] => retorna a SortedList (com os pares <evento, destino>)
-        SortedList<int, int> this[int s] { get; }
+        List<(int e, int s)> this[int s] { get; }
 
         bool HasEvent(int s, int e);
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace UltraDES
 {
@@ -36,8 +37,7 @@ namespace UltraDES
         public int this[int s, int e]
             => HasEvent(s, e) ? _internal[s][e] : -1;
 
-        public SortedList<int, int> this[int s]
-            => _internal[s] ??= new SortedList<int, int>();
+        public List<(int, int)> this[int s] => _internal[s].Select(kvp => (kvp.Key, kvp.Value)).ToList();
 
         public bool HasEvent(int s, int e)
         {

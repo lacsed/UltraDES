@@ -262,7 +262,6 @@ namespace UltraDES
         /// <param name="nonBlocking">if set to <c>true</c> [non blocking].</param>
         private void FindSupervisor(int nPlant, bool nonBlocking)
         {
-            _numberOfRunningThreads = 0;
             _statesStack = new Stack<StatesTuple>();
             _removeBadStates = new Stack<bool>();
 
@@ -335,7 +334,8 @@ namespace UltraDES
         {
             conflictResolvingSupervisor ??= Array.Empty<DFA>();
 
-            var supervisors = specifications.AsParallel().WithDegreeOfParallelism(NumberOfThreads).Select(e => MonolithicSupervisor(plants.Where(p => p._eventsUnion.Intersect(e._eventsUnion).Any()), new[] {e})).ToList();
+            var supervisors = specifications/*.AsParallel().WithDegreeOfParallelism(NumberOfThreads)*/.Select(e => MonolithicSupervisor(plants.Where(p => p._eventsUnion.Intersect(e._eventsUnion).Any()),
+                [e])).ToList();
 
             var complete = supervisors.Union(conflictResolvingSupervisor).ToList();
 
@@ -356,7 +356,7 @@ namespace UltraDES
         public static IEnumerable<DFA> LocalModularSupervisor(IEnumerable<DFA> plants, IEnumerable<DFA> specifications,
             out List<DFA> compoundPlants, IEnumerable<DFA> conflictResolvingSupervisor = null)
         {
-            conflictResolvingSupervisor ??= new DFA[0];
+            conflictResolvingSupervisor ??= Array.Empty<DFA>();
 
             var dic = specifications.ToDictionary(e => plants.Where(p => p._eventsUnion.Intersect(e._eventsUnion).Any()).Aggregate((a, b) => a.ParallelCompositionWith(b)));
 
@@ -467,7 +467,6 @@ namespace UltraDES
 
             markedStates = null;
             Size = 0;
-            _numberOfRunningThreads = 0;
             var tasks = new Task[NumberOfThreads - 1];
 
             for (i = 0; i < NumberOfThreads - 1; ++i)
