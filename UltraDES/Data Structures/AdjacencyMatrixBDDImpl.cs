@@ -63,6 +63,7 @@ namespace UltraDES
             }
         }
 
+
         public bool HasEvent(int s, int e) => (this[s, e] != -1);
 
         public void Add(int origin, int e, int dest)

@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 
 namespace UltraDES
 {
@@ -15,6 +16,9 @@ namespace UltraDES
         /// <value>The m data.</value>
         public uint[] MData { get; private set; }
 
+        public StatesTuple()
+        {}
+
         /// <summary>
         /// Initializes a new instance of the <see cref="StatesTuple"/> struct.
         /// </summary>
@@ -30,8 +34,8 @@ namespace UltraDES
         /// <summary>
         /// Initializes a new instance of the <see cref="StatesTuple"/> struct.
         /// </summary>
-        /// <param name="k">The k.</param>
-        public StatesTuple(int k) : this() => MData = new uint[k];
+        /// <param name="size">The size.</param>
+        public StatesTuple(int size) : this() => MData = new uint[size];
 
         /// <summary>
         /// Sets the specified states.
@@ -48,10 +52,12 @@ namespace UltraDES
                     ++j;
                     MData[j] = 0;
                 }
-                MData[j] += ((uint)states[i] << bits[i]);
+                unchecked
+                {
+                    MData[j] += ((uint)states[i] << bits[i]);
+                }
             }
         }
-
         /// <summary>
         /// Gets the specified states.
         /// </summary>
@@ -64,20 +70,14 @@ namespace UltraDES
             for (var i = 0; i < states.Length; i++)
             {
                 if (bits[i] == 0) j++;
-                states[i] = (int)(MData[j] >> bits[i]) & maxSize[i];
+                unchecked
+                {
+                    states[i] = (int)(MData[j] >> bits[i]) & maxSize[i];
+                }
+                
             }
         }
 
-        /// <summary>
-        /// Clones this instance.
-        /// </summary>
-        /// <returns>StatesTuple.</returns>
-        public StatesTuple Clone()
-        {
-            var c = new StatesTuple(MData.Length);
-            for (var i = 0; i < MData.Length; ++i) c.MData[i] = MData[i];
-            return c;
-        }
     }
 
 

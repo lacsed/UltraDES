@@ -45,6 +45,12 @@ namespace UltraDES
         /// </summary>
         public int this[int s, int e] => _impl[s, e];
 
+        public bool TryGet(int s, int e, out int value)
+        {
+            value = this[s, e];
+            return value != -1;
+        }
+
         /// <summary>
         /// Indexador: retorna a SortedList de transições (evento -> destino) para o estado 's'.
         /// Se não existir, cria e retorna.

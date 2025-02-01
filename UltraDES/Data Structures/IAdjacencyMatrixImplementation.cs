@@ -13,7 +13,6 @@ namespace UltraDES
 
         // Indexador [s] => retorna a SortedList (com os pares <evento, destino>)
         List<(int e, int s)> this[int s] { get; }
-
         bool HasEvent(int s, int e);
 
         void Add(int origin, (int, int)[] values);
