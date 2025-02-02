@@ -1,6 +1,3 @@
-// Caution! Be sure you understand the caveats before publishing an application with
-// offline support. See https://aka.ms/blazor-offline-considerations
-
 self.importScripts('./service-worker-assets.js');
 self.addEventListener('install', event => event.waitUntil(onInstall(event)));
 self.addEventListener('activate', event => event.waitUntil(onActivate(event)));
@@ -13,37 +10,49 @@ const offlineAssetsExclude = [ /^service-worker\.js$/ ];
 
 async function onInstall(event) {
     console.info('Service worker: Install');
+    self.skipWaiting(); // Garante que o novo SW seja ativado imediatamente
 
-    // Fetch and cache all matching items from the assets manifest
     const assetsRequests = self.assetsManifest.assets
         .filter(asset => offlineAssetsInclude.some(pattern => pattern.test(asset.url)))
         .filter(asset => !offlineAssetsExclude.some(pattern => pattern.test(asset.url)))
-        .map(asset => new Request(asset.url));
-    await caches.open(cacheName).then(cache => cache.addAll(assetsRequests));
+        .map(asset => new Request(asset.url, { cache: 'reload' }));
+
+    const cache = await caches.open(cacheName);
+    await cache.addAll(assetsRequests);
 }
 
 async function onActivate(event) {
     console.info('Service worker: Activate');
+    clients.claim(); // Garante que todas as abas usem o novo SW imediatamente
 
-    // Delete unused caches
     const cacheKeys = await caches.keys();
     await Promise.all(cacheKeys
         .filter(key => key.startsWith(cacheNamePrefix) && key !== cacheName)
         .map(key => caches.delete(key)));
+    
+    // Notifica os clientes para recarregarem a página
+    const clientsList = await clients.matchAll({ type: 'window' });
+    clientsList.forEach(client => client.navigate(client.url));
 }
 
 async function onFetch(event) {
-    let cachedResponse = null;
-    if (event.request.method === 'GET') {
-        // For all navigation requests, try to serve index.html from cache
-        // If you need some URLs to be server-rendered, edit the following check to exclude those URLs
-        const shouldServeIndexHtml = event.request.mode === 'navigate';
-
-        const request = shouldServeIndexHtml ? 'index.html' : event.request;
-        const cache = await caches.open(cacheName);
-        cachedResponse = await cache.match(request);
+    if (event.request.method !== 'GET') {
+        return fetch(event.request);
     }
+    
+    const shouldServeIndexHtml = event.request.mode === 'navigate';
+    const request = shouldServeIndexHtml ? new Request('index.html', { cache: 'reload' }) : event.request;
 
-    return cachedResponse || fetch(event.request);
+    const cache = await caches.open(cacheName);
+    const cachedResponse = await cache.match(request);
+
+    return cachedResponse || fetch(event.request).then(response => {
+        if (!response || response.status !== 200 || response.type !== 'basic') {
+            return response;
+        }
+        
+        const responseToCache = response.clone();
+        cache.put(event.request, responseToCache);
+        return response;
+    });
 }
-/* Manifest version: DFXvtr2+ *//* Manifest version: 2glTIXaE */
