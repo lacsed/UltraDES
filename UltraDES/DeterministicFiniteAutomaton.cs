@@ -282,7 +282,7 @@ public sealed partial class DeterministicFiniteAutomaton
             if (events1 != "")
                 dot.Append($"\n\t\"{group.Key.Origin}\" -> \"{group.Key.Destination}\" [label = \"{events1}\"]");
 
-            foreach (var groupStyle in group.Where(t => styleTrans.ContainsKey(t.Trigger)).GroupBy(t => styleTrans[t.Trigger]))
+            foreach (var groupStyle in group.Where(t => styleTrans.ContainsKey(t)).GroupBy(t => styleTrans[t]))
             {
                 var events2 = groupStyle.Aggregate("", (acc, t) => acc + "," + t.Trigger).Trim(',');
                 var style = $"style = {groupStyle.Key.s} color = {groupStyle.Key.c} fontcolor = {groupStyle.Key.c}";
