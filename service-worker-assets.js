@@ -33,7 +33,7 @@
       "url": "_framework\/icudt_no_CJK.dat"
     },
     {
-      "hash": "sha256-r\/5lYlOM6Y2vIwPltXPWDYSefIT5HN80QFvMRWUMhSs=",
+      "hash": "sha256-Xv99ONBBZMrMCqGpHgfbBWx1z9vpVRq8Q3g31uosdFg=",
       "url": "_framework\/blazor.boot.json"
     },
     {
@@ -101,7 +101,7 @@
       "url": "_framework\/Microsoft.JSInterop.WebAssembly.wasm"
     },
     {
-      "hash": "sha256-kPMoeX0nVo62K9LukZ0nAbSr9i83N97cMJhe\/C39Mkw=",
+      "hash": "sha256-TE+05Uci6cU5KFHfwlOKNOaDD1nFU5MxcOcsz9iDmKc=",
       "url": "_framework\/netstandard.wasm"
     },
     {
@@ -173,7 +173,7 @@
       "url": "_framework\/System.Linq.Parallel.wasm"
     },
     {
-      "hash": "sha256-a2WkRypbAvmF4k8M2TGZALSFgSIcfgwYs4lO4gZkvfQ=",
+      "hash": "sha256-X7cPnEU4so2OcVWyM2N5OGezuCK23o4aU9w3mkbw4Xg=",
       "url": "_framework\/System.Linq.wasm"
     },
     {
@@ -293,11 +293,11 @@
       "url": "_framework\/System.Xml.XmlSerializer.wasm"
     },
     {
-      "hash": "sha256-+DUYavScrOs0xBcDFfJkhjqxaDrExdIx3tns0Xcbnik=",
+      "hash": "sha256-r+zxPphFbsnCVunKRJ5JRORhRV8EayC3kpiXlLB0oIc=",
       "url": "_framework\/UltraDES.wasm"
     },
     {
-      "hash": "sha256-0zXoYZlzacA9p5vsrhcLO99KcjroNeR1mLvr6P0A4II=",
+      "hash": "sha256-zmOiC59nI0GOtKho7j+8k45GqqaWazPdXvJc5eB3EWs=",
       "url": "_framework\/UltraDESWeb.wasm"
     },
     {
@@ -469,5 +469,5 @@
       "url": "webfonts\/fa-solid-900.woff2"
     }
   ],
-  "version": "mowg21so"
+  "version": "2glTIXaE"
 };

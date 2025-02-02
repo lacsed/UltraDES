@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "UltraDESWeb",
   "resources": {
-    "hash": "sha256-vk+r9AQ+GMz4wl0l/hwrDsIeqpNr4Kj/BphjIUY1ds0=",
+    "hash": "sha256-NTMsIKi2ZDgrt/gZMZaQy/Q+T6GceEkuGsDGx+CQw1U=",
     "jsModuleNative": {
       "dotnet.native.8.0.12.5019ia6r61.js": "sha256-B6DNRvFeCUi3jbx9uKpuj+hV9cN0KG4RdZj1FgBZwj8="
     },
@@ -33,7 +33,7 @@
       "Microsoft.Extensions.Primitives.wasm": "sha256-Ms2HR5Gpug/0uRAzdk4SUNT76Ml3CjFv9Jo+dUIMGac=",
       "Microsoft.JSInterop.wasm": "sha256-7f8qa0Vm8S2NeHeEY+/3W1snrj9Yf+PrMKIrn7g+pio=",
       "Microsoft.JSInterop.WebAssembly.wasm": "sha256-3/M5Qj+EeMp8ANXvZmxLvL3MA4eWTJvlxq/NsNWJChs=",
-      "netstandard.wasm": "sha256-kPMoeX0nVo62K9LukZ0nAbSr9i83N97cMJhe/C39Mkw=",
+      "netstandard.wasm": "sha256-TE+05Uci6cU5KFHfwlOKNOaDD1nFU5MxcOcsz9iDmKc=",
       "Newtonsoft.Json.wasm": "sha256-GlXMWKvDs45M2pACoR3Y4Qh8mcrOZGljqmvJY+6JZ5s=",
       "System.Collections.Concurrent.wasm": "sha256-+1x1vqv22JEculISBpPWg00QQNkB6ROo1aDjAJslqkg=",
       "System.Collections.NonGeneric.wasm": "sha256-cST0j+py3teoHHVMnxxyxrFQx8YRkxfBDgZ/zQQ3P1k=",
@@ -51,7 +51,7 @@
       "System.Drawing.wasm": "sha256-cmGEmeY9js7zvwlERSKEJ2tVi5WSnmXbhCeQ/G/eKJg=",
       "System.Linq.Expressions.wasm": "sha256-y7WgXiamXmb+sR5NUCS/SJA/AbIabYrz98CB+5TLBK4=",
       "System.Linq.Parallel.wasm": "sha256-1MKEBdNtesU4ekZmMuLnHXbUIM4K91tHtC2/cU6u03E=",
-      "System.Linq.wasm": "sha256-a2WkRypbAvmF4k8M2TGZALSFgSIcfgwYs4lO4gZkvfQ=",
+      "System.Linq.wasm": "sha256-X7cPnEU4so2OcVWyM2N5OGezuCK23o4aU9w3mkbw4Xg=",
       "System.Memory.wasm": "sha256-S0VFzrhJYg8OJzDF8cQ4G8qNtQNn8sU+71JYkcDCR7w=",
       "System.Net.Http.wasm": "sha256-VBmGDEGINPBMBPx7vVCAO/wTpkokNv4UIURrharMs48=",
       "System.Net.Primitives.wasm": "sha256-UMEAfb2hYidx0dv5N0+zKO9df9eH697dkfLMLmFY9aU=",
@@ -81,8 +81,8 @@
       "System.Xml.ReaderWriter.wasm": "sha256-391VphyLNIhqsIUmKZwMgShTkYQ8OO/Z1BH+l4CYTtw=",
       "System.Xml.XDocument.wasm": "sha256-+WnYaazc0W5Q8zICYXRiEbp1zW64E0KCiHOhiLIZhRU=",
       "System.Xml.XmlSerializer.wasm": "sha256-1KmDSTL2hOmenSCjHUQcIwhFZmqca2IoDz5UWsDOV0c=",
-      "UltraDES.wasm": "sha256-+DUYavScrOs0xBcDFfJkhjqxaDrExdIx3tns0Xcbnik=",
-      "UltraDESWeb.wasm": "sha256-0zXoYZlzacA9p5vsrhcLO99KcjroNeR1mLvr6P0A4II="
+      "UltraDES.wasm": "sha256-r+zxPphFbsnCVunKRJ5JRORhRV8EayC3kpiXlLB0oIc=",
+      "UltraDESWeb.wasm": "sha256-zmOiC59nI0GOtKho7j+8k45GqqaWazPdXvJc5eB3EWs="
     }
   },
   "cacheBootResources": true,
