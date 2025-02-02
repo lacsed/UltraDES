@@ -512,7 +512,7 @@
           "lib/netcoreapp2.0/_._": {}
         }
       },
-      "UltraDES/2.2.5": {
+      "UltraDES/2.2.5.1": {
         "type": "package",
         "dependencies": {
           "Microsoft.Bcl.AsyncInterfaces": "8.0.0",
@@ -1039,7 +1039,7 @@
           "lib/netcoreapp2.0/_._": {}
         }
       },
-      "UltraDES/2.2.5": {
+      "UltraDES/2.2.5.1": {
         "type": "package",
         "dependencies": {
           "Microsoft.Bcl.AsyncInterfaces": "8.0.0",
@@ -2121,10 +2121,10 @@
         "system.numerics.vectors.nuspec"
       ]
     },
-    "UltraDES/2.2.5": {
-      "sha512": "iqTcN+z0hNCCr2L5Zn9acWtBE9wmenadpy3Mz4WJGbjjEoJGD7A+g4oY+fMPIgIir49KlSn/QAM2aiha+J4dPg==",
+    "UltraDES/2.2.5.1": {
+      "sha512": "oyGmlrqfcscvhkcvn+xJXiuW4o+6OWeGbUzpSy/XP7HMH37N7gx520U1xnvfPCMcZ+3b9edFfDBtjiEfQT8T4g==",
       "type": "package",
-      "path": "ultrades/2.2.5",
+      "path": "ultrades/2.2.5.1",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -2134,7 +2134,7 @@
         "linqpad-samples/Getting Started/UltraDES Petri Nets Basics.linq",
         "linqpad-samples/Supervisory Control Theory/FMS Modular Supervisor.linq",
         "linqpad-samples/Supervisory Control Theory/ITL Monolithic Supervisor.linq",
-        "ultrades.2.2.5.nupkg.sha512",
+        "ultrades.2.2.5.1.nupkg.sha512",
         "ultrades.nuspec"
       ]
     }
@@ -2146,7 +2146,7 @@
       "Microsoft.NET.ILLink.Tasks >= 8.0.12",
       "Microsoft.NET.Sdk.WebAssembly.Pack >= 9.0.1",
       "System.Net.Http.Json >= 8.0.1",
-      "UltraDES >= 2.2.5"
+      "UltraDES >= 2.2.5.1"
     ]
   },
   "packageFolders": {
@@ -2227,7 +2227,7 @@
           },
           "UltraDES": {
             "target": "Package",
-            "version": "[2.2.5, )"
+            "version": "[2.2.5.1, )"
           }
         },
         "imports": [

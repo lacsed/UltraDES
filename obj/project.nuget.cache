@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "QzenIoOmzhA=",
+  "dgSpecHash": "HkZPJ1LB6Ow=",
   "success": true,
   "projectFilePath": "\\\\Mac\\Home\\Documents\\GitHub\\UltraDES\\UltraDESWeb.csproj",
   "expectedPackageFiles": [
@@ -36,7 +36,7 @@
     "C:\\Users\\lucasvra\\.nuget\\packages\\system.io.pipelines\\8.0.0\\system.io.pipelines.8.0.0.nupkg.sha512",
     "C:\\Users\\lucasvra\\.nuget\\packages\\system.net.http.json\\8.0.1\\system.net.http.json.8.0.1.nupkg.sha512",
     "C:\\Users\\lucasvra\\.nuget\\packages\\system.numerics.vectors\\4.6.0\\system.numerics.vectors.4.6.0.nupkg.sha512",
-    "C:\\Users\\lucasvra\\.nuget\\packages\\ultrades\\2.2.5\\ultrades.2.2.5.nupkg.sha512",
+    "C:\\Users\\lucasvra\\.nuget\\packages\\ultrades\\2.2.5.1\\ultrades.2.2.5.1.nupkg.sha512",
     "C:\\Users\\lucasvra\\.nuget\\packages\\microsoft.netcore.app.runtime.mono.browser-wasm\\8.0.12\\microsoft.netcore.app.runtime.mono.browser-wasm.8.0.12.nupkg.sha512"
   ],
   "logs": []

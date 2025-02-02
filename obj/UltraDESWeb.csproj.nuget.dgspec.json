@@ -78,7 +78,7 @@
             },
             "UltraDES": {
               "target": "Package",
-              "version": "[2.2.5, )"
+              "version": "[2.2.5.1, )"
             }
           },
           "imports": [
