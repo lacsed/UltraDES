@@ -678,9 +678,9 @@ public sealed partial class DeterministicFiniteAutomaton
     private void DepthFirstSearchThread(object param, Stack<StatesTuple> statesStack)
     {
         var length = 0;
-        var n = _statesList.Count;
-        var pos = new int[n];
-        var nextPosition = new int[n];
+        var numAutomata = _statesList.Count;
+        var stateArr = new int[numAutomata];
+        var stateArrNext = new int[numAutomata];
         var acceptAllStates = (bool)param;
 
         while (true)
@@ -693,19 +693,19 @@ public sealed partial class DeterministicFiniteAutomaton
             }
 
             ++length;
-            tuple.Get(pos, _bits, _maxSize);
+            tuple.Get(stateArr, _bits, _maxSize);
 
             int e;
             for (e = 0; e < _eventsUnion.Length; ++e)
             {
                 var nextEvent = false;
                 int i;
-                for (i = n - 1; i >= 0; --i)
+                for (i = numAutomata - 1; i >= 0; --i)
                 {
                     if (!_eventsList[i][e])
-                        nextPosition[i] = pos[i];
-                    else if (_adjacencyList[i].TryGet(pos[i], e, out int val))
-                        nextPosition[i] = val;
+                        stateArrNext[i] = stateArr[i];
+                    else if (_adjacencyList[i].TryGet(stateArr[i], e, out int dest))
+                        stateArrNext[i] = dest;
                     else
                     {
                         nextEvent = true;
@@ -714,7 +714,7 @@ public sealed partial class DeterministicFiniteAutomaton
                 }
 
                 if (nextEvent) continue;
-                tuple = new StatesTuple(nextPosition, _bits, _tupleSize);
+                tuple = new StatesTuple(stateArrNext, _bits, _tupleSize);
                 lock (_lockObject)
                 {
                     if (_validStates.TryGetValue(tuple, out var invalid))

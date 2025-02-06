@@ -197,34 +197,43 @@ partial class DeterministicFiniteAutomaton
         // Process transitions for automata from G1.
         for (var i = 0; i < G1._adjacencyList.Count; ++i)
         {
-            G12._eventsList.Add(new bool[G12._eventsUnion.Length]);
+            
+            var events = new bool[G12._eventsUnion.Length];
             for (var e = 0; e < G1._eventsUnion.Length; ++e)
-                G12._eventsList[i][Array.IndexOf(G12._eventsUnion, G1._eventsUnion[e])] = G1._eventsList[i][e];
+                events[Array.IndexOf(G12._eventsUnion, G1._eventsUnion[e])] = G1._eventsList[i][e];
 
-            G12._adjacencyList.Add(new AdjacencyMatrix(G1._statesList[i].Length, G12._eventsUnion.Length));
+            G12._eventsList.Add(events);
+
+            
+            var adjacency = new AdjacencyMatrix(G1._statesList[i].Length, G12._eventsUnion.Length);
             for (var j = 0; j < G1._statesList[i].Length; ++j)
             {
                 foreach (var p in G1._adjacencyList[i][j])
-                    G12._adjacencyList[i].Add(j, Array.IndexOf(G12._eventsUnion, G1._eventsUnion[p.e]), p.s);
+                    adjacency.Add(j, Array.IndexOf(G12._eventsUnion, G1._eventsUnion[p.e]), p.s);
             }
+            G12._adjacencyList.Add(adjacency);
         }
 
         // Process transitions for automata from G2.
         for (var i = G1._adjacencyList.Count; i < n; ++i)
         {
-            G12._eventsList.Add(new bool[G12._eventsUnion.Length]);
+            
+            var events = new bool[G12._eventsUnion.Length];
             for (var e = 0; e < G2._eventsUnion.Length; ++e)
             {
-                G12._eventsList[i][Array.IndexOf(G12._eventsUnion, G2._eventsUnion[e])] =
+                events[Array.IndexOf(G12._eventsUnion, G2._eventsUnion[e])] =
                     G2._eventsList[i - G1._adjacencyList.Count][e];
             }
+            G12._eventsList.Add(events);
 
-            G12._adjacencyList.Add(new AdjacencyMatrix(G12._statesList[i].Length, G12._eventsUnion.Length));
+            
+            var adjacency = new AdjacencyMatrix(G12._statesList[i].Length, G12._eventsUnion.Length);
             for (var j = 0; j < G12._statesList[i].Length; ++j)
             {
                 foreach (var q in G2._adjacencyList[i - G1._adjacencyList.Count][j])
-                    G12._adjacencyList[i].Add(j, Array.IndexOf(G12._eventsUnion, G2._eventsUnion[q.e]), q.s);
+                    adjacency.Add(j, Array.IndexOf(G12._eventsUnion, G2._eventsUnion[q.e]), q.s);
             }
+            G12._adjacencyList.Add(adjacency);
         }
 
         return G12;

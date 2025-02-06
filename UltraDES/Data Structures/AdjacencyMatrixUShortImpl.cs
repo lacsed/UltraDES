@@ -30,10 +30,16 @@ internal sealed class AdjacencyMatrixUShortImpl : IAdjacencyMatrixImplementation
     }
 
     // Indexador [s,e]: retorna destino ou -1 se não existe
-    public int this[int s, int e] => HasEvent(s, e) ? _internal[s][e] : -1;
+    public int this[int s, int e]
+    {
+        get => HasEvent(s, e) ? _internal[s][e] : -1;
+    }
 
     // Indexador [s]: retorna SortedList, cria se null
-    public List<(int, int)> this[int s] => _internal[s].Select(kvp => (kvp.Key, kvp.Value)).ToList();
+    public List<(int, int)> this[int s]
+    {
+        get => _internal[s].Select(kvp => (kvp.Key, kvp.Value)).ToList();
+    }
 
     public bool HasEvent(int s, int e)
     {
