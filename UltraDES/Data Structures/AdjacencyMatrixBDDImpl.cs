@@ -51,20 +51,20 @@ namespace UltraDES
                 if (s < 0 || s >= Length)
                     throw new IndexOutOfRangeException();
 
-                // Percorre todos os eventos possíveis e checa Evaluate
                 var func = _stateFunctions[s] ?? MTBDD.FullTree(0, numVars, -1);
-                for (int e = 0; e < EventsNum; e++)
-                {
-                    var dest = func.Evaluate(e, numVars);
-                    if (dest != -1)
-                        transitions.Add((e, dest));
-                }
+                func.CollectNonDefault(0, numVars, EventsNum, -1, transitions);
                 return transitions;
             }
         }
 
 
-        public bool HasEvent(int s, int e) => (this[s, e] != -1);
+        public bool HasEvent(int s, int e)
+        {
+            if (s < 0 || s >= Length || e < 0 || e >= EventsNum)
+                throw new IndexOutOfRangeException();
+
+            return _stateFunctions[s] != null && _stateFunctions[s].Evaluate(e, numVars) != -1;
+        }
 
         public void Add(int origin, int e, int dest)
         {
@@ -87,10 +87,58 @@ namespace UltraDES
 
         public void Add(int origin, (int, int)[] values)
         {
-            foreach (var tuple in values)
+            if (origin < 0 || origin >= Length)
+                throw new IndexOutOfRangeException();
+
+            if (_stateFunctions[origin] != null)
             {
-                Add(origin, tuple.Item1, tuple.Item2);
+                foreach (var tuple in values)
+                    Add(origin, tuple.Item1, tuple.Item2);
+
+                return;
             }
+
+            var transitions = new Dictionary<int, int>(values.Length);
+            foreach (var (e, dest) in values)
+            {
+                if (e < 0 || e >= EventsNum)
+                    throw new IndexOutOfRangeException();
+
+                if (transitions.TryGetValue(e, out var current))
+                {
+                    if (current != dest)
+                        throw new Exception("Automaton is not deterministic.");
+                }
+                else
+                {
+                    transitions.Add(e, dest);
+                }
+            }
+
+            _stateFunctions[origin] = BuildSparseTree(transitions.Select(kvp => (kvp.Key, kvp.Value)).ToList(), 0);
+        }
+
+        private MTBDD BuildSparseTree(List<(int e, int dest)> values, int level)
+        {
+            if (values.Count == 0)
+                return MTBDD.Terminal(-1);
+
+            if (level == numVars)
+                return MTBDD.Terminal(values[0].dest);
+
+            var low = new List<(int e, int dest)>();
+            var high = new List<(int e, int dest)>();
+
+            foreach (var value in values)
+            {
+                var bit = (value.e >> (numVars - 1 - level)) & 1;
+                if (bit == 0)
+                    low.Add(value);
+                else
+                    high.Add(value);
+            }
+
+            return MTBDD.Node(level, BuildSparseTree(low, level + 1), BuildSparseTree(high, level + 1));
         }
 
         public void Remove(int origin, int e)

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace UltraDES
@@ -132,6 +133,9 @@ namespace UltraDES
         /// </summary>
         public static MTBDD FullTree(int level, int numVars, int value, bool reduce = true)
         {
+            if (reduce)
+                return Terminal(value);
+
             if (level == numVars)
                 return Terminal(value);
 
@@ -141,9 +145,8 @@ namespace UltraDES
             var left = FullTree(level + 1, numVars, value, reduce);
             var right = FullTree(level + 1, numVars, value, reduce);
 
-            return reduce ? Node(level, left, right) :
-                // constrói nó sem usar manager
-                new MTBDD(level, left, right);
+            // constrói nó sem usar manager
+            return new MTBDD(level, left, right);
         }
 
         #endregion
@@ -180,20 +183,33 @@ namespace UltraDES
             if (level == numVars)
                 return Terminal(dest);
 
-            // Se o nó atual é terminal e ainda precisamos expandir,
-            // expandimos sem redução para então atualizar.
+            // Se o nó atual é terminal e ainda precisamos descer, não construa
+            // uma árvore completa. Para matrizes de adjacência esparsas, uma
+            // atualização normalmente altera apenas um evento entre muitos
+            // ausentes; criar a árvore completa torna a inserção exponencial no
+            // número de variáveis. Em vez disso, materializamos apenas o caminho
+            // até o evento atualizado e mantemos o terminal atual como o ramo
+            // padrão do restante do domínio.
             if (IsTerminal)
             {
-                var full = FullTree(level, numVars, this.Value, reduce: false);
-                return full.Update(e, dest, level, numVars);
+                int bitAtLevel = (e >> (numVars - 1 - level)) & 1;
+                var updatedBranch = Update(e, dest, level + 1, numVars);
+                return bitAtLevel == 0
+                    ? Node(level, updatedBranch, this)
+                    : Node(level, this, updatedBranch);
             }
 
-            // Se a variável do nó atual é maior que 'level', 
-            // significa que não há nível para 'level' e precisamos expandir:
+            // Se a variável do nó atual é maior que 'level', a função não
+            // depende explicitamente dos níveis intermediários. Crie somente o
+            // nó do nível ausente no caminho atualizado e compartilhe o nó atual
+            // como ramo padrão.
             if (Variable > level)
             {
-                var full = FullTree(level, numVars, this.Evaluate(e, numVars), reduce: false);
-                return full.Update(e, dest, level, numVars);
+                int bitAtLevel = (e >> (numVars - 1 - level)) & 1;
+                var updatedBranch = Update(e, dest, level + 1, numVars);
+                return bitAtLevel == 0
+                    ? Node(level, updatedBranch, this)
+                    : Node(level, this, updatedBranch);
             }
 
             // Se a variável do nó == level, vamos descer no filho certo
@@ -221,6 +237,69 @@ namespace UltraDES
                 var newHigh2 = High.Update(e, dest, level, numVars);
                 return Node(Variable, newLow2, newHigh2);
             }
+        }
+
+        #endregion
+
+        #region Enumeration
+
+        public void CollectNonDefault(
+            int level,
+            int numVars,
+            int eventsNum,
+            int defaultValue,
+            List<(int e, int value)> values,
+            int prefix = 0)
+        {
+            if (level == numVars)
+            {
+                if (prefix < eventsNum && (!IsTerminal || Value != defaultValue))
+                    values.Add((prefix, Evaluate(prefix, numVars)));
+
+                return;
+            }
+
+            if (IsTerminal)
+            {
+                if (Value == defaultValue)
+                    return;
+
+                AddTerminalRange(level, numVars, eventsNum, Value, values, prefix);
+                return;
+            }
+
+            if (Variable > level)
+            {
+                CollectNonDefault(level + 1, numVars, eventsNum, defaultValue, values, prefix << 1);
+                CollectNonDefault(level + 1, numVars, eventsNum, defaultValue, values, (prefix << 1) | 1);
+                return;
+            }
+
+            if (Variable == level)
+            {
+                Low.CollectNonDefault(level + 1, numVars, eventsNum, defaultValue, values, prefix << 1);
+                High.CollectNonDefault(level + 1, numVars, eventsNum, defaultValue, values, (prefix << 1) | 1);
+                return;
+            }
+
+            Low.CollectNonDefault(level, numVars, eventsNum, defaultValue, values, prefix);
+            High.CollectNonDefault(level, numVars, eventsNum, defaultValue, values, prefix);
+        }
+
+        private static void AddTerminalRange(
+            int level,
+            int numVars,
+            int eventsNum,
+            int value,
+            List<(int e, int value)> values,
+            int prefix)
+        {
+            var remainingBits = numVars - level;
+            var start = prefix << remainingBits;
+            var end = Math.Min(eventsNum, start + (1 << remainingBits));
+
+            for (var e = start; e < end; e++)
+                values.Add((e, value));
         }
 
         #endregion
