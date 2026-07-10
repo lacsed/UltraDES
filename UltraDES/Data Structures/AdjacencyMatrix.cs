@@ -21,15 +21,39 @@ namespace UltraDES
         /// </summary>
         public AdjacencyMatrix(int states, int eventsNum, bool preAllocate = false)
         {
-            _impl = eventsNum switch
+            _impl = CreateImplementation(states, eventsNum, preAllocate);
+            //_impl = new AdjacencyMatrixBDDImpl(states, eventsNum, preAllocate);
+            //_impl = new AdjacencyMatrixBitArrayImpl(states, eventsNum, preAllocate);
+        }
+
+        private static IAdjacencyMatrixImplementation CreateImplementation(int states, int eventsNum, bool preAllocate)
+        {
+            var requestedImplementation = Environment.GetEnvironmentVariable("ULTRADES_ADJACENCY_MATRIX_IMPL");
+
+            if (!string.IsNullOrWhiteSpace(requestedImplementation)
+                && !requestedImplementation.Equals("Auto", StringComparison.OrdinalIgnoreCase))
+            {
+                return requestedImplementation.ToUpperInvariant() switch
+                {
+                    "USHORT" when eventsNum <= 16 => new AdjacencyMatrixUShortImpl(states, eventsNum, preAllocate),
+                    "UINT" when eventsNum <= 32 => new AdjacencyMatrixUIntImpl(states, eventsNum, preAllocate),
+                    "BITMASK" when eventsNum <= 64 => new AdjacencyMatrixBitMask(states, eventsNum, preAllocate),
+                    "BDD" => new AdjacencyMatrixBDDImpl(states, eventsNum, preAllocate),
+                    "BITARRAY" => new AdjacencyMatrixBitArrayImpl(states, eventsNum, preAllocate),
+                    "BOOLARRAY" => new AdjacencyMatrixBoolArrayImpl(states, eventsNum, preAllocate),
+                    _ => throw new ArgumentException(
+                        $"Unsupported adjacency matrix implementation '{requestedImplementation}' for {eventsNum} events.",
+                        nameof(requestedImplementation))
+                };
+            }
+
+            return eventsNum switch
             {
                 <= 16 => new AdjacencyMatrixUShortImpl(states, eventsNum, preAllocate),
                 <= 32 => new AdjacencyMatrixUIntImpl(states, eventsNum, preAllocate),
                 <= 64 => new AdjacencyMatrixBitMask(states, eventsNum, preAllocate),
-                _ => new AdjacencyMatrixBDDImpl(states, eventsNum, preAllocate)
+                _ => new AdjacencyMatrixBitArrayImpl(states, eventsNum, preAllocate)
             };
-            //_impl = new AdjacencyMatrixBDDImpl(states, eventsNum, preAllocate);
-            //_impl = new AdjacencyMatrixBitArrayImpl(states, eventsNum, preAllocate);
         }
 
         // Construtor usado internamente para clone:

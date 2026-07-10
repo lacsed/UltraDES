@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Petri Nets", "Petri Nets\Pe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Opacity and Diagnosability", "Opacity and Diagnosability\Opacity and Diagnosability.csproj", "{C4C7FEE9-08CD-41AA-B612-015AB6E20209}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AdjacencyMatrix Benchmark", "AdjacencyMatrix Benchmark\AdjacencyMatrix Benchmark.csproj", "{A5F30C96-A36C-45D0-9E7E-39AB2D830C6F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,6 +49,10 @@ Global
 		{C4C7FEE9-08CD-41AA-B612-015AB6E20209}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C4C7FEE9-08CD-41AA-B612-015AB6E20209}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C4C7FEE9-08CD-41AA-B612-015AB6E20209}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A5F30C96-A36C-45D0-9E7E-39AB2D830C6F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A5F30C96-A36C-45D0-9E7E-39AB2D830C6F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A5F30C96-A36C-45D0-9E7E-39AB2D830C6F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A5F30C96-A36C-45D0-9E7E-39AB2D830C6F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -57,6 +63,7 @@ Global
 		{51B30B71-081B-4104-ACC6-7C98828166A0} = {70C16CFE-3E42-4306-8A4D-C4C0EE63F39A}
 		{B82F8120-D143-43A7-998D-22D730B20718} = {70C16CFE-3E42-4306-8A4D-C4C0EE63F39A}
 		{C4C7FEE9-08CD-41AA-B612-015AB6E20209} = {70C16CFE-3E42-4306-8A4D-C4C0EE63F39A}
+		{A5F30C96-A36C-45D0-9E7E-39AB2D830C6F} = {70C16CFE-3E42-4306-8A4D-C4C0EE63F39A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {CC9CF77B-E285-4B4C-86A2-A640952C15DF}
