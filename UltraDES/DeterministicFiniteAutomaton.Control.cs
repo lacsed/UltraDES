@@ -363,11 +363,14 @@ partial class DeterministicFiniteAutomaton
     /// <exception cref="Exception">Thrown if the synthesized supervisors conflict.</exception>
     public static IEnumerable<DFA> LocalModularSupervisor(IEnumerable<DFA> plants, IEnumerable<DFA> specifications, IEnumerable<DFA> conflictResolvingSupervisor = null)
     {
+        var plantArray = plants as DFA[] ?? plants.ToArray();
+        var specificationArray = specifications as DFA[] ?? specifications.ToArray();
         conflictResolvingSupervisor ??= Array.Empty<DFA>();
+        var localPlantCache = new Dictionary<string, DFA>();
 
-        var supervisors = specifications
+        var supervisors = specificationArray
             // .AsParallel().WithDegreeOfParallelism(NumberOfThreads)
-            .Select(e => MonolithicSupervisor(plants.Where(p => p._eventsUnion.Intersect(e._eventsUnion).Any()), new[] { e }))
+            .Select(e => MonolithicSupervisor(new[] { GetCachedLocalPlant(plantArray, e, localPlantCache) }, new[] { e }))
             .ToList();
 
         var complete = supervisors.Union(conflictResolvingSupervisor).ToList();
@@ -394,12 +397,17 @@ partial class DeterministicFiniteAutomaton
     public static IEnumerable<DFA> LocalModularSupervisor(IEnumerable<DFA> plants, IEnumerable<DFA> specifications,
         out List<DFA> compoundPlants, IEnumerable<DFA> conflictResolvingSupervisor = null)
     {
+        var plantArray = plants as DFA[] ?? plants.ToArray();
+        var specificationArray = specifications as DFA[] ?? specifications.ToArray();
         conflictResolvingSupervisor ??= Array.Empty<DFA>();
+        var localPlantCache = new Dictionary<string, DFA>();
 
-        var dic = specifications.ToDictionary(e => plants.Where(p => p._eventsUnion.Intersect(e._eventsUnion).Any()).Aggregate((a, b) => a.ParallelCompositionWith(b)));
+        var localProblems = specificationArray
+            .Select(e => (Plant: GetCachedLocalPlant(plantArray, e, localPlantCache), Specification: e))
+            .ToList();
 
-        var supervisors = dic.AsParallel().WithDegreeOfParallelism(NumberOfThreads)
-            .Select(automata => MonolithicSupervisor(new[] { automata.Key }, new[] { automata.Value }))
+        var supervisors = localProblems.AsParallel().WithDegreeOfParallelism(NumberOfThreads)
+            .Select(automata => MonolithicSupervisor(new[] { automata.Plant }, new[] { automata.Specification }))
             .ToList();
 
         var complete = supervisors.Union(conflictResolvingSupervisor).ToList();
@@ -407,9 +415,73 @@ partial class DeterministicFiniteAutomaton
         if (IsConflicting(complete))
             throw new Exception("Conflicting Supervisors");
 
-        compoundPlants = dic.Keys.ToList();
+        compoundPlants = localProblems.Select(automata => automata.Plant).ToList();
         GC.Collect();
         return complete;
+    }
+
+    /// <summary>
+    /// Gets the plant associated with a local specification, reusing previous compositions when
+    /// different specifications depend on the same subset of plants.
+    /// </summary>
+    /// <param name="plants">The complete plant array.</param>
+    /// <param name="specification">The local specification.</param>
+    /// <param name="cache">A cache indexed by the selected plant positions.</param>
+    /// <returns>The composed local plant for the specification.</returns>
+    private static DFA GetCachedLocalPlant(DFA[] plants, DFA specification, Dictionary<string, DFA> cache)
+    {
+        var selectedPlantIndexes = GetLocalModularPlantIndexes(plants, specification);
+
+        var cacheKey = string.Join(",", selectedPlantIndexes);
+
+        if (cache.TryGetValue(cacheKey, out var localPlant))
+            return localPlant;
+
+        localPlant = selectedPlantIndexes
+            .Select(index => plants[index])
+            .Aggregate((a, b) => a.ParallelCompositionWith(b, false));
+
+        cache[cacheKey] = localPlant;
+        return localPlant;
+    }
+
+    /// <summary>
+    /// Gets the indexes of plants that belong to a local modular group for a specification.
+    /// The group starts with plants that share events with the specification and is then
+    /// expanded until every plant that shares events with any plant in the group is included.
+    /// </summary>
+    /// <param name="plants">The complete plant array.</param>
+    /// <param name="specification">The local specification.</param>
+    /// <returns>The indexes of plants included in the local modular group.</returns>
+    private static int[] GetLocalModularPlantIndexes(DFA[] plants, DFA specification)
+    {
+        var selectedPlantIndexes = plants
+            .Select((plant, index) => (Plant: plant, Index: index))
+            .Where(item => item.Plant._eventsUnion.Intersect(specification._eventsUnion).Any())
+            .Select(item => item.Index)
+            .ToList();
+
+        var selectedPlantIndexesSet = selectedPlantIndexes.ToHashSet();
+        var groupEvents = new HashSet<AbstractEvent>(selectedPlantIndexes.SelectMany(index => plants[index]._eventsUnion));
+
+        var changed = true;
+        while (changed)
+        {
+            changed = false;
+
+            for (var i = 0; i < plants.Length; ++i)
+            {
+                if (selectedPlantIndexesSet.Contains(i) || !groupEvents.Overlaps(plants[i]._eventsUnion))
+                    continue;
+
+                selectedPlantIndexes.Add(i);
+                selectedPlantIndexesSet.Add(i);
+                groupEvents.UnionWith(plants[i]._eventsUnion);
+                changed = true;
+            }
+        }
+
+        return selectedPlantIndexes.ToArray();
     }
 
     /// <summary>
