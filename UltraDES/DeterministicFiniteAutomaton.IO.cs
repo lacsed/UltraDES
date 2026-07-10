@@ -20,6 +20,11 @@ using DFA = DeterministicFiniteAutomaton;
 /// </summary>
 partial class DeterministicFiniteAutomaton
 {
+    static DeterministicFiniteAutomaton()
+    {
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+    }
+
     /// <summary>
     /// Gets an XML string representation of the automaton.
     /// </summary>
