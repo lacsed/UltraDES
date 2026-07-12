@@ -1,6 +1,6 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="img/ultrades_dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="img/ultrades_white.png">
+  <source media="(prefers-color-scheme: dark)" srcset="imgs/ultrades_dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="imgs/ultrades_white.png">
   <img alt="UltraDES" src="img/ultrades_white.png">
 </picture>
 
