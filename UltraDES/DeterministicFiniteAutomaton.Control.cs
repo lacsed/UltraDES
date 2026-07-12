@@ -303,8 +303,8 @@ partial class DeterministicFiniteAutomaton
         FindStates(nPlant, statesStack, removeBadStates);
         Task.WaitAll(tasks);
 
-        foreach (var s in _validStates.Where(s => s.Value))
-            _validStates.Remove(s.Key);
+        foreach (var s in _validStates.Where(s => s.Value).Select(s => s.Key).ToArray())
+            _validStates.Remove(s);
 
         bool vNewBadStates;
         do
@@ -368,9 +368,12 @@ partial class DeterministicFiniteAutomaton
         conflictResolvingSupervisor ??= Array.Empty<DFA>();
         var localPlantCache = new Dictionary<string, DFA>();
 
-        var supervisors = specificationArray
-            // .AsParallel().WithDegreeOfParallelism(NumberOfThreads)
-            .Select(e => MonolithicSupervisor(new[] { GetCachedLocalPlant(plantArray, e, localPlantCache) }, new[] { e }))
+        var localProblems = specificationArray
+            .Select(e => (Plant: GetCachedLocalPlant(plantArray, e, localPlantCache), Specification: e))
+            .ToArray();
+
+        var supervisors = localProblems.AsParallel().WithDegreeOfParallelism(NumberOfThreads)
+            .Select(automata => MonolithicSupervisor(new[] { automata.Plant }, new[] { automata.Specification }))
             .ToList();
 
         var complete = supervisors.Union(conflictResolvingSupervisor).ToList();
@@ -455,14 +458,20 @@ partial class DeterministicFiniteAutomaton
     /// <returns>The indexes of plants included in the local modular group.</returns>
     private static int[] GetLocalModularPlantIndexes(DFA[] plants, DFA specification)
     {
-        var selectedPlantIndexes = plants
-            .Select((plant, index) => (Plant: plant, Index: index))
-            .Where(item => item.Plant._eventsUnion.Intersect(specification._eventsUnion).Any())
-            .Select(item => item.Index)
-            .ToList();
+        var specificationEvents = new HashSet<AbstractEvent>(specification._eventsUnion);
+        var selectedPlantIndexes = new List<int>();
+        var selectedPlantIndexesSet = new HashSet<int>();
+        var groupEvents = new HashSet<AbstractEvent>();
 
-        var selectedPlantIndexesSet = selectedPlantIndexes.ToHashSet();
-        var groupEvents = new HashSet<AbstractEvent>(selectedPlantIndexes.SelectMany(index => plants[index]._eventsUnion));
+        for (var i = 0; i < plants.Length; ++i)
+        {
+            if (!specificationEvents.Overlaps(plants[i]._eventsUnion))
+                continue;
+
+            selectedPlantIndexes.Add(i);
+            selectedPlantIndexesSet.Add(i);
+            groupEvents.UnionWith(plants[i]._eventsUnion);
+        }
 
         var changed = true;
         while (changed)

@@ -4,6 +4,7 @@ using System.Linq;
 
 namespace UltraDES
 {
+    [Serializable]
     internal sealed class AdjacencyMatrixBitMask : IAdjacencyMatrixImplementation
     {
         // Cada estado tem uma SortedList<evento, destino>

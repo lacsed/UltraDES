@@ -4,6 +4,7 @@ using System.Linq;
 
 namespace UltraDES
 {
+    [Serializable]
     internal sealed class AdjacencyMatrixBDDImpl : IAdjacencyMatrixImplementation
     {
         private readonly MTBDD[] _stateFunctions;

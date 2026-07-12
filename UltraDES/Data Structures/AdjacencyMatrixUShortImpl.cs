@@ -4,6 +4,7 @@ using System.Linq;
 
 namespace UltraDES;
 
+[Serializable]
 internal sealed class AdjacencyMatrixUShortImpl : IAdjacencyMatrixImplementation
 {
     private readonly SortedList<int, int>[] _internal;

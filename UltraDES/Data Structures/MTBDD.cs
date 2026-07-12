@@ -9,6 +9,7 @@ namespace UltraDES
     /// Estrutura-auxiliar para lookup do unique table
     /// Armazena (variable, low, high) e gera hash de forma eficiente
     /// </summary>
+    [Serializable]
     internal readonly struct NodeKey(int variable, MTBDD low, MTBDD high) : IEquatable<NodeKey>
     {
         public readonly int Variable = variable;
@@ -87,6 +88,7 @@ namespace UltraDES
     /// Observe também que mantemos a API pública pedida (Terminal, Node, etc.)
     /// mas internamente redirecionamos para o Manager.
     /// </summary>
+    [Serializable]
     internal sealed class MTBDD
     {
         #region Campos
