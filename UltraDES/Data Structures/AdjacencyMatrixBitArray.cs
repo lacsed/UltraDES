@@ -6,6 +6,7 @@ using System.Text;
 
 namespace UltraDES
 {
+    [Serializable]
     internal sealed class AdjacencyMatrixBitArrayImpl : IAdjacencyMatrixImplementation
     {
         private readonly SortedList<int, int>[] _internal;

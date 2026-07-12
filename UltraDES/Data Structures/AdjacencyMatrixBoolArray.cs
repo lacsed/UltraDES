@@ -8,6 +8,7 @@ namespace UltraDES
     /// Implementação que usa bool[] por estado para marcar quais eventos existem.
     /// Só será utilizada se a quantidade de estados for menor que 1000 (critério dado).
     /// </summary>
+    [Serializable]
     internal sealed class AdjacencyMatrixBoolArrayImpl : IAdjacencyMatrixImplementation
     {
         private readonly SortedList<int, int>[] _internal;

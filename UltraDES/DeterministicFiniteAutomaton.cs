@@ -555,6 +555,20 @@ public sealed partial class DeterministicFiniteAutomaton
     public IEnumerable<AbstractEvent> UncontrollableEvents => _eventsUnion.Where(i => !i.IsControllable);
 
     /// <summary>
+    /// Gets the number of uncontrollable events. Events are stored with uncontrollable
+    /// events first, so this avoids repeatedly allocating/enumerating LINQ iterators in
+    /// supervisor hot paths.
+    /// </summary>
+    private int UncontrollableEventsCount
+    {
+        get
+        {
+            var firstControllable = Array.FindIndex(_eventsUnion, static e => e.IsControllable);
+            return firstControllable < 0 ? _eventsUnion.Length : firstControllable;
+        }
+    }
+
+    /// <summary>
     /// Creates a deep copy of the automaton with a specified capacity.
     /// </summary>
     /// <param name="capacity">The number of automaton components to copy.</param>
@@ -649,7 +663,7 @@ public sealed partial class DeterministicFiniteAutomaton
         statesStack = null;
 
         bool newBadStates = false;
-        int uncontrollableEventsCount = UncontrollableEvents.Count();
+        int uncontrollableEventsCount = UncontrollableEventsCount;
 
         // If bad state checking is enabled, remove the invalid states.
         if (checkForBadStates)
@@ -779,7 +793,7 @@ public sealed partial class DeterministicFiniteAutomaton
         var nPlant = obj;
         var pos = new int[n];
         var nextPosition = new int[n];
-        var uncontrollableEventsCount = UncontrollableEvents.Count();
+        var uncontrollableEventsCount = UncontrollableEventsCount;
         var nextStates = new StatesTuple[uncontrollableEventsCount];
 
         while (true)
@@ -920,7 +934,7 @@ public sealed partial class DeterministicFiniteAutomaton
         var n = _statesList.Count;
         var nextPosition = new int[n];
         int e, i;
-        var uncontrollableEventsCount = UncontrollableEvents.Count();
+        var uncontrollableEventsCount = UncontrollableEventsCount;
         var nextStates = new StatesTuple[uncontrollableEventsCount];
         var vEvents = new int[uncontrollableEventsCount];
         var k = 0;
