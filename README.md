@@ -1,8 +1,8 @@
-<p align="center">
-  <a href="https://github.com/lacsed/UltraDES">
-    <img src="http://lacsed.eng.ufmg.br/wp-content/uploads/2017/05/Logo_UltraDES_PNG_Internet-e1494353854950.png" alt="AngouriMath logo" width="400">
-  </a>
-</p>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="img/ultrades_dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="img/ultrades_white.png">
+  <img alt="UltraDES" src="img/ultrades_white.png">
+</picture>
 
 <h2 align="center">UltraDES</h2>
 
