@@ -76,8 +76,8 @@ namespace UltraDES
         }
 
         /// <summary>
-        /// Indexador: retorna a SortedList de transições (evento -> destino) para o estado 's'.
-        /// Se não existir, cria e retorna.
+        /// Indexador: retorna as transições (evento -> destino) para o estado 's'.
+        /// Retorna uma lista vazia quando o estado não possui transições.
         /// </summary>
         public List<(int e, int s)> this[int s] => _impl[s];
 

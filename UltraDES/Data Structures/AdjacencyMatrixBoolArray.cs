@@ -40,9 +40,11 @@ namespace UltraDES
             => HasEvent(s, e) ? _internal[s][e] : -1;
 
         /// <summary>
-        /// Indexador [s]: retorna a SortedList<evento, destino> para o estado 's' (criando se for null)
+        /// Indexador [s]: retorna as transições do estado ou uma lista vazia quando não houver nenhuma.
         /// </summary>
-        public List<(int, int)> this[int s] => _internal[s].Select(kvp => (kvp.Key, kvp.Value)).ToList();
+        public List<(int, int)> this[int s] => _internal[s] == null
+            ? new List<(int, int)>()
+            : _internal[s].Select(kvp => (kvp.Key, kvp.Value)).ToList();
 
         /// <summary>
         /// Verifica se existe o evento 'e' no estado 's'

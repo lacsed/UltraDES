@@ -38,7 +38,9 @@ namespace UltraDES
         public int this[int s, int e]
             => HasEvent(s, e) ? _internal[s][e] : -1;
 
-        public List<(int, int)> this[int s] => _internal[s].Select(kvp => (kvp.Key, kvp.Value)).ToList();
+        public List<(int, int)> this[int s] => _internal[s] == null
+            ? new List<(int, int)>()
+            : _internal[s].Select(kvp => (kvp.Key, kvp.Value)).ToList();
 
         public bool HasEvent(int s, int e)
         {
