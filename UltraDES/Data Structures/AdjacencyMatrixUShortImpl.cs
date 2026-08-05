@@ -8,7 +8,7 @@ namespace UltraDES;
 internal sealed class AdjacencyMatrixUShortImpl : IAdjacencyMatrixImplementation
 {
     private readonly SortedList<int, int>[] _internal;
-    private readonly ushort[] _eventMask; // 1 bit por evento, total 16 bits
+    private readonly ushort[] _eventMask; // 1 bit per event, 16 bits in total
 
     public int Length => _internal.Length;
     public int EventsNum { get; }
@@ -16,7 +16,7 @@ internal sealed class AdjacencyMatrixUShortImpl : IAdjacencyMatrixImplementation
     public AdjacencyMatrixUShortImpl(int states, int eventsNum, bool preAllocate = false)
     {
         if (eventsNum > 16)
-            throw new ArgumentException("AdjacencyMatrixUShortImpl suporta no máximo 16 eventos.", nameof(eventsNum));
+            throw new ArgumentException("AdjacencyMatrixUShortImpl supports at most 16 events.", nameof(eventsNum));
 
         EventsNum = eventsNum;
         _internal = new SortedList<int, int>[states];
@@ -30,16 +30,18 @@ internal sealed class AdjacencyMatrixUShortImpl : IAdjacencyMatrixImplementation
         }
     }
 
-    // Indexador [s,e]: retorna destino ou -1 se não existe
+    // Indexer [s,e]: returns the destination or -1 if it does not exist
     public int this[int s, int e]
     {
         get => HasEvent(s, e) ? _internal[s][e] : -1;
     }
 
-    // Indexador [s]: retorna SortedList, cria se null
+    // Indexer [s]: returns the state transitions or an empty list.
     public List<(int, int)> this[int s]
     {
-        get => _internal[s].Select(kvp => (kvp.Key, kvp.Value)).ToList();
+        get => _internal[s] == null
+            ? new List<(int, int)>()
+            : _internal[s].Select(kvp => (kvp.Key, kvp.Value)).ToList();
     }
 
     public bool HasEvent(int s, int e)
