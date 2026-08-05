@@ -5,14 +5,14 @@ using System.Linq;
 namespace UltraDES
 {
     /// <summary>
-    /// Implementação que usa bool[] por estado para marcar quais eventos existem.
-    /// Só será utilizada se a quantidade de estados for menor que 1000 (critério dado).
+    /// Implementation that uses bool[] per state to mark which events exist.
+    /// It is only used if the number of states is less than 1000 (given criterion).
     /// </summary>
     [Serializable]
     internal sealed class AdjacencyMatrixBoolArrayImpl : IAdjacencyMatrixImplementation
     {
         private readonly SortedList<int, int>[] _internal;
-        private readonly bool[][] _events;  // Para cada estado, um array de bool com tamanho EventsNum
+        private readonly bool[][] _events;  // For each state, a bool array with size EventsNum
 
         public int Length => _internal.Length;
         public int EventsNum { get; }
@@ -34,30 +34,30 @@ namespace UltraDES
         }
 
         /// <summary>
-        /// Indexador [s, e]: retorna destino ou -1 se não existir transição
+        /// Indexer [s, e]: returns the destination or -1 if the transition does not exist
         /// </summary>
         public int this[int s, int e]
             => HasEvent(s, e) ? _internal[s][e] : -1;
 
         /// <summary>
-        /// Indexador [s]: retorna as transições do estado ou uma lista vazia quando não houver nenhuma.
+        /// Indexer [s]: returns the state transitions or an empty list when there are none.
         /// </summary>
         public List<(int, int)> this[int s] => _internal[s] == null
             ? new List<(int, int)>()
             : _internal[s].Select(kvp => (kvp.Key, kvp.Value)).ToList();
 
         /// <summary>
-        /// Verifica se existe o evento 'e' no estado 's'
+        /// Checks whether event 'e' exists in state 's'
         /// </summary>
         public bool HasEvent(int s, int e)
         {
-            // se _events[s] ainda não foi criado, não tem evento
+            // If _events[s] has not been created yet, there is no event
             if (_events[s] == null) return false;
             return _events[s][e];
         }
 
         /// <summary>
-        /// Adiciona múltiplos pares (evento, destino) para o estado 'origin'
+        /// Adds multiple (event, destination) pairs to state 'origin'
         /// </summary>
         public void Add(int origin, (int, int)[] values)
         {
@@ -76,7 +76,7 @@ namespace UltraDES
                 }
                 else
                 {
-                    // se já existe, checa determinismo
+                    // If it already exists, checks determinism
                     if (_internal[origin][evt] != dest)
                         throw new Exception("Automaton is not deterministic.");
                 }
@@ -84,7 +84,7 @@ namespace UltraDES
         }
 
         /// <summary>
-        /// Adiciona um par (evento, destino) ao estado 'origin'
+        /// Adds an (event, destination) pair to state 'origin'
         /// </summary>
         public void Add(int origin, int e, int dest)
         {
@@ -101,14 +101,14 @@ namespace UltraDES
             }
             else
             {
-                // se já existe, checa determinismo
+                // If it already exists, checks determinism
                 if (_internal[origin][e] != dest)
                     throw new Exception("Automaton is not deterministic.");
             }
         }
 
         /// <summary>
-        /// Remove o evento 'e' do estado 'origin'
+        /// Removes event 'e' from state 'origin'
         /// </summary>
         public void Remove(int origin, int e)
         {
@@ -117,7 +117,7 @@ namespace UltraDES
         }
 
         /// <summary>
-        /// Clona a matriz de adjacência
+        /// Clones the adjacency matrix
         /// </summary>
         public IAdjacencyMatrixImplementation Clone()
         {
@@ -126,14 +126,14 @@ namespace UltraDES
             {
                 if (_internal[s] != null)
                 {
-                    // clona a SortedList
+                    // Clones the SortedList
                     clone._internal[s] = new SortedList<int, int>();
                     foreach (var kv in _internal[s])
                     {
                         clone._internal[s].Add(kv.Key, kv.Value);
                     }
                 }
-                // clona o array de bool
+                // Clones the bool array
                 if (_events[s] != null)
                 {
                     clone._events[s] = new bool[EventsNum];
@@ -144,7 +144,7 @@ namespace UltraDES
         }
 
         /// <summary>
-        /// Solicita às coleções internas que liberem memória extra
+        /// Requests that the internal collections release extra memory
         /// </summary>
         public void TrimExcess()
         {

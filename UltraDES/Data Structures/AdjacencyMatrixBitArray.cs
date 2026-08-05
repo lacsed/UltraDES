@@ -10,7 +10,7 @@ namespace UltraDES
     internal sealed class AdjacencyMatrixBitArrayImpl : IAdjacencyMatrixImplementation
     {
         private readonly SortedList<int, int>[] _internal;
-        private readonly BitArray[] _events; // Cada estado tem um BitArray para marcar eventos
+        private readonly BitArray[] _events; // Each state has a BitArray to mark events
 
         public int Length => _internal.Length;
         public int EventsNum { get; }

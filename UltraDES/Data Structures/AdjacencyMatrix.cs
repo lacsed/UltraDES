@@ -11,13 +11,13 @@ namespace UltraDES
     [Serializable]
     internal sealed class AdjacencyMatrix
     {
-        // Mantém uma referência para a implementação escolhida
+        // Keeps a reference to the selected implementation
         private readonly IAdjacencyMatrixImplementation _impl;
 
         /// <summary>
-        /// Construtor principal. Se 'eventsNum' <= 64, usa implementação com bitmask (ulong),
-        /// caso contrário, usa BitArray.
-        /// O parâmetro 'preAllocate' pode ser repassado a ambas as implementações.
+        /// Main constructor. If 'eventsNum' <= 64, uses the bitmask (ulong) implementation,
+        /// otherwise, uses BitArray.
+        /// The 'preAllocate' parameter can be forwarded to both implementations.
         /// </summary>
         public AdjacencyMatrix(int states, int eventsNum, bool preAllocate = false)
         {
@@ -56,16 +56,16 @@ namespace UltraDES
             };
         }
 
-        // Construtor usado internamente para clone:
+        // Constructor used internally for cloning:
         private AdjacencyMatrix(IAdjacencyMatrixImplementation impl) => _impl = impl;
 
         /// <summary>
-        /// Retorna a quantidade de estados.
+        /// Returns the number of states.
         /// </summary>
         public int Length => _impl.Length;
 
         /// <summary>
-        /// Indexador: retorna o destino, ou -1 se não houver transição.
+        /// Indexer: returns the destination, or -1 when there is no transition.
         /// </summary>
         public int this[int s, int e] => _impl[s, e];
 
@@ -76,33 +76,33 @@ namespace UltraDES
         }
 
         /// <summary>
-        /// Indexador: retorna as transições (evento -> destino) para o estado 's'.
-        /// Retorna uma lista vazia quando o estado não possui transições.
+        /// Indexer: returns the transitions (event -> destination) for state 's'.
+        /// Returns an empty list when the state has no transitions.
         /// </summary>
         public List<(int e, int s)> this[int s] => _impl[s];
 
         /// <summary>
-        /// Verifica se o estado 's' tem o evento 'e'.
+        /// Checks whether state 's' has event 'e'.
         /// </summary>
         public bool HasEvent(int s, int e) => _impl.HasEvent(s, e);
 
         /// <summary>
-        /// Adiciona vários pares (evento, destino) em um único estado.
+        /// Adds multiple (event, destination) pairs to a single state.
         /// </summary>
         public void Add(int origin, (int, int)[] values) => _impl.Add(origin, values);
 
         /// <summary>
-        /// Adiciona um par (evento, destino) em um estado.
+        /// Adds an (event, destination) pair to a state.
         /// </summary>
         public void Add(int origin, int e, int dest) => _impl.Add(origin, e, dest);
 
         /// <summary>
-        /// Remove o evento 'e' do estado 'origin'.
+        /// Removes event 'e' from state 'origin'.
         /// </summary>
         public void Remove(int origin, int e) => _impl.Remove(origin, e);
 
         /// <summary>
-        /// Clona toda a matriz de adjacência (cópia profunda).
+        /// Clones the whole adjacency matrix (deep copy).
         /// </summary>
         public AdjacencyMatrix Clone()
         {
@@ -111,8 +111,8 @@ namespace UltraDES
         }
 
         /// <summary>
-        /// Tenta reduzir a quantidade de memória ocupada pelas coleções internas.
-        /// Em coleções grandes, pode ser útil.
+        /// Attempts to reduce the memory used by the internal collections.
+        /// This can be useful for large collections.
         /// </summary>
         public void TrimExcess() => _impl.TrimExcess();
     }

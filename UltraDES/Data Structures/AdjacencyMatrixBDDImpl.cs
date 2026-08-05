@@ -37,9 +37,9 @@ namespace UltraDES
                 if (s < 0 || s >= Length || e < 0 || e >= EventsNum)
                     throw new IndexOutOfRangeException();
 
-                // Se ainda não existe, cria
+                // Creates it if it does not exist yet
                 _stateFunctions[s] ??= MTBDD.FullTree(0, numVars, -1);
-                // Avalia
+                // Evaluates
                 return _stateFunctions[s].Evaluate(e, numVars);
             }
         }
@@ -159,7 +159,7 @@ namespace UltraDES
             var clone = new AdjacencyMatrixBDDImpl(Length, EventsNum);
             for (int i = 0; i < Length; i++)
             {
-                // MTBDD é imutável, podemos compartilhar a mesma referência
+                // MTBDD is immutable, so we can share the same reference
                 clone._stateFunctions[i] = _stateFunctions[i];
             }
             return clone;
@@ -167,8 +167,8 @@ namespace UltraDES
 
         public void TrimExcess()
         {
-            // Se quisermos, poderíamos tentar reordenar variáveis ou 
-            // forçar minimizações adicionais. Mas no momento, nada é feito.
+            // If desired, we could try to reorder variables or
+            // force additional minimizations. For now, nothing is done.
         }
     }
 }
