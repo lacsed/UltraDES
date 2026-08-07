@@ -28,6 +28,10 @@ namespace UltraDES
 
         private static IAdjacencyMatrixImplementation CreateImplementation(int states, int eventsNum, bool preAllocate)
         {
+            // Static flag on DFA takes highest priority
+            if (DeterministicFiniteAutomaton.UseDiskStorage)
+                return new AdjacencyMatrixDiskImpl(states, eventsNum, preAllocate);
+
             var requestedImplementation = Environment.GetEnvironmentVariable("ULTRADES_ADJACENCY_MATRIX_IMPL");
 
             if (!string.IsNullOrWhiteSpace(requestedImplementation)
@@ -41,6 +45,7 @@ namespace UltraDES
                     "BDD" => new AdjacencyMatrixBDDImpl(states, eventsNum, preAllocate),
                     "BITARRAY" => new AdjacencyMatrixBitArrayImpl(states, eventsNum, preAllocate),
                     "BOOLARRAY" => new AdjacencyMatrixBoolArrayImpl(states, eventsNum, preAllocate),
+                    "DISK" => new AdjacencyMatrixDiskImpl(states, eventsNum, preAllocate),
                     _ => throw new ArgumentException(
                         $"Unsupported adjacency matrix implementation '{requestedImplementation}' for {eventsNum} events.",
                         nameof(requestedImplementation))

@@ -23,6 +23,21 @@ public sealed partial class DeterministicFiniteAutomaton
     public static bool Multicore { get; set; } = true;
 
     /// <summary>
+    /// Gets or sets a value indicating whether adjacency matrices should be stored on disk
+    /// instead of in memory. Useful for very large automata that exceed available RAM.
+    /// When enabled, all new <see cref="AdjacencyMatrix"/> instances will use
+    /// <see cref="AdjacencyMatrixDiskImpl"/> backed by a memory-mapped file.
+    /// </summary>
+    public static bool UseDiskStorage { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets the directory path used to store temporary adjacency matrix files
+    /// when disk storage is enabled. Defaults to the application base directory.
+    /// For best performance, point this to an NVMe or other high-speed drive.
+    /// </summary>
+    public static string DiskStorageTempPath { get; set; } = AppContext.BaseDirectory;
+
+    /// <summary>
     /// Gets the number of threads to be used based on the Multicore setting and processor count.
     /// </summary>
     private static int NumberOfThreads => Multicore ? Math.Max(2, 10 * Environment.ProcessorCount) : 1;
