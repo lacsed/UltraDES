@@ -17,9 +17,6 @@
 ## Conventions used in this wiki
 
 - `DFA` is an alias for `DeterministicFiniteAutomaton`.
-- A marked state normally represents successful task completion or an accepted word.
-- An uncontrollable event cannot be disabled by a supervisor.
-- `AccessiblePart`, `Trim`, and `Minimal` are computed properties, so they are used without parentheses.
 - Operations normally return a new automaton. Keep the original reference if the unmodified model is still needed.
 
-> `KleeneClosure` is present in the DFA API but currently throws `NotImplementedException`. To express closure at the language level, use `ToRegularExpression` followed by `RegularExpression.Kleene`.
+> `KleeneClosure` is present in the DFA but currently throws `NotImplementedException`. To express closure at the language level, use `ToRegularExpression` followed by `RegularExpression.Kleene`.
