@@ -65,28 +65,28 @@ namespace UltraDES
         {
             var nodes = edges.Select(e => e.o).Distinct().Union(edges.Select(e => e.d).Distinct()).ToList();
 
-            var dot = @"digraph 
+            var dot = new System.Text.StringBuilder(@"digraph
 {
     
 forcelabels = TRUE;
 splines = FALSE;
-";
+");
 
-            dot += "node [shape = rectangle, label = \"\"];\n";
+            dot.Append("node [shape = rectangle, label = \"\"];\n");
             foreach (var n in nodes)
             {
-                dot += $"\"{n}\" [ label = \"{n}\" ];\n";
+                dot.Append($"\"{n}\" [ label = \"{n}\" ];\n");
             }
 
 
 
             foreach (var (o, l,d) in edges)
             {
-                dot += $"\"{o}\" -> \"{d}\" [ label = \"{l}\" ];\n";
+                dot.Append($"\"{o}\" -> \"{d}\" [ label = \"{l}\" ];\n");
             }
 
-            dot += "}";
-            return dot;
+            dot.Append("}");
+            return dot.ToString();
         }
         public static List<List<TNode>> StronglyConnectedComponents<TNode, TLabel>(this IEnumerable<(TNode o, TLabel l, TNode d)> edges, Func<TNode, TNode, bool> equals) =>
             edges.ToUnlabeledEdges().StronglyConnectedComponents(equals);
