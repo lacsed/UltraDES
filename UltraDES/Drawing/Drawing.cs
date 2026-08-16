@@ -216,8 +216,6 @@ namespace UltraDES
         /// <returns>Dictionary&lt;System.String, DrawingState&gt;.</returns>
         private static Dictionary<string, DrawingState> prepare(DeterministicFiniteAutomaton G)
         {
-            //CRIANDO MÉTODO QUE SERA UTILIZADO PARA O DESENVOLVIMENTO DA BIBLIOTECA
-
             var drawingStatesList = new Dictionary<string, DrawingState>();           // lista de estados com cordenadas
 
             //Cria uma lista de estados com parametros de posição para serem desenhados
